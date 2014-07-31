@@ -1,0 +1,227 @@
+# coding: utf8
+# versuche so etwas wie
+import basic
+import data
+
+def index(): return dict(message="hello from manage_char.py")
+
+@auth.requires_login()
+def manage_chars():
+    table = db.chars
+    query = db.chars.player == auth.user.id or db.chars.master == auth.user.id
+    table.id.represent = lambda id: A(id, _href=URL("edit_char", args=(id)))
+    table.player.represent = lambda player: db.auth_user[player].username
+    create = crud.create(table)
+    form = crud.select(table, query=query, fields=["id", "name"])
+    return dict(form=form, create=create)
+
+
+@auth.requires_login()
+def edit_char():
+    char = request.args(0)
+    if not db.chars[char] or (db.chars[char].player != auth.user.id
+                              and db.chars[char].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.chars
+    table.player.writable = False
+    table.player.represent = lambda player: db.auth_user[player].username
+    basic.Char(db, char)
+    form = crud.update(table, char)
+    linklist = [A("attributes", _href=URL('edit_attributes', args=[char])),
+                A("skills", _href=URL('edit_skills', args=[char])),
+                A("damage", _href=URL('edit_damage', args=[char])),
+                A("wounds", _href=URL('edit_wounds', args=[char])),
+                A("items", _href=URL('edit_items', args=[char])),
+                A("sins", _href=URL('edit_sins', args=[char])),
+                A("locations", _href=URL('edit_locations', args=[char])),
+                A("ware", _href=URL('manage_ware', args=[char])),
+                A("deck", _href=URL('manage_decks', args=[char])),
+                ]
+    return dict(form=form, linklist=linklist)
+
+
+@auth.requires_login()
+def edit_attributes():
+    char = request.args(0)
+    if not db.chars[char] or (db.chars[char].player != auth.user.id
+                              and db.chars[char].master != auth.user.id):
+        redirect(URL(f='index'))
+    charname = db.chars[char].name
+    fields = []
+    attributes = []
+    rows = db(db.char_attributes.char == char).select(db.char_attributes.ALL)
+    for row in rows:
+        fields += [Field(row.attribute, 'double', default=row.value)]
+    form = SQLFORM.factory(*fields)
+    if form.accepts(request.vars, session):
+        response.flash = 'form accepted'
+        for entry in form.vars:
+            db(db.char_attributes.char == char and db.char_attributes.attribute == entry).update(value=form.vars[entry])
+        db.commit()
+    elif form.errors:
+        response.flash = 'form has errors'
+    rows = db(db.char_attributes.char == char).select(db.char_attributes.ALL)
+#    base = {}
+#    xp = {}
+#    modified = {}
+    for row in rows:
+        attribute = row.attribute
+        form.custom.widget[attribute]['value'] = row.value
+        form.custom.widget[attribute]['_style'] = 'width:50px'
+        form.custom.widget[attribute]._postprocessing()
+#        base[attribute] = database.get_attrib_xp_base(db, cache, char, attribute)
+#        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
+#        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
+    return dict(charname=charname, form=form, attributes=data.attributes_dict.keys())
+
+
+@auth.requires_login()
+def edit_skills():
+    char = request.args(0)
+    if not db.chars[char] or (db.chars[char].player != auth.user.id
+                              and db.chars[char].master != auth.user.id):
+        redirect(URL(f='index'))
+    charname = db.chars[char].name
+    fields = []
+    skills = []
+    rows = db(db.char_skills.char == char).select(db.char_skills.ALL)
+    for row in rows:
+        fields += [Field(row.skill, 'double', default=row.value)]
+    form = SQLFORM.factory(*fields)
+    if form.accepts(request.vars, session):
+        response.flash = 'form accepted'
+        for entry in form.vars:
+            db(db.char_skills.char == char and db.char_skills.skill == entry).update(value=form.vars[entry])
+        db.commit()
+    elif form.errors:
+        response.flash = 'form has errors'
+    rows = db(db.char_skills.char == char).select(db.char_skills.ALL)
+#    base = {}
+#    xp = {}
+#    modified = {}
+    for row in rows:
+        skill = row.skill
+        form.custom.widget[skill]['value'] = row.value
+        form.custom.widget[skill]['_style'] = 'width:50px'
+        form.custom.widget[skill]._postprocessing()
+#        base[attribute] = database.get_attrib_xp_base(db, cache, char, attribute)
+#        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
+#        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
+    return dict(charname=charname, form=form, skills=data.skills_dict.keys())
+
+
+@auth.requires_login()
+def manage_ware():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_ware
+    table.char.default = char_id
+    query = (db.char_ware.char == char_id)
+    table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id)))
+    create = crud.create(table, fields = ["ware"], onaccept = lambda form: basic.CharWare(db, form.vars.name, form.vars.id, basic.Char(db, char_id)))
+    form = crud.select(table, query=query, fields=["id", "ware"])
+    return dict(form=form, create=create)
+
+
+@auth.requires_login()
+def edit_ware():
+    char_ware_id = request.args(0)
+    char = db(db.char_ware.id==char_ware_id).select(db.char_ware.char).first().char
+    if not db.chars[char] or (db.chars[char].player != auth.user.id
+                              and db.chars[char].master != auth.user.id):
+        redirect(URL(f='index'))
+    ware = db.char_ware[char_ware_id].ware
+    fields = []
+    attributes = []
+    rows = db(db.char_ware_stats.ware == char_ware_id).select(db.char_ware_stats.ALL)
+    for row in rows:
+        fields += [Field(row.stat, 'double', default=row.value)]
+    form = SQLFORM.factory(*fields)
+    if form.accepts(request.vars, session):
+        response.flash = 'form accepted'
+        for entry in form.vars:
+            db(db.char_ware_stats.ware == char_ware_id and db.char_ware_stats.stat == entry).update(value=form.vars[entry])
+        db.commit()
+    elif form.errors:
+        response.flash = 'form has errors'
+    rows = db(db.char_ware_stats.ware == char_ware_id).select(db.char_ware_stats.ALL)
+#    base = {}
+#    xp = {}
+#    modified = {}
+    for row in rows:
+        stat = row.stat
+        form.custom.widget[stat]['value'] = row.value
+        form.custom.widget[stat]['_style'] = 'width:50px'
+        form.custom.widget[stat]._postprocessing()
+#        base[attribute] = database.get_attrib_xp_base(db, cache, char, attribute)
+#        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
+#        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
+    return dict(ware=ware, form=form, stats=[key for key, value in data.attributes_dict.items() if value.kind == 'physical'])
+
+
+@auth.requires_login()
+def edit_damage():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_damage
+    table.char.default = char_id
+    query = db.char_damage.char == char_id
+    form = SQLFORM.grid(query, fields = [table.damagekind, table.value], csv = False, args=request.args[:1])
+    return dict(form=form)
+
+
+@auth.requires_login()
+def edit_wounds():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_wounds
+    table.char.default = char_id
+    query = db.char_wounds.char == char_id
+    form = SQLFORM.grid(query, fields = [table.bodypart, table.damagekind, table.value], csv = False, args=request.args[:1])
+    return dict(form=form)
+
+
+@auth.requires_login()
+def edit_items():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_items
+    table.char.default = char_id
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.item, table.loadout], csv = False, args=request.args[:1])
+    return dict(form=form)
+
+
+@auth.requires_login()
+def edit_sins():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_sins
+    table.locations.requires = IS_IN_DB(db(db.char_locations.char == char_id), 'char_locations.id', '%(name)s', multiple=True)
+    table.char.default = char_id
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.name, table.rating, table.permits, table.locations], csv = False, args=request.args[:1])
+    return dict(form=form)
+
+
+@auth.requires_login()
+def edit_locations():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_locations
+    table.char.default = char_id
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.name], csv = False, args=request.args[:1])
+    return dict(form=form)

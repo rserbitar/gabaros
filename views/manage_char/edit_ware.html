@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+{{=H1(ware)}}
+<br>
+<table>
+<tr>
+{{=form.custom.begin}}
+<th>Stat</th>
+<th>Value</th>
+
+</tr>
+{{for stat in stats:}}
+<tr>
+<td>{{=form.custom.label[stat]}}</td>
+<td>{{=form.custom.widget[stat]}}</td>
+</tr>
+{{pass}}
+</table>
+{{=form.custom.submit}}
+{{=form.custom.end}}

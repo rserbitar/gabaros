@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+{{=H1(charname)}}
+<br>
+<table>
+<tr>
+{{=form.custom.begin}}
+<th>Skill</th>
+<th>Value</th>
+
+</tr>
+{{for skill in skills:}}
+<tr>
+<td>{{=form.custom.label[skill]}}</td>
+<td>{{=form.custom.widget[skill]}}</td>
+</tr>
+{{pass}}
+</table>
+{{=form.custom.submit}}
+{{=form.custom.end}}
