@@ -1,0 +1,55 @@
+{{extend 'layout.html'}}
+{{from math import ceil}}
+
+{{count = int(ceil((len(skills)-1)/3))}}
+<table>
+    <td valign="top">
+        <table>
+            <tr>
+                {{for entry in skills[0]:}}
+                {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
+                {{pass}}
+            </tr>
+            {{for row in skills[1:count+1]:}}
+            <tr>
+                {{for entry in row:}}
+                {{=TD(entry, _style="padding-right:10px;text-align:left;")}}
+                {{pass}}
+            </tr>
+            {{pass}}
+        </table>
+    </td>
+
+    <td valign="top">
+        <table>
+            <tr>
+                {{for entry in skills[0]:}}
+                {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
+                {{pass}}
+            </tr>
+            {{for row in skills[1+count:2*count+1]:}}
+            <tr>
+                {{for entry in row:}}
+                {{=TD(entry, _style="padding-right:10px;text-align:left;")}}
+                {{pass}}
+            </tr>
+            {{pass}}
+        </table>
+    </td>
+    <td>
+        <table>
+            <tr valign="top">
+                {{for entry in skills[0]:}}
+                {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
+                {{pass}}
+            </tr>
+            {{for row in skills[1+2*count:]:}}
+            <tr>
+                {{for entry in row:}}
+                {{=TD(entry, _style="padding-right:10px;text-align:left;")}}
+                {{pass}}
+            </tr>
+            {{pass}}
+        </table>
+    </td>
+</table>

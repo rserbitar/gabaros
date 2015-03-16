@@ -3,7 +3,8 @@
 import basic
 import data
 
-def index(): return dict(message="hello from manage_char.py")
+def index():
+    redirect(URL('manage_chars'))
 
 @auth.requires_login()
 def manage_chars():
@@ -32,10 +33,12 @@ def edit_char():
                 A("damage", _href=URL('edit_damage', args=[char])),
                 A("wounds", _href=URL('edit_wounds', args=[char])),
                 A("items", _href=URL('edit_items', args=[char])),
+                A("loadout", _href=URL('edit_loadout', args=[char])),
                 A("sins", _href=URL('edit_sins', args=[char])),
                 A("locations", _href=URL('edit_locations', args=[char])),
                 A("ware", _href=URL('manage_ware', args=[char])),
-                A("deck", _href=URL('manage_decks', args=[char])),
+                A("adept powers", _href=URL('manage_powers', args=[char])),
+                A("computers", _href=URL('edit_computers', args=[char])),
                 ]
     return dict(form=form, linklist=linklist)
 
@@ -111,6 +114,21 @@ def edit_skills():
 
 
 @auth.requires_login()
+def manage_powers():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_adept_powers
+    table.char.default = char_id
+    query = (table.char == char_id)
+    table.value.represent = lambda value, row: basic.CharAdeptPower(db, row.power, basic.Char(db, char_id)).get_description()
+    create = crud.create(table, fields = ["power", "value"])
+    form = crud.select(table, query=query, fields=["id", "power", "value"])
+    return dict(form=form, create=create)
+
+
+@auth.requires_login()
 def manage_ware():
     char_id = request.args(0)
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
@@ -118,9 +136,10 @@ def manage_ware():
         redirect(URL(f='index'))
     table = db.char_ware
     table.char.default = char_id
-    query = (db.char_ware.char == char_id)
+    query = (table.char == char_id)
     table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id)))
-    create = crud.create(table, fields = ["ware"], onaccept = lambda form: basic.CharWare(db, form.vars.name, form.vars.id, basic.Char(db, char_id)))
+    create = crud.create(table, fields = ["ware"], onaccept = lambda form:
+    basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id)))
     form = crud.select(table, query=query, fields=["id", "ware"])
     return dict(form=form, create=create)
 
@@ -196,7 +215,7 @@ def edit_items():
     table = db.char_items
     table.char.default = char_id
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.item, table.loadout], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, args=request.args[:1])
     return dict(form=form)
 
 
@@ -224,4 +243,51 @@ def edit_locations():
     table.char.default = char_id
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.name], csv = False, args=request.args[:1])
+    return dict(form=form)
+
+
+@auth.requires_login()
+def edit_loadout():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    query = (db.char_loadout.char==char_id)
+
+    if request.vars.get('loadout'):
+        db.char_loadout.update_or_insert(query, value=request.vars.get('loadout'), char = char_id)
+    val = db(query).select(db.char_loadout.value).first()
+    if not val:
+        val = 0
+    else:
+        val = int(val.value)
+    fields = [Field('loadout', 'integer', default=val, label = 'Loadout', requires=IS_IN_SET(list(range(10))))]
+    form = SQLFORM.factory(*fields)
+    form.element(_name='loadout')['_onblur']="ajax('/gabaros/manage_char/edit_loadout/{}', " \
+                                            "['loadout'], '')".format(char_id)
+    if form.process().accepts:
+        if form.vars.get('loadout') is not None:
+            db.char_loadout.update_or_insert(query, value=form.vars.get('loadout'), char = char_id)
+            fields = [Field('loadout', 'integer', default=form.vars.get('loadout'), label = 'Loadout',
+                            requires=IS_IN_SET(list(range(10))))]
+            form = SQLFORM.factory(*fields)
+    form.element(_name='loadout')['_onblur']="ajax('/gabaros/manage_char/edit_loadout/{}', " \
+                                            "['loadout'], '')".format(char_id)
+    return dict(form = form)
+
+
+@auth.requires_login()
+def edit_computers():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_computers
+    table.char.default = char_id
+    owned_decks =db((db.char_items.char == char_id) &
+                         (db.char_items.item.belongs(data.computer_dict.keys()))
+                        )
+    table.item.requires = IS_IN_DB(owned_decks, 'char_items.id', '%(item)s')
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.item, table.firewall, table.current_uplink, table.damage], csv = False, args=request.args[:1])
     return dict(form=form)

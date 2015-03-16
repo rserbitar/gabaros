@@ -1,6 +1,6 @@
 # coding: utf8
 from datetime import datetime
-import applications.gabaros2.modules.data as data
+import data
 
 
 db.define_table('char_state',
@@ -25,3 +25,8 @@ db.define_table('char_xp',
                 Field('char', type='reference chars', label=T('Character'),
                                      requires=IS_IN_DB(db, db.chars.id, '%(name)s'), writable=False),
                 Field('xp', type='float'))
+
+db.define_table('char_loadout',
+                Field('char', type='reference chars', label=T('Character'),
+                                     requires=IS_IN_DB(db, db.chars.id, '%(name)s'), writable=False),
+                Field('value', type='integer', requires=IS_IN_SET([0,1,2,3,4,5,6,7,8,9]), default=0))

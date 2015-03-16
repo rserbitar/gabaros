@@ -16,9 +16,17 @@ attrib_mod_norm = 30
 subskill_exp = 0.25
 subskill_norm = 1 / 3.
 skill_exp = 1.5
-baselife = 100 / 75 ** (2 / 3.)
+baselife = 100.
+baseweight = 75.
+baseagility = attrib_mod_norm
+baseconstitution = attrib_mod_norm
+baseintuition = attrib_mod_norm
+baselogic = attrib_mod_norm
+basemagic = attrib_mod_norm
+baseuplink = attrib_mod_norm
 wound_exp = 200.
 cyberhalf = 20
+shoot_base_difficulty = -40
 
 movement_mods = OrderedDict([
     ('standing', 0),
@@ -40,7 +48,7 @@ def attrib_mod(attribute, base):
     if not attribute:
         return float('-infinity')
     else:
-        return double_attrib_mod_val * log(attribute / base) / log(2) + attrib_mod_norm
+        return double_attrib_mod_val * log(attribute / base) / log(2)
 
 
 def calc_base_weight(weight_base, size, size_base):
@@ -95,48 +103,34 @@ def calc_charisma_degrade(cyberindex):
 
 
 def life(weight, constitution):
-    return weight ** (2 / 3.) * constitution / 30. * baselife
+    return weight/baseweight ** (2 / 3.) * constitution / baseconstitution * baselife
 
 
 def woundlimit(weight, constitution):
     percent = 5 * (erf((1.05 ** constitution ** 0.2))) - 4.25
     return percent * life(weight, constitution)
 
-
-def physical_initiative(intuition, intuitionbase, agility, agilitybase):
-    intu = attrib_mod(intuition, intuitionbase)
-    agil = attrib_mod(agility, agilitybase)
-    return (intu + agil) / 2.
+def woundeffect(attribute, wounds):
+    return attribute * (0.5)**wounds
 
 
-def physical_reaction(coordination, coordinationbase, agility, agilitybase):
-    coord = attrib_mod(coordination, coordinationbase)
-    agil = attrib_mod(agility, agilitybase)
-    return (coord + agil) / 2. - attrib_mod_norm
+
+def physical_reaction(agility, inutition):
+    agility_mod = attrib_mod(agility, baseagility)
+    intuition_mod = attrib_mod(inutition, baseintuition)
+    return (agility_mod + intuition_mod) / 2.
 
 
-def matrix_initiative(intuition, intuitionbase, processor, processorbase):
-    intuition = attrib_mod(intuition, intuitionbase)
-    processor = attrib_mod(processor, processorbase)
-    return (intuition + processor) / 2.
+def matrix_reaction(logic, uplink):
+    logic_mod = attrib_mod(logic, baselogic)
+    uplink_mod = attrib_mod(uplink, baseuplink)
+    return (logic_mod + uplink_mod) / 2.
 
 
-def matrix_reaction(logic, logicbase, uplink, uplinkbase):
-    logic = attrib_mod(logic, logicbase)
-    uplink = attrib_mod(uplink, uplinkbase)
-    return (logic + uplink) / 2. - attrib_mod_norm
-
-
-def astral_initiative(intuition, intuitionbase, magic, magicbase):
-    intu = attrib_mod(intuition, intuitionbase)
-    magic = attrib_mod(magic, magicbase)
-    return (intu + magic) / 2.
-
-
-def astral_reaction(logic, logicbase, magic, magicbase):
-    logic = attrib_mod(logic, logicbase)
-    magic = attrib_mod(magic, magicbase)
-    return (logic + magic) / 2. - attrib_mod_norm
+def astral_reaction(intution, magic):
+    logic_mod = attrib_mod(intution, baseintuition)
+    magic_mod = attrib_mod(magic, basemagic)
+    return (logic_mod + magic_mod) / 2.
 
 
 #load modifier on speed/agility depending on load, strength, and weight
@@ -200,7 +194,7 @@ def combatresource_by_attribute(value, attribute, frac, attribute2):
 
 
 def lifemod(life, maxlife):
-    return (maxlife / float(life)) * (-10) + 10
+    return log(max(1, maxlife / float(life)))/log(2)*-10
 
 
 #def warecostmult(effectmult=1, charmodmult=1, weightmult=1, kind="cyberware"):
@@ -227,8 +221,8 @@ def warecost(basecost, cost, attributes, effectsmult, charmodmult=1, weightmult=
 
 
 def weapondamage(damage, testresult):
-    if testresult > 50:
-        testresult = 50
+    if testresult > 60:
+        testresult = 60
     if testresult > 0:
         result = damage * 2 ** (testresult / 10.)
     else:
@@ -288,7 +282,7 @@ def summoning_drain(force):
 
 
 def visible_perception_mod(size, distance, zoom):
-    return abs(log(2 * zoom * size / distance) / log(2)) * -10
+    return abs(log(zoom * size / distance/2) / log(2)) * 10
 
 
 def percept_time(time):
@@ -305,14 +299,23 @@ def percept_blind(sensitivity, background):
 
 def shooting_difficulty(weaponrange, magnification, distance, size=1.):
     sightmod = visible_perception_mod(size, distance, magnification)
-    rangemod = log(distance / float(weaponrange)) / log(2) * -10
-    if rangemod > 0:
+    rangemod = shoot_rangemod(weaponrange, distance)
+    return shoot_base_difficulty + sightmod + rangemod
+
+def shoot_rangemod(weaponrange, distance):
+    rangemod = log(distance / float(weaponrange)) / log(2) * 10
+    if rangemod < 0:
         rangemod = 0
-    return - 40 - sightmod - rangemod
+    return rangemod
+
+
+
+def weapon_minstr_mod(minimum_strength, strength):
+    return max(0, log(minimum_strength/strength)/log(2) * 20)
 
 
 def matrix_action_rating(program_rating, matrix_attribute, skill):
-    return (matrix_attribute + program_rating) / 2. + skill
+    return (matrix_attribute + program_rating) / 4. + skill/2.
 
 
 def processor_cost(proc, size):
