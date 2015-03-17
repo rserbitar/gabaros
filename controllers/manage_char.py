@@ -64,18 +64,19 @@ def edit_attributes():
     elif form.errors:
         response.flash = 'form has errors'
     rows = db(db.char_attributes.char == char).select(db.char_attributes.ALL)
-#    base = {}
-#    xp = {}
-#    modified = {}
+    base = {}
+    xp = {}
+    total_xp = 0
     for row in rows:
         attribute = row.attribute
         form.custom.widget[attribute]['value'] = row.value
         form.custom.widget[attribute]['_style'] = 'width:50px'
         form.custom.widget[attribute]._postprocessing()
-#        base[attribute] = database.get_attrib_xp_base(db, cache, char, attribute)
-#        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
-#        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
-    return dict(charname=charname, form=form, attributes=data.attributes_dict.keys())
+        base[attribute] = basic.CharPropertyGetter(basic.Char(db, char), 'base').get_attribute_value(attribute)
+        xp[attribute] = round(basic.CharPropertyGetter(basic.Char(db, char), 'unaugmented').get_attribute_xp_cost(attribute))
+        total_xp += xp[attribute]
+    return dict(charname=charname, form=form, attributes=data.attributes_dict.keys(),
+                xp=xp, base=base, total_xp=total_xp)
 
 
 @auth.requires_login()

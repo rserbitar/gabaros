@@ -2,18 +2,26 @@
 {{=H1(charname)}}
 <br>
 <table>
-<tr>
-{{=form.custom.begin}}
-<th>Attribute</th>
-<th>Value</th>
-
-</tr>
-{{for attribute in attributes:}}
-<tr>
-<td>{{=form.custom.label[attribute]}}</td>
-<td>{{=form.custom.widget[attribute]}}</td>
-</tr>
-{{pass}}
+    <tr>
+        {{=form.custom.begin}}
+        <th>Attribute</th>
+        <th>Base</th>
+        <th>Value</th>
+        <th>XP</th>
+    </tr>
+    {{for attribute in attributes:}}
+    <tr>
+        <td>{{=form.custom.label[attribute]}}</td>
+        <td>{{=base[attribute]}}</td>
+        <td>{{=form.custom.widget[attribute]}}</td>
+        <td>{{=xp[attribute]}}</td>
+    </tr>
+    {{pass}}
+    <tr>
+        <td>Total XP</td>
+        <td></td>
+        <td>{{=total_xp}}</td>
+    </tr>
 </table>
 {{=form.custom.submit}}
 {{=form.custom.end}}

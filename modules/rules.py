@@ -63,39 +63,40 @@ def calc_agility_base(agility_base, weight, weight_base):
     return (float(weight) / weight_base) ** (-1 / 3.) * agility_base
 
 
-def subskill_factor(percentage):
-    return subskill_norm * ((1 / percentage) ** subskill_exp - 1) + 1
+def get_skill_xp_cost(value):
+    return (2**abs(value/10.)-1)*50
 
 
-def exp_cost_skill(toval, fromval=float('-infinity'), factor=1):
-    if fromval > toval:
+def get_attrib_xp_cost(attrib):
+    val = (attrib)/30.
+    if val >= 1:
+        sign = 1
+    else:
+        sign = -1
+        val = 1./val
+    return (2**abs(val-1)-1)*1000*sign
+
+
+def exp_cost_attribute(attribute, value, base):
+    if value == 0:
         return 0
-    if fromval == float('-infinity'):
-        start = 0
+    attrib_cost_dict = {
+        'Weight': (2,-1),
+        'Size': (6,-1),
+    }
+    signmod = 1
+    valmod = 1
+    if attribute in attrib_cost_dict:
+        valmod = attrib_cost_dict[attribute][0]
+        signmod = attrib_cost_dict[attribute][1]
+    val = float(value)/base
+    if val >= 1:
+        sign = 1
     else:
-        start = 1.5 ** (fromval / 10.) * factor * 100
-    end = 1.5 ** (toval / 10.) * factor * 100
-    return end - start
-
-
-def exp_cost_attribute(value, base, factor=10000):
-    if factor > 0:
-        a = 1.8
-        b = 2
-    else:
-        a = 2
-        b = 1.8
-    if value - base >= 0:
-        if not base:
-            amount = float('infinity') * factor
-        else:
-            amount = (b ** (float(value) / base) - b) * factor
-    else:
-        if not value:
-            amount = float('-infinity') * factor
-        else:
-            amount = -(a ** (float(base) / value) - a) * factor
-    return amount
+        sign = -1 * signmod
+        val = 1./val
+    val = (val -1) * valmod
+    return (2**val-1)*1000*sign
 
 
 def calc_charisma_degrade(cyberindex):
@@ -307,7 +308,6 @@ def shoot_rangemod(weaponrange, distance):
     if rangemod < 0:
         rangemod = 0
     return rangemod
-
 
 
 def weapon_minstr_mod(minimum_strength, strength):

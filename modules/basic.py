@@ -577,7 +577,7 @@ interfaces = ['basic', 'ar', 'cold-sim', 'hot-sim']
 class CharPropertyGetter():
     def __init__(self, char, modlevel='stateful'):
         """"
-        :param modlevel: the modlevel: ['unaugmented', 'augmented', 'temporary', 'stateful']
+        :param modlevel: the modlevel: ['base', 'unaugmented', 'augmented', 'temporary', 'stateful']
         """
         self.char = char
         self.modlevel = modlevel
@@ -586,6 +586,22 @@ class CharPropertyGetter():
         self.skills = {}
         self.stats = {}
         self.maxlife = None
+
+    def get_skill_xp_cost(self, skill):
+        base_value = CharPropertyGetter(self.char, 'base').get_skill_value(skill)
+        value = CharPropertyGetter(self.char, 'unaugmented').get_skill_value(skill)
+        base_value_xp = rules.get_skill_xp_cost(base_value)
+        value_xp = rules.get_skill_xp_cost(value)
+        result = base_value_xp - value_xp
+        if result < 0:
+            result = 0
+        return result
+
+    def get_attribute_xp_cost(self, attribute):
+        base = CharPropertyGetter(self.char, 'base').get_attribute_value(attribute)
+        value = CharPropertyGetter(self.char, 'unaugmented').get_attribute_value(attribute)
+        result = rules.exp_cost_attribute(attribute, value, base)
+        return result
 
     def get_attribute_value(self, attribute):
         """
@@ -603,13 +619,13 @@ class CharPropertyGetter():
         if self.modlevel == 'base':
             value = data.attributes_dict[attribute].base
             if attribute == 'Weight':
-                size = self.get_attribute_value('Size')
+                size = CharPropertyGetter(self.char, 'unaugmented').get_attribute_value('Size')
                 size_base = data.attributes_dict['Size'].base
                 value = rules.calc_base_weight(value, size, size_base)
             elif attribute in ['Strength', 'Agility']:
-                size = self.get_attribute_value('Size')
+                size = CharPropertyGetter(self.char, 'unaugmented').get_attribute_value('Size')
                 size_base = data.attributes_dict['Size'].base
-                weight = self.get_attribute_value('Weight')
+                weight = CharPropertyGetter(self.char, 'unaugmented').get_attribute_value('Weight')
                 weight_base = data.attributes_dict['Weight'].base
                 if attribute == 'Strength':
                     value = rules.calc_base_strength(value, size, size_base, weight, weight_base)
@@ -682,6 +698,11 @@ class CharPropertyGetter():
             value = self.char.skills[skill]
         if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
             value = self.char.skills[skill]
+            parent = data.skill_attribmods[skill].parent
+            if parent:
+                parent_value = self.get_skill_value(parent)
+                if value < parent_value:
+                    value = parent_value
         if self.modlevel in ('augmented','temporary','stateful'):
             for adept_power in self.char.adept_powers:
                 if adept_power.effect[0] == 'skills' and adept_power.effect[1] == skill:
@@ -744,7 +765,6 @@ class CharPropertyGetter():
         weapons = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Ranged Weapon']
         weapons = [Weapon(name, self.char) for name in weapons]
         return weapons
-
 
     def get_maxlife(self):
         value = self.maxlife
@@ -990,6 +1010,7 @@ class CharAstralPropertyGetter(CharPropertyGetter):
             pass
         self.stats[statname] = value
         return value
+
 
 if __name__ == '__main__':
     body = Body()
