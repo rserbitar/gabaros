@@ -100,18 +100,19 @@ def edit_skills():
     elif form.errors:
         response.flash = 'form has errors'
     rows = db(db.char_skills.char == char).select(db.char_skills.ALL)
-#    base = {}
-#    xp = {}
-#    modified = {}
+    base = {}
+    xp = {}
+    total_xp = 0
     for row in rows:
         skill = row.skill
         form.custom.widget[skill]['value'] = row.value
         form.custom.widget[skill]['_style'] = 'width:50px'
         form.custom.widget[skill]._postprocessing()
-#        base[attribute] = database.get_attrib_xp_base(db, cache, char, attribute)
-#        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
-#        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
-    return dict(charname=charname, form=form, skills=data.skills_dict.keys())
+        base[skill] = basic.CharPropertyGetter(basic.Char(db, char), 'base').get_skill_value(skill)
+        xp[skill] = round(basic.CharPropertyGetter(basic.Char(db, char), 'unaugmented').get_skill_xp_cost(skill))
+        total_xp += xp[skill]
+    return dict(charname=charname, form=form, skills=data.skills_dict.keys(),
+                xp=xp, base=base, total_xp=total_xp)
 
 
 @auth.requires_login()

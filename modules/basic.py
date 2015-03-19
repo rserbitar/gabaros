@@ -35,6 +35,7 @@ class Char(object):
         char_property_getter = CharPropertyGetter(self, 'base')
         for attribute in data.attributes_dict.keys():
             value = char_property_getter.get_attribute_value(attribute)
+            self.attributes[attribute] = value
             self.db.char_attributes.bulk_insert([{'char': self.char_id, 'attribute': attribute, 'value': value}])
 
     def init_skills(self):
@@ -697,8 +698,8 @@ class CharPropertyGetter():
         if self.modlevel == 'base':
             value = self.char.skills[skill]
         if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
-            value = self.char.skills[skill]
-            parent = data.skill_attribmods[skill].parent
+            value = self.char.skills.get(skill,0)
+            parent = data.skills_dict[skill].parent
             if parent:
                 parent_value = self.get_skill_value(parent)
                 if value < parent_value:
