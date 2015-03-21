@@ -115,23 +115,34 @@ def woundeffect(attribute, wounds):
     return attribute * (0.5)**wounds
 
 
+def action_cost(kind, actionmult):
+    action_cost_dict = {'Free': 5,
+                        'Simple': 10,
+                        'Complex': 20}
+    return round(action_cost_dict.get(kind, 20) * actionmult ,0)
 
-def physical_reaction(agility, intuition):
-    agility_mod = attrib_mod(agility, baseagility)
-    intuition_mod = attrib_mod(intuition, baseintuition)
+def physical_actionmult(agility_mod, coordination_mod, intuition_mod):
+    return 2**((agility_mod+coordination_mod+intuition_mod)/-60.)
+
+
+def matrix_actionmult(uplink_mod, logic_mod, intuition_mod):
+    return 2**((uplink_mod + logic_mod + intuition_mod)/-60.)
+
+
+def astral_actionmult(magic_mod, charisma_mod, intuition_mod):
+    return 2**((magic_mod + charisma_mod + intuition_mod)/-60.)
+
+
+def physical_reaction(agility_mod, intuition_mod):
     return (agility_mod + intuition_mod) / 2.
 
 
-def matrix_reaction(logic, uplink):
-    logic_mod = attrib_mod(logic, baselogic)
-    uplink_mod = attrib_mod(uplink, baseuplink)
+def matrix_reaction(logic_mod, uplink_mod):
     return (logic_mod + uplink_mod) / 2.
 
 
-def astral_reaction(intuition, magic):
-    logic_mod = attrib_mod(intuition, baseintuition)
-    magic_mod = attrib_mod(magic, basemagic)
-    return (logic_mod + magic_mod) / 2.
+def astral_reaction(intuition_mod, magic_mod):
+    return (intuition_mod + magic_mod) / 2.
 
 
 #load modifier on speed/agility depending on load, strength, and weight
@@ -166,7 +177,7 @@ def jumplimit(weight, strength, size):
 #speed depending on agility, weight, strength and size
 def speed(agility, weight=75., strength=30., size=1.75):
     speed = (agility / 30) ** 0.2
-    speed *= 4 ** min(0, (-weight ** (2 / 3.) / strength * 30 / 75 ** (2 / 3.) + 1))
+    speed *= 4. ** min(0, (-weight ** (2 / 3.) / strength * 30. / 75 ** (2 / 3.) + 1))
     speed *= size / 1.75 * 1.5
     return [speed, speed * 3, speed * 5]
 
@@ -194,9 +205,11 @@ def combatresource_by_attribute(value, attribute, frac, attribute2):
     return cost
 
 
-def lifemod(life, maxlife):
+def lifemod_absolute(life, maxlife):
     return log(max(1, maxlife / float(life)))/log(2)*-10
 
+def lifemod_relative(life, maxlife):
+    return max(1, maxlife / float(life))**(1/3.)
 
 #def warecostmult(effectmult=1, charmodmult=1, weightmult=1, kind="cyberware"):
 #    mult = 2.5 ** (effectmult - 1.)

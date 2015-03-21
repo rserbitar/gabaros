@@ -672,7 +672,7 @@ class CharPropertyGetter():
                         value *= armor.get_coordination_mult()
         # store calculated value
         if self.modlevel == 'stateful':
-            value += self.get_damagemod()
+            value *= self.get_damagemod('relative')
         self.attributes[attribute] = value
         return value
 
@@ -720,7 +720,7 @@ class CharPropertyGetter():
         if self.modlevel in ('temporary','stateful'):
             pass
         if self.modlevel == 'stateful':
-            pass
+            value += self.get_damagemod('absolute')
         self.skills[skill] = value
         return value
 
@@ -769,9 +769,9 @@ class CharPropertyGetter():
         self.maxlife = value
         return value
 
-    def get_damagemod(self):
+    def get_damagemod(self, kind):
         """
-
+        kind = ['absolute', 'relative']
 
         """
         totaldamage = sum([i for i in self.char.damage.values()])
@@ -788,7 +788,12 @@ class CharPropertyGetter():
                 if effect[0] == 'stats' and effect[1] == statname:
                     pain_resistance += (1- pain_resistance)* eval('value {}'.format(effect[2]))
         max_life = self.get_maxlife()
-        damagemod = rules.lifemod(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
+        if kind == 'relative':
+            damagemod = rules.lifemod_relative(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
+        elif kind == 'absolute':
+            damagemod = rules.lifemod_absolute(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
+        else:
+            damagemod = 0
         return damagemod
 
 
@@ -804,8 +809,8 @@ class CharPropertyGetter():
         if self.modlevel == 'base':
             value = 0
         if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
-            value = rules.physical_reaction(self.get_attribute_mod('Coordination'),
-                                              self.get_attribute_mod('Agility'))
+            value = rules.physical_reaction(self.get_attribute_mod('Agility'),
+                                              self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
             for ware in self.char.ware:
                 for effect in ware.effects:
@@ -819,6 +824,43 @@ class CharPropertyGetter():
             pass
         self.stats[statname] = value
         return value
+
+
+    def get_actionmult(self):
+        """
+
+
+        """
+        statname = 'Action Multiplier'
+        value = self.stats.get(statname)
+        if value:
+            return value
+        if self.modlevel == 'base':
+            value = 0
+        if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
+            value = rules.physical_actionmult(self.get_attribute_mod('Agility'),
+                                              self.get_attribute_mod('Coordination'),
+                                              self.get_attribute_mod('Intuition'))
+        if self.modlevel in ('augmented','temporary','stateful'):
+            for ware in self.char.ware:
+                for effect in ware.effects:
+                    if effect[0] == 'stats' and effect[1] == statname:
+                        value = eval('value {}'.format(effect[2]))
+            for power in self.char.adept_powers:
+                for effect in power.effects:
+                    if effect[0] == 'stats' and effect[1] == statname:
+                        value = eval('value {}'.format(effect[2]))
+        if self.modlevel in ('temporary','stateful'):
+            pass
+        self.stats[statname] = value
+        return value
+
+
+    def get_actioncost(self, kind):
+        actionmult = self.get_actionmult()
+        cost = rules.action_cost(kind, actionmult)
+        return cost
+
 
     def get_total_exp(self):
         """
@@ -864,8 +906,8 @@ class CharPhysicalPropertyGetter(CharPropertyGetter):
         if self.modlevel == 'base':
             value = 0
         if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
-            value = rules.physical_reaction(self.get_attribute_mod('Coordination'),
-                                              self.get_attribute_mod('Agility'))
+            value = rules.physical_reaction(self.get_attribute_mod('Agility'),
+                                              self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
             for ware in self.char.ware:
                 for effect in ware.effects:
@@ -921,8 +963,8 @@ class CharMatrixPropertyGetter(CharPropertyGetter):
         if self.modlevel == 'base':
             value = 0
         if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
-            value = rules.physical_reaction(self.get_attribute_mod('Coordination'),
-                                              self.get_attribute_mod('Agility'))
+            value = rules.matrix_reaction(self.get_attribute_mod('Agility'),
+                                              self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
             for ware in self.char.ware:
                 for effect in ware.effects:
@@ -979,8 +1021,8 @@ class CharAstralPropertyGetter(CharPropertyGetter):
         if self.modlevel == 'base':
             value = 0
         if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
-            value = rules.physical_reaction(self.get_attribute_mod('Coordination'),
-                                              self.get_attribute_mod('Agility'))
+            value = rules.astral_reaction(self.get_attribute_mod('Agility'),
+                                              self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
             for ware in self.char.ware:
                 for effect in ware.effects:
