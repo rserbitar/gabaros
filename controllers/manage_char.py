@@ -101,18 +101,25 @@ def edit_skills():
         response.flash = 'form has errors'
     rows = db(db.char_skills.char == char).select(db.char_skills.ALL)
     base = {}
+    weight = {}
     xp = {}
     total_xp = 0
+    getter = basic.CharPropertyGetter(basic.Char(db, char), 'unaugmented')
     for row in rows:
         skill = row.skill
         form.custom.widget[skill]['value'] = row.value
         form.custom.widget[skill]['_style'] = 'width:50px'
         form.custom.widget[skill]._postprocessing()
-        base[skill] = basic.CharPropertyGetter(basic.Char(db, char), 'base').get_skill_value(skill)
-        xp[skill] = round(basic.CharPropertyGetter(basic.Char(db, char), 'unaugmented').get_skill_xp_cost(skill))
+        parent = data.skills_dict[skill].parent
+        base_val = 0
+        if parent:
+            base_val = getter.get_skill_value(parent)
+        base[skill] = base_val
+        weight[skill] = data.skills_dict[skill].expweight
+        xp[skill] = round(getter.get_skill_xp_cost(skill))
         total_xp += xp[skill]
     return dict(charname=charname, form=form, skills=data.skills_dict.keys(),
-                xp=xp, base=base, total_xp=total_xp)
+                xp=xp, base=base, total_xp=total_xp, weight = weight)
 
 
 @auth.requires_login()

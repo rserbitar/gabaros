@@ -6,6 +6,7 @@
 {{=form.custom.begin}}
         {{=form.custom.begin}}
         <th>Skill</th>
+        <th>Weight</th>
         <th>Base</th>
         <th>Value</th>
         <th>XP</th>
@@ -13,6 +14,7 @@
 {{for skill in skills:}}
     <tr>
         <td>{{=form.custom.label[skill]}}</td>
+        <td>{{=weight[skill]}}</td>
         <td>{{=base[skill]}}</td>
         <td>{{=form.custom.widget[skill]}}</td>
         <td>{{=xp[skill]}}</td>

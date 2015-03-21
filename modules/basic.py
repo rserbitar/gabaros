@@ -589,11 +589,14 @@ class CharPropertyGetter():
         self.maxlife = None
 
     def get_skill_xp_cost(self, skill):
-        base_value = CharPropertyGetter(self.char, 'base').get_skill_value(skill)
-        value = CharPropertyGetter(self.char, 'unaugmented').get_skill_value(skill)
+        parent = data.skills_dict[skill].parent
+        base_value = 0
+        if parent:
+            base_value = self.get_skill_value(parent)
+        value = self.get_skill_value(skill)
         base_value_xp = rules.get_skill_xp_cost(base_value)
         value_xp = rules.get_skill_xp_cost(value)
-        result = base_value_xp - value_xp
+        result = (value_xp - base_value_xp) * data.skills_dict[skill].expweight
         if result < 0:
             result = 0
         return result
@@ -736,26 +739,6 @@ class CharPropertyGetter():
         value += mod
         return value
 
-    def get_combat_awareness(self):
-        statname = 'Combat Awareness'
-        value = self.stats.get(statname)
-        if value:
-            return value
-        if self.modlevel == 'base':
-            value = 0
-        if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
-            value = 0
-        if self.modlevel in ('augmented','temporary','stateful'):
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
-        if self.modlevel in ('temporary','stateful'):
-            pass
-        if self.modlevel == 'stateful':
-            value += self.get_damagemod()
-        self.stats[statname] = value
-        return value
 
     def get_armor(self):
         armor = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Armor']

@@ -64,7 +64,7 @@ def calc_agility_base(agility_base, weight, weight_base):
 
 
 def get_skill_xp_cost(value):
-    return (2**abs(value/10.)-1)*50
+    return (2**abs(value/10.)-1)*25
 
 
 def get_attrib_xp_cost(attrib):
@@ -116,9 +116,9 @@ def woundeffect(attribute, wounds):
 
 
 
-def physical_reaction(agility, inutition):
+def physical_reaction(agility, intuition):
     agility_mod = attrib_mod(agility, baseagility)
-    intuition_mod = attrib_mod(inutition, baseintuition)
+    intuition_mod = attrib_mod(intuition, baseintuition)
     return (agility_mod + intuition_mod) / 2.
 
 
@@ -128,8 +128,8 @@ def matrix_reaction(logic, uplink):
     return (logic_mod + uplink_mod) / 2.
 
 
-def astral_reaction(intution, magic):
-    logic_mod = attrib_mod(intution, baseintuition)
+def astral_reaction(intuition, magic):
+    logic_mod = attrib_mod(intuition, baseintuition)
     magic_mod = attrib_mod(magic, basemagic)
     return (logic_mod + magic_mod) / 2.
 
