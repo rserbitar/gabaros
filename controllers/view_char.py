@@ -207,7 +207,10 @@ def shoot_weapon():
     damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'])
     result['roll'] = roll
     result['other mods'] = shoot_mod
+    difficulty = -(result['difficulty'] + result['other mods'] + result['minimum strength mod']
+                  + result['weapon range mod'] + result['sight range mod'] - result['skill'])   
     text = ('damage: {}, {}'.format(damage, result))
+    db.rolls.insert(char=char_id, name='shoot', value=difficulty, roll=roll, result=result['result'], visible=True)
     return text
 
 

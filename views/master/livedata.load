@@ -1,0 +1,5 @@
+Newest result:
+<p></p>
+<h1>{{=rows[0].char.name}} {{=int(round(rows[0].result))}} {{=rows[0].visible}}</h1>
+<br>
+{{=table}}

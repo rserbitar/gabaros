@@ -735,7 +735,7 @@ class CharPropertyGetter():
         for attribute in data.attributes_dict.keys():
             weight = getattr(skill_attribmods, attribute)
             if weight:
-                mod += weight * self.get_attribute_mod(attribute)
+                mod += weight * self.get_attribute_mod(attribute)/2.
         value += mod
         return value
 

@@ -26,7 +26,7 @@ basemagic = attrib_mod_norm
 baseuplink = attrib_mod_norm
 wound_exp = 200.
 cyberhalf = 20
-shoot_base_difficulty = -40
+shoot_base_difficulty = 20
 
 movement_mods = OrderedDict([
     ('standing', 0),
@@ -295,8 +295,18 @@ def summoning_drain(force):
     return force
 
 
+def distance_modifier(distance):
+    return log(distance)/log(2.)*10 -40
+
+
+def size_modifier(size):
+    return log(size)/log(2.)*-10 -20
+
+
 def visible_perception_mod(size, distance, zoom):
-    return abs(log(zoom * size / distance/2) / log(2)) * 10
+    distance_mod = distance_modifier(distance)
+    size_mod = size_modifier(size*zoom)
+    return distance_mod + size_mod
 
 
 def percept_time(time):
@@ -311,7 +321,7 @@ def percept_blind(sensitivity, background):
     return -min(0, background + sensitivity)
 
 
-def shooting_difficulty(weaponrange, magnification, distance, size=1.):
+def shooting_difficulty(weaponrange, magnification, distance, size=2.):
     sightmod = visible_perception_mod(size, distance, magnification)
     rangemod = shoot_rangemod(weaponrange, distance)
     return shoot_base_difficulty + sightmod + rangemod

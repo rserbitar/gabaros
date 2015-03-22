@@ -448,6 +448,7 @@ skill_attribmods = [['skill', 'Agility', 'Constitution', 'Coordination', 'Streng
                     ["Disguise", 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0., 0],
                     ["Forgery", 0, 0, 0.5, 0, 0, 0, 0, 0.75, 0, 0., 0],
                     ["Locomotion", 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0., 0],
+                    ["Vehicle Mechanics", 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0., 0],
                     ["Ground Vehicle Mechanics", 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0., 0],
                     ["Airborne Vehicle Mechanics", 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0., 0],
                     ["Spacecraft Mechanics", 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0., 0],
