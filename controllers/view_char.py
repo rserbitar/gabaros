@@ -31,6 +31,7 @@ def view_char():
                 A("skills", _href=URL('view_skills', args=[char])),
                 A("computer", _href=URL('view_computer', args=[char])),
                 A("weapons", _href=URL('view_weapons', args=[char])),
+                A("combat", _href=URL('combat', args=[char])),
                 ]
     return dict(linklist=linklist)
 
@@ -179,10 +180,10 @@ def view_weapons():
         table.append(row)
     fields = [Field('val', 'integer', default=0, label = 'Modifications')]
     form = SQLFORM.factory(*fields, table_name = 'weapons',  buttons=[], _method = '', _action = None)
-    form.element(_name='val')['_onblur']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
-                                         "['val'], '')".format(char_id)
-    form.element(_name='val')['_onkeypress']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
-                                         "['val'], '')".format(char_id)
+    #form.element(_name='val')['_onblur']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
+    #                                     "['val'], '')".format(char_id)
+    #form.element(_name='val')['_onkeypress']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
+    #                                     "['val'], '')".format(char_id)
     return dict(weapons=table, insert_shoot_mod = LOAD('view_char','insert_shoot_mod.load',ajax=True, args = [char_id]))
 
 
@@ -254,3 +255,39 @@ def insert_shoot_mod():
             val = int(val.value)
             form.element(_name=var).update(_value=val)
     return dict(form = form)
+
+
+@auth.requires_login()
+def combat():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
+    reaction = char_property_getter.get_reaction()
+    actions = ['Free', 'Simple', 'Complex']
+    action_costs = {i: char_property_getter.get_actioncost(i) for i in actions}
+    action_buttons = {i: A(i, callback=URL('perform_action', args=[char_id, i]),
+                     target = 'next_action', _class='btn') for i in actions}
+    reaction_button = A("Reaction ({})".format(reaction),
+                    callback=URL('roll_button', args=[char_id, 'Reaction', reaction, 1]), _class='btn', _title = 'test')
+    return dict(reaction_button=reaction_button, actions=actions, action_costs=action_costs, action_buttons=action_buttons)
+
+
+@auth.requires_login()
+def perform_action():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    action = request.args(1)
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
+    action_cost = char_property_getter.get_actioncost(action)
+    db.actions.insert(char=char_id, combat=1, action=action, cost=action_cost)
+    sum = db.actions.cost.sum()
+    next_action = db((db.actions.char==char_id) & (db.actions.combat==1)).select(sum).first()[sum]
+    return """
+Last Action: {} ({})
+<br>
+Next Action: {}
+    """.format(action, action_cost, next_action)

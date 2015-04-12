@@ -22,3 +22,15 @@ db.define_table('state_mods',
     Field('name', type = 'string', label = T('Name')),
     Field('value', type = 'double', label = T('Value')),
     )
+
+
+db.define_table('actions',
+    Field('char', type='reference chars', label=T('Player'),
+    writable=False,
+    requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
+    Field('combat', type = 'integer', label = T('Name')),
+    Field('action', type = 'string', label = T('Value')),
+    Field('cost', type = 'double', label = T('Roll')),
+    )
+
+

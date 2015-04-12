@@ -139,11 +139,16 @@ stats_dict = OrderedDict([(entry[0], stats_nt(*([i] + entry))) for i, entry in e
 races = [
     ["name", "Size", "Weight", "Agility", "Constitution", "Coordination", "Strength", "Charisma", "Intuition", "Logic",
      "Willpower", "Magic", "xpcost"],
-    ["Human", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-    ["Troll", 1.33, 1.33, 0.9, 1.33, 0.67, 1.1, 0.83, 1.33, 0.67, 0.67, 1, 0],
-    ["Orc", 1.1, 1.33, 1.2, 1.33, 1, 1.2, 0.67, 1.17, 0.67, 1.33, 1, 0],
-    ["Elf", 1.1, 0.8, 1.40, 0.9, 1.17, 0.8, 1.17, 1, 1, 1, 1, 0],
-    ["Dwarf", 0.75, 1.4, 0.8, 1.33, 1.17, 1.5, 1, 1, 1, 1, 1, 0],
+    ["Human", 1, 1, 1, 1, 1, 1, 1, 1, 1,
+     1, 1, 0],
+    ["Troll", 1.33, 1.33, 0.9, 1.33, 0.67, 1.1, 0.83, 1.33, 0.67,
+     0.67, 1, 0],
+    ["Orc", 1.1, 1.33, 1.2, 1.33, 1, 1.2, 0.67, 1.17, 0.67,
+     1.33, 1, 0],
+    ["Elf", 1.1, 0.8, 1.40, 0.9, 1.17, 0.8, 1.17, 1, 1,
+     1, 1, 0],
+    ["Dwarf", 0.75, 1.4, 0.8, 1.33, 1.17, 1.5, 1, 1, 1,
+     1, 1, 0],
 ]
 
 races_nt = namedtuple('race', ['id'] + races[0])
@@ -160,19 +165,20 @@ gendermods_nt = namedtuple('gendermod', ['id'] + gendermods[0])
 gendermods_dict = OrderedDict([(entry[0], gendermods_nt(*([i] + entry))) for i, entry in enumerate(gendermods[1:])])
 
 attributes = [
-    ["name", "base", "description", "factor", "kind"],
-    ["Size", 1.75, "size of a character in meteres", 100000, "special"],
-    ["Weight", 75, "weight of the character in kg", -10000, "special"],
-    ["Agility", 30, "speed of muscle movement, dexterity of limbs..", 10000, "physical"],
-    ["Constitution", 30, "ability to endure fatigue, bodily toughness, resitance to poinson and disease", 10000,
+    ["name", "base", "description", "factor", "signmod", "kind"],
+    ["Size", 1.75, "size of a character in meteres", 5000, -1, "special"],
+    ["Weight", 75, "weight of the character in kg", 2000, -1, "special"],
+    ["Agility", 30, "speed of muscle movement, dexterity of limbs..", 1000, 1, "physical"],
+    ["Constitution", 30, "ability to endure fatigue, bodily toughness, resitance to poinson and disease", 1000, 1,
      "physical"],
-    ["Coordination", 30, "ability to coordinate agility and strength", 10000, "physical"],
-    ["Strength", 30, "raw physical strength", 10000, "physical"],
-    ["Charisma", 30, "empathy, ability to influence others", 10000, "mental"],
-    ["Intuition", 30, "unconsciousness thinking, ability to recognize patterns", 10000, "mental"],
-    ["Logic", 30, "raw mental processing power", 10000, "mental"],
-    ["Willpower", 30, "ability to resist temptations and influence of others", 10000, "mental"],
-    ["Magic", 30, "the ability to channel magic", 20000, "special"],
+    ["Coordination", 30, "ability to coordinate agility and strength", 1000, 1, "physical"],
+    ["Strength", 30, "raw physical strength", 1000, 1, "physical"],
+    ["Charisma", 30, "empathy, ability to influence others", 1000, 1, "mental"],
+    ["Intuition", 30, "unconsciousness thinking, ability to recognize patterns", 1000, 1, "mental"],
+    ["Logic", 30, "raw mental processing power", 1000, 1,  "mental"],
+    ["Willpower", 30, "ability to resist temptations and influence of others", 1000, 1, "mental"],
+    ["Magic", 30, "the ability to channel magic", 2000, 1, "special"],
+    ["Edge", 30, "luck, the ability to excel in dangerous situations", 1000, 1, "special"],
 ]
 
 attributes_nt = namedtuple('attribute', ['id'] + attributes[0])
@@ -674,7 +680,7 @@ gameitems = [
     ["Mainframe", "Computer", 1, 100, 0.05, 60, 40, 0],
     ["Cluster", "Computer", 20, 10000, 2.0, 10, 10, 0],
 ]
-
+    
 gameitems_nt = namedtuple('gameitem', ['id'] + gameitems[0])
 gameitems_dict = OrderedDict([(entry[0], gameitems_nt(*([i] + entry))) for i, entry in enumerate(gameitems[1:])])
 
@@ -884,7 +890,7 @@ computer_nt = namedtuple('computer', ['id'] + computer[0])
 computer_dict = OrderedDict([(entry[0], computer_nt(*([i] + entry))) for i, entry in enumerate(computer[1:])])
 
 spells = [
-    ['name', 'category', 'subcategoy', 'threshold', 'resist', 'drain', 'effekt', 'range', 'volume', 'anchor',
+    ['name', 'category', 'subcategoy', 'threshold', 'resist', 'drain', 'effect', 'range', 'volume', 'anchor',
      'casttime'],
     ['Mana Bolt',
      'Mana, Mind',
@@ -931,3 +937,6 @@ spells = [
      '-',
      '3'],
 ]
+
+spells_nt = namedtuple('spell', ['id'] + spells[0])
+spells_dict = OrderedDict([(entry[0], spells_nt(*([i] + entry))) for i, entry in enumerate(spells[1:])])

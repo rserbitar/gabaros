@@ -350,7 +350,7 @@ class CharWare(Ware):
     def init_stats(self):
         char_property_getter = CharPropertyGetter(self.char, 'base')
         for name, attribute in data.attributes_dict.items():
-            if attribute.kind == 'physical':
+            if attribute.kind == 'physical' or attribute.name == 'Weight':
                 value = char_property_getter.get_attribute_value(attribute.name)
                 self.db.char_ware_stats.bulk_insert([{'ware': self.db_id, 'stat': attribute.name, 'value': value}])
 
@@ -602,9 +602,11 @@ class CharPropertyGetter():
         return result
 
     def get_attribute_xp_cost(self, attribute):
+        factor = data.attributes_dict[attribute].factor
+        signmod = data.attributes_dict[attribute].signmod
         base = CharPropertyGetter(self.char, 'base').get_attribute_value(attribute)
         value = CharPropertyGetter(self.char, 'unaugmented').get_attribute_value(attribute)
-        result = rules.exp_cost_attribute(attribute, value, base)
+        result = rules.exp_cost_attribute(attribute, value, base, factor, signmod)
         return result
 
     def get_attribute_value(self, attribute):
@@ -645,8 +647,11 @@ class CharPropertyGetter():
         # temporary modlevel includes drugs, spells, encumbrance
         # stateful modlevel includes damage
         elif self.modlevel in ('augmented', 'temporary', 'stateful'):
-            # calculate badoy part contribution to attribute
-            if data.attributes_dict[attribute].kind == 'physical':
+            # calculate body part contribution to attribute
+            if attribute == 'Weight':
+                #implicitly includes wounds
+                value = self.char_body.bodyparts['Body'].get_attribute_absolute(attribute, self.modlevel)
+            elif data.attributes_dict[attribute].kind == 'physical':
                 #implicitly includes wounds
                 value = self.char_body.bodyparts['Body'].get_attribute_absolute(attribute, self.modlevel)
             else:

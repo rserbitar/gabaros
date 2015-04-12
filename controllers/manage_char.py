@@ -38,6 +38,7 @@ def edit_char():
                 A("locations", _href=URL('edit_locations', args=[char])),
                 A("ware", _href=URL('manage_ware', args=[char])),
                 A("adept powers", _href=URL('manage_powers', args=[char])),
+                A("spells", _href=URL('manage_spells', args=[char])),
                 A("computers", _href=URL('edit_computers', args=[char])),
                 ]
     return dict(form=form, linklist=linklist)
@@ -186,7 +187,8 @@ def edit_ware():
 #        base[attribute] = database.get_attrib_xp_base(db, cache, char, attribute)
 #        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
 #        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
-    return dict(ware=ware, form=form, stats=[key for key, value in data.attributes_dict.items() if value.kind == 'physical'])
+    return dict(ware=ware, form=form, stats=[key for key, value in data.attributes_dict.items()
+                                             if value.kind == 'physical' or value.name == 'Weight'])
 
 
 @auth.requires_login()
@@ -225,6 +227,18 @@ def edit_items():
     table.char.default = char_id
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, args=request.args[:1])
+    return dict(form=form)
+
+@auth.requires_login()
+def manage_spells():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                              and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    table = db.char_spells
+    table.char.default = char_id
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.spell], csv = False, args=request.args[:1])
     return dict(form=form)
 
 

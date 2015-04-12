@@ -77,34 +77,29 @@ def get_attrib_xp_cost(attrib):
     return (2**abs(val-1)-1)*1000*sign
 
 
-def exp_cost_attribute(attribute, value, base):
-    if value == 0:
+def exp_cost_attribute(attribute, value, base, factor, signmod):
+    if attribute == 0:
         return 0
-    attrib_cost_dict = {
-        'Weight': (2,-1),
-        'Size': (6,-1),
-    }
-    signmod = 1
-    valmod = 1
-    if attribute in attrib_cost_dict:
-        valmod = attrib_cost_dict[attribute][0]
-        signmod = attrib_cost_dict[attribute][1]
     val = float(value)/base
     if val >= 1:
         sign = 1
     else:
         sign = -1 * signmod
         val = 1./val
-    val = (val -1) * valmod
-    return (2**val-1)*1000*sign
-
+    val = (val -1)
+    val = (2**val-1)*factor*sign
+    if val < -factor:
+        val = -factor
+    if attribute == 'Magic':
+        val += 2*factor
+    return val
 
 def calc_charisma_degrade(cyberindex):
     return 1 / (1. + (cyberindex / cyberhalf) ** 2)
 
 
 def life(weight, constitution):
-    return weight/baseweight ** (2 / 3.) * constitution / baseconstitution * baselife
+    return (weight/baseweight) ** (2 / 3.) * constitution / baseconstitution * baselife
 
 
 def woundlimit(weight, constitution):
