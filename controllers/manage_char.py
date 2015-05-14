@@ -20,6 +20,7 @@ def manage_chars():
 @auth.requires_login()
 def edit_char():
     char = request.args(0)
+    session.char = char
     if not db.chars[char] or (db.chars[char].player != auth.user.id
                               and db.chars[char].master != auth.user.id):
         redirect(URL(f='index'))
@@ -46,7 +47,7 @@ def edit_char():
 
 @auth.requires_login()
 def edit_attributes():
-    char = request.args(0)
+    char = request.args(0) or session.char
     if not db.chars[char] or (db.chars[char].player != auth.user.id
                               and db.chars[char].master != auth.user.id):
         redirect(URL(f='index'))
@@ -82,7 +83,7 @@ def edit_attributes():
 
 @auth.requires_login()
 def edit_skills():
-    char = request.args(0)
+    char = request.args(0) or session.char
     if not db.chars[char] or (db.chars[char].player != auth.user.id
                               and db.chars[char].master != auth.user.id):
         redirect(URL(f='index'))
@@ -125,22 +126,22 @@ def edit_skills():
 
 @auth.requires_login()
 def manage_powers():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
     table = db.char_adept_powers
     table.char.default = char_id
     query = (table.char == char_id)
+    maxlength = {'char_adept_powers.power': 50, 'char_adept_powers.value': 100}
     table.value.represent = lambda value, row: basic.CharAdeptPower(db, row.power, basic.Char(db, char_id)).get_description()
-    create = crud.create(table, fields = ["power", "value"])
-    form = crud.select(table, query=query, fields=["id", "power", "value"])
-    return dict(form=form, create=create)
+    form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, args=request.args[:1], maxtextlengths = maxlength)
+    return dict(form=form)
 
 
 @auth.requires_login()
 def manage_ware():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -148,10 +149,9 @@ def manage_ware():
     table.char.default = char_id
     query = (table.char == char_id)
     table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id)))
-    create = crud.create(table, fields = ["ware"], onaccept = lambda form:
-    basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id)))
-    form = crud.select(table, query=query, fields=["id", "ware"])
-    return dict(form=form, create=create)
+    form = SQLFORM.grid(query, fields = [table.id, table.ware], csv = False, args=request.args[:1],
+                        oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id))))
+    return dict(form=form)
 
 
 @auth.requires_login()
@@ -193,7 +193,7 @@ def edit_ware():
 
 @auth.requires_login()
 def edit_damage():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -206,7 +206,7 @@ def edit_damage():
 
 @auth.requires_login()
 def edit_wounds():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -219,7 +219,7 @@ def edit_wounds():
 
 @auth.requires_login()
 def edit_items():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -231,7 +231,7 @@ def edit_items():
 
 @auth.requires_login()
 def manage_spells():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -244,7 +244,7 @@ def manage_spells():
 
 @auth.requires_login()
 def edit_sins():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -258,7 +258,7 @@ def edit_sins():
 
 @auth.requires_login()
 def edit_locations():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -271,7 +271,7 @@ def edit_locations():
 
 @auth.requires_login()
 def edit_loadout():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -301,7 +301,7 @@ def edit_loadout():
 
 @auth.requires_login()
 def edit_computers():
-    char_id = request.args(0)
+    char_id = request.args(0) or session.char
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                               and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))

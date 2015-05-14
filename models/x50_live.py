@@ -24,13 +24,21 @@ db.define_table('state_mods',
     )
 
 
+db.define_table('combats',
+    Field('char', type='reference chars', label=T('Player'),
+    writable=False,
+    requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
+    Field('name', type = 'string', label = T('Name')),
+    Field('lighting', type = 'string', label = T('Lighting')),
+    Field('noise', type = 'string', label = T('Noise')),
+    Field('environment', type = 'string', label = T('Environment')),
+    )
+    
 db.define_table('actions',
     Field('char', type='reference chars', label=T('Player'),
     writable=False,
     requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
-    Field('combat', type = 'integer', label = T('Name')),
+    Field('combat', type = 'reference combats', requires = IS_IN_DB(db,db.combats.id,'%(name)s')),
     Field('action', type = 'string', label = T('Value')),
     Field('cost', type = 'double', label = T('Roll')),
     )
-
-

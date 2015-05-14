@@ -31,24 +31,24 @@ db.define_table('char_items', Field('char', type='reference chars', label=T('Cha
                       requires=IS_IN_SET([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], multiple=True), default=0),
                 format=lambda x: x.item)
 
-db.define_table('char_ware', Field('char', type='reference chars', label=T('Character')),
+db.define_table('char_ware', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('ware', type='string', label=T('Ware'), requires=IS_IN_SET(data.ware_dict.keys())))
 
 db.define_table('char_ware_stats', Field('ware', type='reference char_ware', label=T('Ware')),
                 Field('stat', type='string', label=T('Stat')), Field('value', type='double', label=T('Value')))
 
-db.define_table('char_adept_powers', Field('char', type='reference chars', label=T('Character')),
+db.define_table('char_adept_powers', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('power', type='string', label=T('Power'), requires=IS_IN_SET(data.adept_powers_dict.keys())),
                 Field('value', type='double', label=T('Value')),
                 )
 
-db.define_table('char_computers', Field('char', type='reference chars', label=T('Character')),
+db.define_table('char_computers', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('item', type='reference char_items', label=T('Item'), unique=True),
                 Field('firewall', type='double', label=T('Firewall')),
                 Field('current_uplink', type='double', label=T('Current Uplink')),
                 Field('damage', type='double', label=T('Damage')))
 
-db.define_table('char_programmes', Field('char', type='reference chars', label=T('Character')),
+db.define_table('char_programmes', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('programme', type='string', label=T('Programme'),
                       requires=IS_IN_SET(data.programmes_dict.keys())),
                 Field('deck', type='reference char_items', label=T('Deck'),

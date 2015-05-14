@@ -6,7 +6,8 @@
 #########################################################################
 
 response.logo = A(B('web',SPAN(2),'py'),XML('&trade;&nbsp;'),
-                  _class="brand",_href="http://www.web2py.com/")
+                  _class="navbar-brand",_href="http://www.web2py.com/",
+                  _id="web2py-logo")
 response.title = request.application.replace('_',' ').title()
 response.subtitle = ''
 
@@ -24,7 +25,38 @@ response.google_analytics_id = None
 #########################################################################
 
 response.menu = [
-    (T('Home'), False, URL('default', 'index'), [])
+    (T('Home'), False, URL('default', 'index'), []),
+      (T('Manage Char'), False, '#', [
+          (T('Create/Select'), False, URL('gabaros', 'manage_char', 'index')),
+          LI(_class="divider"),
+          (T('Attributes'), False, URL('gabaros', 'manage_char', 'edit_attributes', args = [session.char])),
+          (T('Skills'), False, URL('gabaros', 'manage_char', 'edit_skills', args = [session.char])),
+          (T('Adept Powers'), False, URL('gabaros', 'manage_char', 'manage_powers', args = [session.char])),
+          (T('Spells'), False, URL('gabaros', 'manage_char', 'manage_spells', args = [session.char])),
+          (T('Ware'), False, URL('gabaros', 'manage_char', 'manage_ware', args = [session.char])),
+          LI(_class="divider"),
+          (T('Damage'), False, URL('gabaros', 'manage_char', 'edit_damage', args = [session.char])),
+          (T('Wounds'), False, URL('gabaros', 'manage_char', 'edit_wounds', args = [session.char])),
+          LI(_class="divider"),
+          (T('Items'), False, URL('gabaros', 'manage_char', 'edit_items', args = [session.char])),
+          (T('Loadout'), False, URL('gabaros', 'manage_char', 'edit_loadout', args = [session.char])),
+          (T('Computers'), False, URL('gabaros', 'manage_char', 'edit_computers', args = [session.char])),
+          (T('Sins'), False, URL('gabaros', 'manage_char', 'edit_sins', args = [session.char])),
+          (T('Locations'), False, URL('gabaros', 'manage_char', 'edit_locations', args = [session.char])),
+            ]),
+      (T('View Char'), False, '#', [
+          (T('Attributes'), False, URL('gabaros', 'view_char', 'view_attributes', args = [session.char])),
+          (T('Stats'), False, URL('gabaros', 'view_char', 'view_stats', args = [session.char])),
+          (T('Skills'), False, URL('gabaros', 'view_char', 'view_skills', args = [session.char])),
+          (T('Bodyparts'), False, URL('gabaros', 'view_char', 'view_bodyparts', args = [session.char])),
+          (T('Actions'), False, URL('gabaros', 'view_char', 'view_actions', args = [session.char])),
+          (T('Damage'), False, URL('gabaros', 'view_char', 'view_damage_state', args = [session.char])),
+          (T('Weapons'), False, URL('gabaros', 'view_char', 'view_weapons', args = [session.char])),
+          (T('Armor'), False, URL('gabaros', 'view_char', 'view_armor', args = [session.char])),
+          (T('Computer'), False, URL('gabaros', 'view_char', 'view_computer', args = [session.char])),
+          LI(_class="divider"),
+          (T('Combat'), False, URL('gabaros', 'view_char', 'combat', args = [session.char])),
+            ]),
 ]
 
 DEVELOPMENT_MENU = True
@@ -39,34 +71,38 @@ def _():
     ctr = request.controller
     # useful links to internal and external resources
     response.menu += [
-        (SPAN('web2py', _class='highlighted'), False, 'http://web2py.com', [
         (T('My Sites'), False, URL('admin', 'default', 'site')),
-        (T('This App'), False, URL('admin', 'default', 'design/%s' % app), [
-        (T('Controller'), False,
-         URL(
-         'admin', 'default', 'edit/%s/controllers/%s.py' % (app, ctr))),
-        (T('View'), False,
-         URL(
-         'admin', 'default', 'edit/%s/views/%s' % (app, response.view))),
-        (T('Layout'), False,
-         URL(
-         'admin', 'default', 'edit/%s/views/layout.html' % app)),
-        (T('Stylesheet'), False,
-         URL(
-         'admin', 'default', 'edit/%s/static/css/web2py.css' % app)),
-        (T('DB Model'), False,
-         URL(
-         'admin', 'default', 'edit/%s/models/db.py' % app)),
-        (T('Menu Model'), False,
-         URL(
-         'admin', 'default', 'edit/%s/models/menu.py' % app)),
-        (T('Database'), False, URL(app, 'appadmin', 'index')),
-        (T('Errors'), False, URL(
-         'admin', 'default', 'errors/' + app)),
-        (T('About'), False, URL(
-         'admin', 'default', 'about/' + app)),
-        ]),
-            ('web2py.com', False, 'http://www.web2py.com', [
+          (T('This App'), False, '#', [
+              (T('Design'), False, URL('admin', 'default', 'design/%s' % app)),
+              LI(_class="divider"),
+              (T('Controller'), False,
+               URL(
+               'admin', 'default', 'edit/%s/controllers/%s.py' % (app, ctr))),
+              (T('View'), False,
+               URL(
+               'admin', 'default', 'edit/%s/views/%s' % (app, response.view))),
+              (T('DB Model'), False,
+               URL(
+               'admin', 'default', 'edit/%s/models/db.py' % app)),
+              (T('Menu Model'), False,
+               URL(
+               'admin', 'default', 'edit/%s/models/menu.py' % app)),
+              (T('Config.ini'), False,
+               URL(
+               'admin', 'default', 'edit/%s/private/appconfig.ini' % app)),
+              (T('Layout'), False,
+               URL(
+               'admin', 'default', 'edit/%s/views/layout.html' % app)),
+              (T('Stylesheet'), False,
+               URL(
+               'admin', 'default', 'edit/%s/static/css/web2py-bootstrap3.css' % app)),
+              (T('Database'), False, URL(app, 'appadmin', 'index')),
+              (T('Errors'), False, URL(
+               'admin', 'default', 'errors/' + app)),
+              (T('About'), False, URL(
+               'admin', 'default', 'about/' + app)),
+              ]),
+          ('web2py.com', False, '#', [
              (T('Download'), False,
               'http://www.web2py.com/examples/default/download'),
              (T('Support'), False,
@@ -80,11 +116,11 @@ def _():
              (T('Free Applications'),
               False, 'http://web2py.com/appliances'),
              (T('Plugins'), False, 'http://web2py.com/plugins'),
-             (T('Layouts'), False, 'http://web2py.com/layouts'),
              (T('Recipes'), False, 'http://web2pyslices.com/'),
-             (T('Semantic'), False, 'http://web2py.com/semantic'),
              ]),
-            (T('Documentation'), False, 'http://www.web2py.com/book', [
+          (T('Documentation'), False, '#', [
+             (T('Online book'), False, 'http://www.web2py.com/book'),
+             LI(_class="divider"),
              (T('Preface'), False,
               'http://www.web2py.com/book/default/chapter/00'),
              (T('Introduction'), False,
@@ -115,26 +151,19 @@ def _():
               'http://www.web2py.com/book/default/chapter/13'),
              (T('Other Recipes'), False,
               'http://www.web2py.com/book/default/chapter/14'),
-             (T('Buy this book'), False,
+             (T('Helping web2py'), False,
+              'http://www.web2py.com/book/default/chapter/15'),
+             (T("Buy web2py's book"), False,
               'http://stores.lulu.com/web2py'),
              ]),
-            (T('Community'), False, None, [
+          (T('Community'), False, None, [
              (T('Groups'), False,
               'http://www.web2py.com/examples/default/usergroups'),
-                        (T('Twitter'), False, 'http://twitter.com/web2py'),
-                        (T('Live Chat'), False,
-                         'http://webchat.freenode.net/?channels=web2py'),
-                        ]),
-                (T('Plugins'), False, None, [
-                        ('plugin_wiki', False,
-                         'http://web2py.com/examples/default/download'),
-                        (T('Other Plugins'), False,
-                         'http://web2py.com/plugins'),
-                        (T('Layout Plugins'),
-                         False, 'http://web2py.com/layouts'),
-                        ])
-                ]
-         )]
+              (T('Twitter'), False, 'http://twitter.com/web2py'),
+              (T('Live Chat'), False,
+               'http://webchat.freenode.net/?channels=web2py'),
+              ]),
+        ]
 if DEVELOPMENT_MENU: _()
 
-if "auth" in locals(): auth.wikimenu() 
+if "auth" in locals(): auth.wikimenu()

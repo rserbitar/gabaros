@@ -1,19 +1,9 @@
 {{extend 'layout.html'}}
 
+<div id="shoot_result"></div>
 
-{{=reaction_button}}
+{{=insert_shoot_mod}}
 
-<table>
-    <tr>
-        <th>Action</th>
-        <th>Cost</th>
-    </tr>
-    {{for action in actions:}}
-    <tr>
-        {{=TD(action_buttons[action])}}
-        {{=TD(action_costs[action])}}
-    </tr>
-    {{pass}}
-</table>
+{{=view_weapons}}
 
-<div id="next_action"></div>
+{{=view_actions}}

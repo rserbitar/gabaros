@@ -138,17 +138,17 @@ stats_dict = OrderedDict([(entry[0], stats_nt(*([i] + entry))) for i, entry in e
 
 races = [
     ["name", "Size", "Weight", "Agility", "Constitution", "Coordination", "Strength", "Charisma", "Intuition", "Logic",
-     "Willpower", "Magic", "xpcost"],
+     "Willpower", "Magic", "Edge", "xpcost"],
     ["Human", 1, 1, 1, 1, 1, 1, 1, 1, 1,
-     1, 1, 0],
+     1, 1, 1, 0],
     ["Troll", 1.33, 1.33, 0.9, 1.33, 0.67, 1.1, 0.83, 1.33, 0.67,
-     0.67, 1, 0],
+     0.67, 1, 1, 0],
     ["Orc", 1.1, 1.33, 1.2, 1.33, 1, 1.2, 0.67, 1.17, 0.67,
-     1.33, 1, 0],
+     1.33, 1, 1, 0],
     ["Elf", 1.1, 0.8, 1.40, 0.9, 1.17, 0.8, 1.17, 1, 1,
-     1, 1, 0],
+     1, 1, 1, 0],
     ["Dwarf", 0.75, 1.4, 0.8, 1.33, 1.17, 1.5, 1, 1, 1,
-     1, 1, 0],
+     1.33, 1, 1, 0],
 ]
 
 races_nt = namedtuple('race', ['id'] + races[0])
@@ -156,9 +156,9 @@ races_dict = OrderedDict([(entry[0], races_nt(*([i] + entry))) for i, entry in e
 
 gendermods = [
     ["name", "Size", "Weight", "Agility", "Constitution", "Coordination", "Strength", "Charisma", "Intuition", "Logic",
-     "Willpower", "Magic"],
-    ["Male", 1.05, 1, 1, 1, 1, 1.05, 0.9, 1, 1, 1, 1],
-    ["Female", 0.95, 1, 1, 1, 1, 0.95, 1.1, 1, 1, 1, 1],
+     "Willpower", "Magic", "Edge"],
+    ["Male", 1.05, 1, 1, 1, 1, 1.05, 0.9, 1, 1, 1, 1, 1],
+    ["Female", 0.95, 1, 1, 1, 1, 0.95, 1.1, 1, 1, 1, 1, 1],
 ]
 
 gendermods_nt = namedtuple('gendermod', ['id'] + gendermods[0])
@@ -543,7 +543,7 @@ programmes = [
     ["Stealth", "Cracking", "System"],
     ["Scan", "Electronic Warfare", "Signal"],
     ["Analyze", "Computer Use", "System"],
-    ["Ancess", "Computer Use", "System"],
+    ["Access", "Computer Use", "System"],
     ["Exploit", "Cracking", "System"],
     ["Crypt", "Computer Use", "System"],
     ["Break", "Decryption", "Processor"],
@@ -557,7 +557,7 @@ programmes_nt = namedtuple('programme', ['id'] + programmes[0])
 programmes_dict = OrderedDict([(entry[0], programmes_nt(*([i] + entry))) for i, entry in enumerate(programmes[1:])])
 
 matrix_actions = [
-    ["name", "programme", "prequesite"],
+    ["name", "programme", "prerequisite"],
     ["Find Node", "Find", "AID"],
     ["Find Wireless Node", "Scan", ""],
     ["Find Process", "Find", "Node Access"],
@@ -607,44 +607,46 @@ matrix_actions_nt = namedtuple('matrix_action', ['id'] + matrix_actions[0])
 matrix_actions_dict = OrderedDict(
     [(entry[0], matrix_actions_nt(*([i] + entry))) for i, entry in enumerate(matrix_actions[1:])])
 
+main_bodyparts = ['Head', 'Upper Body', 'Lower Body', 'Left Arm', 'Right Arm', 'Left Leg', 'Right Leg']
+
 bodyparts = [
-    ["name", "template", "parent", "weightfrac", "sizefrac", "charismafrac",
+    ["name", "template", "parent", "level", "weightfrac", "sizefrac", "charismafrac",
      "agilityfrac", "coordinationfrac", "strengthfrac", "constitutionfrac"],
-    ["Body", "human", None, 1., 1., 100., 1., 1., 1., 1., ],
-    ["Head", "human", "Body", 1 / 11., 1/11., 0.25, 0., 0.1, 0., 0.1, ],
-    ["Vertebrae", "human", "Head", 0.2, 0.2, 0.5, 0., 0., 0., 0., ],
-    ["Eyes", "human", "Head", 0.05, 0.05, 0.15, 0., 0., 0., 0., ],
-    ["Ears", "human", "Head", 0.05, 0.05, 0.1, 0., 1., 0., 0., ],
-    ["Olfactory System", "human", "Head", 0.05, 0.05, 0.05, 0., 0., 0., 0., ],
-    ["Tongue", "human", "Head", 0.05, 0.05, 0.05, 0., 0., 0., 0., ],
-    ["Skull Shell", "human", "Head", 0.6, 0.6, 0.15, 0., 0., 0., 1., ],
-    ["Upper Body", "human", "Body", 2 / 11., 2/11., 0.15, 0.15, 0.0, 0.2, 0.3, ],
-    ["Lungs", "human", "Upper Body", 0.1, 0.1, 0.1, 0., 0., 0.0, 0.3, ],
-    ["Heart", "human", "Upper Body", 0.1, 0.1, 0.2, 0., 0., 0.0, 0.2, ],
-    ["* Muscles", "human", "Upper Body", 0.3, 0.3, 0.3, 0.4, 0.2, 0.9, 0.3, ],
-    ["* Bones", "human", "Upper Body", 0.5, 0.5, 0.2, 0., 0., 0.1, 0.2, ],
-    ["* Nerves", "human", "Upper Body", 0., 0., 0.2, 0.6, 0.8, 0., 0., ],
-    ["Lower Body", "human", "Body", 2 / 11., 2/11., 0.15, 0.05, 0.0, 0.05, 0.1, ],
-    ["Intestines", "human", "Lower Body", 0.4, 0.4, 0.3, 0.0, 0.0, 0.0, 0.3, ],
-    ["* Muscles", "human", "Lower Body", 0.3, 0.3, 0.3, 0.4, 0.2, 0.9, 0.2, ],
-    ["* Bones", "human", "Lower Body", 0.3, 0.3, 0.2, 0., 0., 0.1, 0.5, ],
-    ["* Nerves", "human", "Lower Body", 0., 0, 0.2, 0.6, 0.8, 0., 0., ],
-    ["Left Arm", "human", "Body", 1 / 11., 1/11., 0.125, 0.2, 0.35, 0.225, 0.1, ],
-    ["* Muscles", "human", "Left Arm", 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
-    ["* Bones", "human", "Left Arm", 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
-    ["* Nerves", "human", "Left Arm", 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
-    ["Right Arm", "human", "Body", 1 / 11., 1/11., 0.125, 0.2, 0.35, 0.225, 0.1, ],
-    ["* Muscles", "human", "Right Arm", 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
-    ["* Bones", "human", "Right Arm", 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
-    ["* Nerves", "human", "Right Arm", 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
-    ["Left Leg", "human", "Body", 2 / 11., 2/11., 0.1, 0.2, 0.1, 0.15, 0.15, ],
-    ["* Muscles", "human", "Left Leg", 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
-    ["* Bones", "human", "Left Leg", 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
-    ["* Nerves", "human", "Left Leg", 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
-    ["Right Leg", "human", "Body", 2 / 11., 2/11., 0.1, 0.2, 0.1, 0.15, 0.15, ],
-    ["* Muscles", "human", "Right Leg", 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
-    ["* Bones", "human", "Right Leg", 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
-    ["* Nerves", "human", "Right Leg", 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
+    ["Body", "human", None, 0, 1., 1., 100., 1., 1., 1., 1., ],
+    ["Head", "human", "Body", 1, 1 / 11., 1/11., 0.25, 0., 0.1, 0., 0.1, ],
+    ["Vertebrae", "human", "Head", 2, 0.2, 0.2, 0.5, 0., 0., 0., 0., ],
+    ["Eyes", "human", "Head", 2, 0.05, 0.05, 0.15, 0., 0., 0., 0., ],
+    ["Ears", "human", "Head", 2, 0.05, 0.05, 0.1, 0., 1., 0., 0., ],
+    ["Olfactory System", "human", "Head", 2, 0.05, 0.05, 0.05, 0., 0., 0., 0., ],
+    ["Tongue", "human", "Head", 2, 0.05, 0.05, 0.05, 0., 0., 0., 0., ],
+    ["Skull Shell", "human", "Head", 2, 0.6, 0.6, 0.15, 0., 0., 0., 1., ],
+    ["Upper Body", "human", "Body", 1, 2 / 11., 2/11., 0.15, 0.15, 0.0, 0.2, 0.3, ],
+    ["Lungs", "human", "Upper Body", 2, 0.1, 0.1, 0.1, 0., 0., 0.0, 0.3, ],
+    ["Heart", "human", "Upper Body", 2, 0.1, 0.1, 0.2, 0., 0., 0.0, 0.2, ],
+    ["* Muscles", "human", "Upper Body", 2, 0.3, 0.3, 0.3, 0.4, 0.2, 0.9, 0.3, ],
+    ["* Bones", "human", "Upper Body", 2, 0.5, 0.5, 0.2, 0., 0., 0.1, 0.2, ],
+    ["* Nerves", "human", "Upper Body", 2, 0., 0., 0.2, 0.6, 0.8, 0., 0., ],
+    ["Lower Body", "human", "Body", 1, 2 / 11., 2/11., 0.15, 0.05, 0.0, 0.05, 0.1, ],
+    ["Intestines", "human", "Lower Body", 2, 0.4, 0.4, 0.3, 0.0, 0.0, 0.0, 0.3, ],
+    ["* Muscles", "human", "Lower Body", 2, 0.3, 0.3, 0.3, 0.4, 0.2, 0.9, 0.2, ],
+    ["* Bones", "human", "Lower Body", 2, 0.3, 0.3, 0.2, 0., 0., 0.1, 0.5, ],
+    ["* Nerves", "human", "Lower Body", 2, 0., 0, 0.2, 0.6, 0.8, 0., 0., ],
+    ["Left Arm", "human", "Body", 1, 1 / 11., 1/11., 0.125, 0.2, 0.35, 0.225, 0.1, ],
+    ["* Muscles", "human", "Left Arm", 2, 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
+    ["* Bones", "human", "Left Arm", 2, 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
+    ["* Nerves", "human", "Left Arm", 2, 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
+    ["Right Arm", "human", "Body", 1, 1 / 11., 1/11., 0.125, 0.2, 0.35, 0.225, 0.1, ],
+    ["* Muscles", "human", "Right Arm", 2, 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
+    ["* Bones", "human", "Right Arm", 2, 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
+    ["* Nerves", "human", "Right Arm", 2, 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
+    ["Left Leg", "human", "Body", 1, 2 / 11., 2/11., 0.1, 0.2, 0.1, 0.15, 0.15, ],
+    ["* Muscles", "human", "Left Leg", 2, 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
+    ["* Bones", "human", "Left Leg", 2, 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
+    ["* Nerves", "human", "Left Leg", 2, 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
+    ["Right Leg", "human", "Body", 1, 2 / 11., 2/11., 0.1, 0.2, 0.1, 0.15, 0.15, ],
+    ["* Muscles", "human", "Right Leg", 2, 0.6, 0.6, 0.4, 0.4, 0.2, 0.9, 0.5, ],
+    ["* Bones", "human", "Right Leg", 2, 0.4, 0.4, 0.2, 0., 0., 0.1, 0.5, ],
+    ["* Nerves", "human", "Right Leg", 2, 0., 0., 0.4, 0.6, 0.8, 0., 0., ],
 ]
 
 bodyparts_nt = namedtuple('bodypart', ['id'] + bodyparts[0])
@@ -706,7 +708,7 @@ rangedweapons_dict = OrderedDict(
     [(entry[0], rangedweapons_nt(*([i] + entry))) for i, entry in enumerate(rangedweapons[1:])])
 
 armor = [
-    ["item", "locations", "protection", "maxagi", "coordmult"],
+    ["item", "locations", "protections", "maxagi", "coordmult"],
     ["Armored Clothing",
      ["Upper Body", "Lower Body", "Right Arm", "Left Arm", "Right Leg", "Left Leg"],
      [[20.,0.], [20.,0.], [20.,0.], [20.,0.], [20.,0.], [20.,0.]],
@@ -834,40 +836,40 @@ ware_dict = OrderedDict([(entry[0], ware_nt(*([i]
 
 adept_powers = [
     ["name", "cost", "description", "formdescription", "effects"],
-    ["Combat Sense", 'X', 'Enhance Reaction', [['Physical Reaction +', '{Value}*{Magic}/30.']], ['stats', 'Physical Reaction', '+{Value}*{Magic}/30.']],
-    ["Danger Sense", 'X', 'Enhance Reaction for suprise tests (Manual)', [['Physical Reaction in Surprise Tests+', '{Value}*{Magic}/15.']], ['test', 'Surprise', '+{Value}*{Magic}/15.']],
-    ["Astral Sight", '10', 'Allow Adept to perceive astrally', [], []],
-    ["Traceless Walk", '5', 'Leave no traces when walking. Does not trigger pressure sensors. (Manual)',[], []],
-    ["Wall Running", '10', 'Allow Adept to run on a wall as long as he is sprinting',[], []],
-    ["Killing Hands", '5', 'Cause Physical Damage in Combat',[],  []],
-    ["Critical Strike", 'X', 'Multiply Unarmed Combat Damage (Manual)', [['Unarmed Combat Damage *', '(1+{Value}*{Magic}/1200.)']], ['stat', 'Unarmed Combat Damage', '*(1+{Value}*{Magic}/1200.)']],
+    ["Combat Sense", 'X', 'Enhance Reaction', [['Physical Reaction +', '{Value}*{Magic}/30.']], [['stats', 'Physical Reaction', '+{Value}*{Magic}/30.']]],
+    ["Danger Sense", 'X', 'Enhance Reaction for suprise tests (Manual)', [['Physical Reaction in Surprise Tests+', '{Value}*{Magic}/15.']], [['test', 'Surprise', '+{Value}*{Magic}/15.']]],
+    ["Astral Sight", '10', 'Allow Adept to perceive astrally', [], [[]]],
+    ["Traceless Walk", '5', 'Leave no traces when walking. Does not trigger pressure sensors. (Manual)',[], [[]]],
+    ["Wall Running", '10', 'Allow Adept to run on a wall as long as he is sprinting',[], [[]]],
+    ["Killing Hands", '5', 'Cause Physical Damage in Combat',[],  [[]]],
+    ["Critical Strike", 'X', 'Multiply Unarmed Combat Damage (Manual)', [['Unarmed Combat Damage *', '(1+{Value}*{Magic}/1200.)']], [['stat', 'Unarmed Combat Damage', '*(1+{Value}*{Magic}/1200.)']]],
     ["Spirit Claw", 'X', 'Multiply Unarmed Combat Damage to dual/astral targets (Manual)', [['Unarmed Combat Damage *', '(1+{Value}*{Magic}/600.)']],
-     ['stat', 'Unarmed Combat Damage', '*(1+{Value}*{Magic}/600.)']],
+     [['stat', 'Unarmed Combat Damage', '*(1+{Value}*{Magic}/600.)']]],
     ["Penetrating Strike", 'X', 'Multiply Unarmed Combat Penetration (Manual)', [['Unarmed Combat Penetration *', '(1+{Value}*{Magic}/120.)']],
-     ['stat', 'Unarmed Combat Penetration', '*(1+{Value}*{Magic}/120.)']],
-    ["Elemental Strike", '5', 'Add elemental Effect to Unarmed Combat Damage (Manual)', [], []],
+     [['stat', 'Unarmed Combat Penetration', '*(1+{Value}*{Magic}/120.)']]],
+    ["Elemental Strike", '5', 'Add elemental Effect to Unarmed Combat Damage (Manual)', [], [[]]],
     ["Elemental Aura", 'X', 'Elemental Aura that deals damage on Contact (successfull attack of being successfully attacked in (un)armed combat). (Manual)',
-        [['Elemental Aura Damage ', '{Value}*{Magic}/20.'], ['Elemental Aura Penetration ', '{Value}*{Magic}/60.']], []],
-    ["Elemental Resistance", 'X', 'Armor against specific elemental effects (Manual)', [['Elemental Armor', '{Value}*{Magic}/10']], []],
-    ["Freefall", 'X', 'Gain no damage for falling a given distance (Manual)', [['Free falling Distance in meters ', '{Value}*{Magic}/20']], []],
-    ["Improved Jump", 'X', 'Jump further', [['Jumping Distance *', '(1+{Value}*{Magic}/600)']], ['stat', 'Jumping Distance', '*(1+{Value}*{Magic}/600)']],
-    ["Improved Running", 'X', 'Run faster', [['Run Speed *', '(1+{Value}*{Magic}/600)']], ['stat', 'Run Speed', '*(1+{Value}*{Magic}/600)']],
-    ["Improved Swimming", 'X', 'Swim faster', [['Swim Speed *', '(1+{Value}*{Magic}/600)']], ['stat', 'Swim Speed', '*(1+{Value}*{Magic}/600)']],
-    ["Rapid Healing", 'X', 'Increase Heal Time (Manual)', [['Heal Time /', '(1+{Value}*{Magic}/150.)']], ['stat', 'Heal Time', '/(1+{Value}*{Magic}/150.)']],
-    ["Kinesics", '10', 'Change Face. Same Gender and Metatype. Change time 5 min, Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
-    ["Melain Control", '5', 'Change Hair Color (only natural colors). Change time 1min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
-    ["Voice Control", '5', 'Change Voice. change time 1 min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
-    ["Pain Resistance", 'X', 'Ignore low life penalties', [['Ignore percentage of damage', '{Value}*{Magic}/5.']], ['stat', 'Pain Resistance', '{Value}*{Magic}/500']],
-    ["Spell Resistance", 'X', 'Improve resistance to spells (Manual)', [['Spell Resistance +', '{Value}*{Magic}/30.']], ['stat', 'Spell Resistance', '+{Value}*{Magic}/30.']],
+        [['Elemental Aura Damage ', '{Value}*{Magic}/20.'], ['Elemental Aura Penetration ', '{Value}*{Magic}/60.']], [[]]],
+    ["Elemental Resistance", 'X', 'Armor against specific elemental effects (Manual)', [['Elemental Armor', '{Value}*{Magic}/10']], [[]]],
+    ["Freefall", 'X', 'Gain no damage for falling a given distance (Manual)', [['Free falling Distance in meters ', '{Value}*{Magic}/20']], [[]]],
+    ["Improved Jump", 'X', 'Jump further', [['Jumping Distance *', '(1+{Value}*{Magic}/600)']], [['stat', 'Jumping Distance', '*(1+{Value}*{Magic}/600)']]],
+    ["Improved Running", 'X', 'Run faster', [['Run Speed *', '(1+{Value}*{Magic}/600)']], [['stat', 'Run Speed', '*(1+{Value}*{Magic}/600)']]],
+    ["Improved Swimming", 'X', 'Swim faster', [['Swim Speed *', '(1+{Value}*{Magic}/600)']], [['stat', 'Swim Speed', '*(1+{Value}*{Magic}/600)']]],
+    ["Rapid Healing", 'X', 'Increase Heal Time (Manual)', [['Heal Time /', '(1+{Value}*{Magic}/150.)']], [['stat', 'Heal Time', '/(1+{Value}*{Magic}/150.)']]],
+    ["Kinesics", '10', 'Change Face. Same Gender and Metatype. Change time 5 min, Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  [[]]],
+    ["Melain Control", '5', 'Change Hair Color (only natural colors). Change time 1min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  [[]]],
+    ["Voice Control", '5', 'Change Voice. change time 1 min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  [[]]],
+    ["Pain Resistance", 'X', 'Ignore low life penalties', [['Ignore percentage of damage', '{Value}*{Magic}/5.']], [['stat', 'Pain Resistance', '{Value}*{Magic}/500']]],
+    ["Spell Resistance", 'X', 'Improve resistance to spells (Manual)', [['Spell Resistance +', '{Value}*{Magic}/30.']], [['stat', 'Spell Resistance', '+{Value}*{Magic}/30.']]],
     ] + [
     ["Enhanced Attribute {}".format(i.name), 'X', 'Enhance {}'.format(i.name),
      [['{} *'.format(i.name), '(1+{Value}*{Magic}/1800.)']],
-     ['attributes', '{}'.format(i.name), '*(1+{Value}*{Magic}/1800.)']]
+     [['attributes', '{}'.format(i.name), '*(1+{Value}*{Magic}/1800.)']]]
     for i in attributes_dict.values() if i.kind != 'special'
     ] + [
     ["Improved Skill {}".format(i.name), 'X', 'Improve {}'.format(i.name),
      [['{} *'.format(i.name), '+{Value}*{Magic}/30.']],
-     ['skills', '{}'.format(i.name), '+{Value}*{Magic}/30.']]
+     [['skills', '{}'.format(i.name), '+{Value}*{Magic}/30.']]]
     for i in skills_dict.values()
     ]
 

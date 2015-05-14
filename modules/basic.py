@@ -29,6 +29,7 @@ class Char(object):
         self.items = []
         self.damage = {}
         self.wounds = {}
+        self.spells = []
         self.load_char()
 
     def init_attributes(self):
@@ -57,6 +58,13 @@ class Char(object):
         self.load_damage()
         self.load_wounds()
         self.load_items()
+        self.load_adept_powers()
+
+
+    def load_spells(self):
+        db_cs = self.db.char_spells
+        for row in self.db(db_cs.char == self.char_id).select(db_cs.spell):
+            self.spells.append(row.spell)
 
     def load_attributes(self):
         """
@@ -128,8 +136,21 @@ class Char(object):
         db_cs = self.db.char_skills
         self.db((db_cs.char == self.char_id) & (db_cs.skill == skill)).update(value=value)
 
-    def write_damage(self, damage, value):
-        pass
+    def write_damage(self, kind, value):
+        db_cd = self.db.char_damage
+        db_cd.update_or_insert((db_cd.char == self.char_id) & (db_cd.damagekind == kind),
+                               value=value,
+                               char = self.char_id,
+                               damagekind = kind)
+
+    def write_wounds(self, number, bodypart, kind):
+        db_cw = self.db.char_wounds
+        db_cw.update_or_insert((db_cw.char == self.char_id) & (db_cw.damagekind == kind) &
+                               (db_cw.bodypart == bodypart),
+                               value=number,
+                               char = self.char_id,
+                               damagekind = kind,
+                               bodypart = bodypart)
 
     @staticmethod
     def write_ware(ware):
@@ -260,11 +281,15 @@ class Armor(object):
     def get_coordination_mult(self):
         return data.armor_dict[self.name].coordmult
 
-    def get_protection(self, bodypart, kind = 'ballistic'):
+    def get_protection(self, bodypart, typ = 'ballistic'):
         map_dict = {'ballistic': 0,
                     'impact': 1}
-        index = data.armor_dict[self.name].locations.index(bodypart)
-        return data.armor_dict[self.name].protections[index][map_dict[kind]]
+        locations = data.armor_dict[self.name].locations
+        index = locations.index(bodypart) if bodypart in locations else None
+        protection = 0
+        if index is not None:
+            protection = data.armor_dict[self.name].protections[index][map_dict[typ]]
+        return protection
 
 #class CharMatrix(Char):
 #    def __init__(self, db, char, computer=None):
@@ -494,10 +519,12 @@ class Bodypart(object):
         self.parent = None
         self.body_fractions = None
         self.children = []
+        self.level = 0
         self.load_data()
 
     def load_data(self):
         bodypart_nt = data.bodyparts_dict[self.name]
+        self.level = bodypart_nt.level
         self.template = bodypart_nt.template
         self.parent = self.body.bodyparts.get(bodypart_nt.parent, None)
         self.relative_body_fractions = BodyFractions(Weight=bodypart_nt.weightfrac,
@@ -529,6 +556,8 @@ class CharBodypart():
         self.bodypart = bodypart
         self.ware = ware
         self.wounds = char.wounds.get(bodypart.name, {})
+        self.attributes = {}
+
     def get_kind(self):
         if self.ware:
             return self.ware.kind
@@ -536,6 +565,9 @@ class CharBodypart():
             return self.bodypart.get_kind()
 
     def get_attribute_absolute(self, attribute, modlevel='stateful'):
+        value = self.attributes.get((attribute, modlevel))
+        if value:
+            return value
         if self.bodypart.children:
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             value = sum([part.get_attribute_absolute(attribute, modlevel) for part in child_char_bodyparts])
@@ -548,11 +580,20 @@ class CharBodypart():
             if modlevel in ('augmented', 'temporary', 'stateful'):
                 if self.ware:
                     value = self.ware.stats[attribute]
+                else:
+                    for adept_power in self.char.adept_powers:
+                        for effect in adept_power.effects:
+                            if effect[0] == 'attributes' and effect[1] == attribute:
+                                    magic = CharPropertyGetter(self.char, modlevel=modlevel).get_attribute_value('Magic')
+                                    formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                                    value = eval('value {}'.format(formula))
             if modlevel == 'stateful':
                 if self.wounds and attribute not in ('Size', 'Weight', 'Constitution'):
                     value = rules.woundeffect(value, sum((self.wounds.values())))
             fraction = self.bodypart.get_fraction(attribute)
-            return value*fraction
+            value *= fraction
+            self.attributes[(attribute, modlevel)] = value
+            return value
 
     def get_life(self):
         if self.bodypart.children:
@@ -564,6 +605,12 @@ class CharBodypart():
             fraction = self.bodypart.get_fraction('Weight')
             life = fraction * rules.life(weight, constitution)
             return life
+
+    def get_woundlimit(self, modlevel = 'stateful'):
+        constitution = self.get_attribute_relative('Constitution', modlevel)
+        weight = self.get_attribute_relative('Weight', 'temporary')
+        woundlimit = rules.woundlimit(weight, constitution)
+        return woundlimit
 
     def get_attribute_relative(self, attribute, modlevel = 'stateful'):
         absolute_value = self.get_attribute_absolute(attribute, modlevel)
@@ -588,6 +635,29 @@ class CharPropertyGetter():
         self.stats = {}
         self.maxlife = None
 
+    def get_bodypart_table(self):
+        attributes = ['Agility', 'Constitution', 'Coordination', 'Strength', 'Weight']
+        table = [['Name'] + attributes + ['Ware', 'Woundlimit', 'Wounds']]
+        for bodypartname in data.bodyparts_dict:
+            templist = []
+            bodypart = self.char_body.bodyparts[bodypartname]
+            level = bodypart.bodypart.level
+            templist.append('<b style="margin-left:{}em;">{}</b>'.format(level*1, bodypartname))
+            for attribute in attributes:
+                augmented = int(round(bodypart.get_attribute_relative(attribute, modlevel='augmented')))
+                stateful = int(round(bodypart.get_attribute_relative(attribute, modlevel='stateful')))
+                frac = round(bodypart.bodypart.get_fraction(attribute),2)
+                templist.append('{}/{}/{}'.format(augmented, stateful, frac))
+            ware = bodypart.ware.name if bodypart.ware else ''
+            kind = bodypart.get_kind()
+            templist.append('{}/{}'.format(kind, ware))
+            woundlimit = int(round(bodypart.get_woundlimit()))
+            templist.append(woundlimit)
+            wounds = int(sum([i for i in  bodypart.wounds.values()]))
+            templist.append(wounds)
+            table.append(templist)
+        return table
+
     def get_skill_xp_cost(self, skill):
         parent = data.skills_dict[skill].parent
         base_value = 0
@@ -608,6 +678,9 @@ class CharPropertyGetter():
         value = CharPropertyGetter(self.char, 'unaugmented').get_attribute_value(attribute)
         result = rules.exp_cost_attribute(attribute, value, base, factor, signmod)
         return result
+
+    def get_spell_xp_cost(self):
+        return sum([rules.get_spell_xp_cost() for i in self.char.spells])
 
     def get_attribute_value(self, attribute):
         """
@@ -656,12 +729,6 @@ class CharPropertyGetter():
                 value = self.char_body.bodyparts['Body'].get_attribute_absolute(attribute, self.modlevel)
             else:
                 value = self.char.attributes[attribute]
-            # add adept power effects
-            for adept_power in self.char.adept_powers:
-                if adept_power.effect[0] == 'attributes' and adept_power.effect[1] == attribute:
-                        magic = self.get_attribute_value('Magic')
-                        formula = adept_power.effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
             # add ware effects to attribute
             for ware in self.char.ware:
                 for effect in ware.effects:
@@ -714,10 +781,11 @@ class CharPropertyGetter():
                     value = parent_value
         if self.modlevel in ('augmented','temporary','stateful'):
             for adept_power in self.char.adept_powers:
-                if adept_power.effect[0] == 'skills' and adept_power.effect[1] == skill:
-                        magic = self.get_attribute_value('Magic')
-                        formula = adept_power.effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
+                for effect in adept_power.effects:
+                    if effect[0] == 'skills' and effect[1] == skill:
+                            magic = self.get_attribute_value('Magic')
+                            formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                            value = eval('value {}'.format(formula))
             for ware in self.char.ware:
                 for effect in ware.effects:
                     if effect[0] == 'skills' and effect[1] == skill:
@@ -738,7 +806,7 @@ class CharPropertyGetter():
         mod = 0
         skill_attribmods = data.skills_attribmods_dict[skill]
         for attribute in data.attributes_dict.keys():
-            weight = getattr(skill_attribmods, attribute)
+            weight = getattr(skill_attribmods, attribute, None)
             if weight:
                 mod += weight * self.get_attribute_mod(attribute)/2.
         value += mod
@@ -749,6 +817,14 @@ class CharPropertyGetter():
         armor = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Armor']
         armor = [Armor(name, self.char) for name in armor]
         return armor
+
+
+    def get_protection(self, bodypart, typ):
+        protection = []
+        for armor in self.get_armor():
+            protection.append(armor.get_protection(bodypart, typ))
+        protection = rules.get_stacked_armor_value(protection)
+        return protection
 
     def get_weapons(self):
         weapons = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Ranged Weapon']
@@ -799,6 +875,7 @@ class CharPropertyGetter():
             damagemod = rules.lifemod_absolute(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
         else:
             damagemod = 0
+            damagemod = 0
         return damagemod
 
 
@@ -833,7 +910,6 @@ class CharPropertyGetter():
 
     def get_actionmult(self):
         """
-
 
         """
         statname = 'Action Multiplier'
@@ -872,7 +948,11 @@ class CharPropertyGetter():
 
 
         """
-        pass
+        summe = 0
+        #summe += self.get_skill_xp_cost()
+        #summe += self.get_attribute_xp_cost()
+        summe += self.get_spell_xp_cost()
+        return summe
 
 
 class LoadoutPropertyGetter(Loadout):
@@ -894,10 +974,31 @@ class CharPhysicalPropertyGetter(CharPropertyGetter):
         self.bodypart = bodypart
 
     def get_jump_distance(self, movement):
-        pass
+        weight = self.get_attribute_value('Weight')
+        size = self.get_attribute_value('Size')
+        strength = self.get_attribute_value('Strength')
+        if movement:
+            distance = rules.jumplimit(weight, strength, size)[1]
+        else:
+            distance = rules.jumplimit(weight, strength, size)[0]
+        return distance
 
     def get_jump_height(self, movement):
-        pass
+        weight = self.get_attribute_value('Weight')
+        size = self.get_attribute_value('Size')
+        strength = self.get_attribute_value('Strength')
+        if movement:
+            distance = rules.jumplimit(weight, strength, size)[3]
+        else:
+            distance = rules.jumplimit(weight, strength, size)[2]
+        return distance
+
+    def get_speed(self):
+        weight = self.get_attribute_value('Weight')
+        size = self.get_attribute_value('Size')
+        strength = self.get_attribute_value('Strength')
+        agility = self.get_attribute_value('Agility')
+        return rules.speed(agility, weight, strength, size)
 
     def get_reaction(self):
         """
@@ -1041,6 +1142,35 @@ class CharAstralPropertyGetter(CharPropertyGetter):
             pass
         self.stats[statname] = value
         return value
+
+
+class CharPropertyPutter():
+    def __init__(self, char):
+        """"
+        :param modlevel: the modlevel: ['base', 'unaugmented', 'augmented', 'temporary', 'stateful']
+        """
+        self.char = char
+
+    def put_damage(self, value, penetration, bodypart='body', kind='physical', typ='ballistic',
+                   percent=False, resist=False):
+        charpropertygetter = CharPropertyGetter(self.char, 'stateful')
+        armor = charpropertygetter.get_protection(bodypart, typ)
+        damage = float(max(0, value - max(0, armor-penetration)))
+        bodykind = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
+        if bodykind != 'cyberware':
+            old_damage = self.char.damage.get(kind, 0)
+            new_damage = old_damage + damage
+            self.char.write_damage(kind, new_damage)
+        wounds = 0
+        if bodykind != 'cyberware' or kind in ('physical'):
+            woundlimit = charpropertygetter.char_body.bodyparts[bodypart].get_woundlimit()
+            wounds = int(damage/woundlimit)
+            old_wounds = self.char.wounds.get(bodypart, 0)
+            if old_wounds:
+                old_wounds = old_wounds.get(kind, 0)
+            new_wounds = wounds + old_wounds
+            self.char.write_wounds(new_wounds, bodypart, kind)
+        return 'damage: {}, wounds: {}'.format(damage, wounds)
 
 
 if __name__ == '__main__':

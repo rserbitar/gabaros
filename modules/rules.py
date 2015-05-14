@@ -27,6 +27,7 @@ baseuplink = attrib_mod_norm
 wound_exp = 200.
 cyberhalf = 20
 shoot_base_difficulty = 20
+spell_xp_cost = 100
 
 movement_mods = OrderedDict([
     ('standing', 0),
@@ -93,6 +94,10 @@ def exp_cost_attribute(attribute, value, base, factor, signmod):
     if attribute == 'Magic':
         val += 2*factor
     return val
+
+
+def get_spell_xp_cost():
+    return spell_xp_cost
 
 def calc_charisma_degrade(cyberindex):
     return 1 / (1. + (cyberindex / cyberhalf) ** 2)
@@ -164,14 +169,16 @@ def loadeffect_inv(percent, strength=30, weight=75):
 #standing vertical jump
 #running vertical jump
 def jumplimit(weight, strength, size):
-    result = [0.8 * strength * weight ** (-0.7) * size / 1.75, 3 * strength * weight ** (-0.75) * size / 1.75,
-              0.5 * strength * weight ** (-0.8) * size / 1.75, 1.5 * strength * weight ** (-0.9) * size / 1.75]
+    result = [0.8 * strength * weight ** (-0.7) * size / 1.75,
+              3 * strength * weight ** (-0.75) * size / 1.75,
+              0.5 * strength * weight ** (-0.8) * size / 1.75,
+              1.5 * strength * weight ** (-0.9) * size / 1.75]
     return result
 
 
 #speed depending on agility, weight, strength and size
 def speed(agility, weight=75., strength=30., size=1.75):
-    speed = (agility / 30) ** 0.2
+    speed = (agility / 30.) ** 0.2
     speed *= 4. ** min(0, (-weight ** (2 / 3.) / strength * 30. / 75 ** (2 / 3.) + 1))
     speed *= size / 1.75 * 1.5
     return [speed, speed * 3, speed * 5]
@@ -371,3 +378,7 @@ def program_cost(rating):
 def firewall_rating(time, skill, system, users):
     #time in hours per week
     return log(skill ** 3 / (system + 50) ** 3 * time / 8. / users) * 10 + skill - 50
+
+
+def get_stacked_armor_value(values):
+    return sum([val/float(i+1) for i,val in enumerate(sorted(values, reverse=True))])
