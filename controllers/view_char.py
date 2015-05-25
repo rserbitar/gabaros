@@ -160,6 +160,58 @@ def view_computer():
     return dict(computer=table, programmes=programmes)
 
 
+def combat():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    char = basic.Char(db, char_id)
+    insert_situation_mod = LOAD('view_char','insert_situation_mod.load',ajax=True, args = [char_id], target = 'insert_situation_mod')
+    view_weapons = LOAD('view_char','view_weapons.load',ajax=True, args = [char_id], target = 'view_weapons')
+    view_actions = LOAD('view_char','view_actions.load',ajax=True, args = [char_id], target = 'view_actions')
+    view_cc_weapons = LOAD('view_char','view_cc_weapons.load',ajax=True, args = [char_id], target = 'view_cc_weapons')
+    return dict(view_weapons=view_weapons, insert_situation_mod=insert_situation_mod, view_actions=view_actions,
+                view_cc_weapons=view_cc_weapons)
+
+
+def get_net_shoottest_val(char_id, weapon_name):
+    char = basic.Char(db, char_id)
+    weapon = basic.RangedWeapon(weapon_name, char)
+    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod', 'shoot_distance']))
+    ).select(db.state_mods.name, db.state_mods.value)
+    resultdict = {'situation_mod': 0.,
+                  'shoot_distance': 10.}
+    for row in rows:
+        resultdict[row.name] = row.value
+    roll = gauss(0, 10)
+    situation_mod = resultdict['situation_mod']
+    net_value = situation_mod - roll
+    damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'])
+    result['roll'] = roll
+    result['other mods'] = situation_mod
+    test_val = (-result['difficulty'] - result['other mods'] - result['minimum strength mod']
+                  - result['weapon range mod'] - result['sight range mod'] + result['skill'])
+    return int(round(test_val))
+
+def get_net_cc_test_val(char_id, weapon_name):
+    char = basic.Char(db, char_id)
+    weapon = basic.CloseCombatWeapon(weapon_name, char)
+    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod']))
+    ).select(db.state_mods.name, db.state_mods.value)
+    resultdict = {'situation_mod': 0.}
+    for row in rows:
+        resultdict[row.name] = row.value
+    roll = gauss(0, 10)
+    situation_mod = resultdict['situation_mod']
+    net_value = situation_mod - roll
+    damage, result = weapon.get_damage(net_value)
+    result['roll'] = roll
+    result['other mods'] = situation_mod
+    test_val = (-result['difficulty'] - result['other mods'] - result['minimum strength mod']
+                   + result['skill'])
+    return int(round(test_val))
+
+
 @auth.requires_login()
 def view_weapons():
     char_id = request.args(0)
@@ -167,8 +219,8 @@ def view_weapons():
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
     char = basic.Char(db, char_id)
-    weapons = basic.CharPropertyGetter(char).get_weapons()
-    table = [['Weapon', 'Skill', 'Val', 'Net Val', 'Dam', 'Type', 'Pen', 'Range', 'Bullets', 'Rec', 'Mag', 'Type', 'Shoot']]
+    weapons = basic.CharPropertyGetter(char).get_ranged_weapons()
+    table = [['Weapon', 'Skill', 'Val', 'Net Val', 'Dam', 'Type', 'Pen', 'Range', 'Bullets', 'Rec', 'Mag', 'Type', 'Hands', 'Shoot']]
     for weapon in weapons:
         row = []
         row.append(weapon.name)
@@ -183,8 +235,9 @@ def view_weapons():
         row.append(weapon.recoil)
         row.append(weapon.mag)
         row.append(weapon.magtype)
+        row.append(weapon.hands)
         row.append(A('Shoot', callback=URL('shoot_weapon', args=[char_id, weapon.name]),
-                     target = 'shoot_result', _class='btn'))
+                     target = 'attack_result', _class='btn'))
         table.append(row)
     #fields = [Field('val', 'integer', default=0, label = 'Modifications')]
     #form = SQLFORM.factory(*fields, table_name = 'weapons',  buttons=[], _method = '', _action = None)
@@ -195,38 +248,6 @@ def view_weapons():
     return dict(weapons=table)
 
 
-def combat():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
-    char = basic.Char(db, char_id)
-    insert_shoot_mod = LOAD('view_char','insert_shoot_mod.load',ajax=True, args = [char_id], target = 'insert_shoot_mod')
-    view_weapons = LOAD('view_char','view_weapons.load',ajax=True, args = [char_id], target = 'view_weapons')
-    view_actions = LOAD('view_char','view_actions.load',ajax=True, args = [char_id], target = 'view_actions')
-    return dict(view_weapons=view_weapons, insert_shoot_mod=insert_shoot_mod, view_actions=view_actions)
-
-
-def get_net_shoottest_val(char_id, weapon_name):
-    char = basic.Char(db, char_id)
-    weapon = basic.Weapon(weapon_name, char)
-    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['shoot_mod', 'shoot_distance']))
-    ).select(db.state_mods.name, db.state_mods.value)
-    resultdict = {'shoot_mod': 0.,
-                  'shoot_distance': 10.}
-    for row in rows:
-        resultdict[row.name] = row.value
-    roll = gauss(0, 10)
-    shoot_mod = resultdict['shoot_mod']
-    net_value = shoot_mod - roll
-    damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'])
-    result['roll'] = roll
-    result['other mods'] = shoot_mod
-    test_val = (-result['difficulty'] - result['other mods'] - result['minimum strength mod']
-                  - result['weapon range mod'] - result['sight range mod'] + result['skill'])
-    return int(round(test_val))
-
-
 @auth.requires_login()
 def shoot_weapon():
     char_id = request.args(0)
@@ -235,25 +256,81 @@ def shoot_weapon():
         redirect(URL(f='index'))
     weapon_name = request.args(1).replace('_', ' ')
     char = basic.Char(db, char_id)
-    weapon = basic.Weapon(weapon_name, char)
-    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['shoot_mod', 'shoot_distance']))
+    weapon = basic.RangedWeapon(weapon_name, char)
+    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod', 'shoot_distance']))
     ).select(db.state_mods.name, db.state_mods.value)
-    resultdict = {'shoot_mod': 0.,
+    resultdict = {'situation_mod': 0.,
                   'shoot_distance': 10.}
     for row in rows:
         resultdict[row.name] = row.value
     roll = gauss(0, 10)
-    shoot_mod = resultdict['shoot_mod']
-    net_value = shoot_mod - roll
+    situation_mod = resultdict['situation_mod']
+    net_value = situation_mod - roll
     damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'])
     result['roll'] = roll
-    result['other mods'] = shoot_mod
+    result['other mods'] = situation_mod
     difficulty = -(result['difficulty'] + result['other mods'] + result['minimum strength mod']
                   + result['weapon range mod'] + result['sight range mod'] - result['skill'])   
     text = ('damage: {}, {}'.format(damage, result))
     db.rolls.insert(char=char_id, name='shoot', value=difficulty, roll=roll, result=result['result'], visible=True)
     return text
 
+
+@auth.requires_login()
+def view_cc_weapons():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    char = basic.Char(db, char_id)
+    weapons = basic.CharPropertyGetter(char).get_close_combat_weapons()
+    table = [['Weapon', 'Skill', 'Val', 'Net Val', 'Dam', 'Type', 'Pen', 'Hands', 'Swing']]
+    for weapon in weapons:
+        row = []
+        row.append(weapon.name)
+        row.append(weapon.skill)
+        row.append('{:.0f}'.format(weapon.get_net_skill_value()))
+        row.append(get_net_cc_test_val(char_id, weapon.name))
+        row.append(weapon.damage)
+        row.append(weapon.damagetype)
+        row.append(weapon.penetration)
+        row.append(weapon.hands)
+        row.append(A('Swing', callback=URL('swing_weapon', args=[char_id, weapon.name]),
+                     target = 'attack_result', _class='btn'))
+        table.append(row)
+    #fields = [Field('val', 'integer', default=0, label = 'Modifications')]
+    #form = SQLFORM.factory(*fields, table_name = 'weapons',  buttons=[], _method = '', _action = None)
+    #form.element(_name='val')['_onblur']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
+    #                                     "['val'], '')".format(char_id)
+    #form.element(_name='val')['_onkeypress']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
+    #                                     "['val'], '')".format(char_id)
+    return dict(weapons=table)
+
+
+@auth.requires_login()
+def swing_weapon():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    weapon_name = request.args(1).replace('_', ' ')
+    char = basic.Char(db, char_id)
+    weapon = basic.CloseCombatWeapon(weapon_name, char)
+    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod']))
+    ).select(db.state_mods.name, db.state_mods.value)
+    resultdict = {'situation_mod': 0.}
+    for row in rows:
+        resultdict[row.name] = row.value
+    roll = gauss(0, 10)
+    situation_mod = resultdict['situation_mod']
+    net_value = situation_mod - roll
+    damage, result = weapon.get_damage(net_value)
+    result['roll'] = roll
+    result['other mods'] = situation_mod
+    difficulty = -(result['difficulty'] + result['other mods'] + result['minimum strength mod'] - result['skill'])
+    text = ('damage: {}, {}'.format(damage, result))
+    db.rolls.insert(char=char_id, name='swing', value=difficulty, roll=roll, result=result['result'], visible=True)
+    return text
 
 @auth.requires_login()
 def insert_state_mod():
@@ -265,12 +342,12 @@ def insert_state_mod():
 
 
 @auth.requires_login()
-def insert_shoot_mod():
+def insert_situation_mod():
     char_id = request.args(0)
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
-    vars = ['shoot_mod','shoot_distance']
+    vars = ['situation_mod','shoot_distance']
     query = [((db.state_mods.char==char_id) & (db.state_mods.name==i)) for i in vars]
 
     for i, var in enumerate(vars):
@@ -279,10 +356,10 @@ def insert_shoot_mod():
                                             value=request.vars.get(var), char = char_id, name = var)
             response.js =  "jQuery('#view_weapons').get(0).reload()"
     fields = [Field('shoot_distance', 'integer', default=0, label = 'Distance',  requires=IS_NOT_EMPTY())]
-    fields.append(Field('shoot_mod', 'integer', default=0, label = 'Modifications',  requires=IS_NOT_EMPTY()))
+    fields.append(Field('situation_mod', 'integer', default=0, label = 'Modifications',  requires=IS_NOT_EMPTY()))
     form = SQLFORM.factory(*fields)
     for var in vars:
-        form.element(_name=var)['_onblur']="ajax('/gabaros/view_char/insert_shoot_mod/{}', " \
+        form.element(_name=var)['_onblur']="ajax('/gabaros/view_char/insert_situation_mod/{}', " \
                                             "['{}'], '')".format(char_id, var)
     if form.process().accepts:
         for i, var in enumerate(vars):
@@ -411,6 +488,40 @@ def view_damage_state():
     damage = char_property_getter.char.damage
     maxlife = char_property_getter.get_maxlife()
     return dict(wounds=wounds, damage=damage, maxlife=maxlife)
+
+
+@auth.requires_login()
+def apply_damage():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    fields = [Field('damage', 'integer', default=0, label = 'Damage'),
+              Field('penetration', 'integer', default=0, label = 'Penetration'),
+              Field('bodypart', 'string', requires=IS_IN_SET(['Body'] + data.main_bodyparts), default = 'Body'),
+              Field('kind', 'string', requires=IS_IN_SET(data.damagekinds_dict.keys()), default = 'physical',
+                    label = 'Damage Kind'),
+              Field('typ', 'string', requires=IS_IN_SET(['ballistic','impact']), default = 'ballistic'),
+              Field('percent', 'boolean', default = False),
+              Field('resist', 'boolean', default = False)]
+    form = SQLFORM.factory(*fields, table_name = 'damage_apply')
+    if form.process().accepted:
+        char = basic.Char(db, char_id)
+        char_property_putter = basic.CharPropertyPutter(char)
+        damage_text = char_property_putter.put_damage(form.vars.damage,
+                                                      form.vars.penetration,
+                                                      form.vars.bodypart,
+                                                      form.vars.kind,
+                                                      form.vars.typ,
+                                                      form.vars.percent,
+                                                      form.vars.resist
+                                                      )
+        response.flash = damage_text
+    elif form.errors:
+       response.flash = 'form has errors'
+    else:
+       response.flash = 'please fill out the form'
+    return dict(form=form)
 
 
 @auth.requires_login()

@@ -1,0 +1,18 @@
+{{=reaction_button}}
+
+<table>
+    <tr>
+        <th>Action</th>
+        <th>Cost</th>
+    </tr>
+    {{for action in actions:}}
+    <tr>
+        {{=TD(action_buttons[action])}}
+        {{=TD(action_costs[action])}}
+    </tr>
+    {{pass}}
+</table>
+<p>
+</p>
+<div id="next_action">
+    {{=action_history}}</div>

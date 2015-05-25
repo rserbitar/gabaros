@@ -56,6 +56,7 @@ response.menu = [
           (T('Computer'), False, URL('gabaros', 'view_char', 'view_computer', args = [session.char])),
           LI(_class="divider"),
           (T('Combat'), False, URL('gabaros', 'view_char', 'combat', args = [session.char])),
+          (T('Apply Damage'), False, URL('gabaros', 'view_char', 'apply_damage', args = [session.char])),
             ]),
 ]
 

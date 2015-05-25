@@ -655,6 +655,11 @@ bodyparts_dict = OrderedDict([(entry[0], bodyparts_nt(*([i] + entry))) for i, en
 
 gameitems = [
     ["name", "clas", "availability", "cost", "weight", "vis_stealth", "scan_stealth", "legality"],
+    ["Combat Knife", "Close Combat Weapon", 20, 500, 0.6, 40, 20, 50],
+    ["Sword", "Close Combat Weapon", 20, 500, 0.6, 40, 20, 50],
+    ["Axe", "Close Combat Weapon", 20, 500, 0.6, 40, 20, 50],
+    ["Baton", "Close Combat Weapon", 20, 500, 0.6, 40, 20, 50],
+    ["Katana", "Close Combat Weapon", 20, 500, 0.6, 40, 20, 50],
     ["Light Pistol", "Ranged Weapon", 20, 500, 0.6, 40, 20, 50],
     ["Heavy Pistol", "Ranged Weapon", 25, 1200, 2.0, 30, 15, 40],
     ["Machine Pistol", "Ranged Weapon", 25, 1200, 1.5, 30, 15, 40],
@@ -666,6 +671,12 @@ gameitems = [
     ["Light MG", "Ranged Weapon", 25, 1200, 6.5, 20, 10, 30],
     ["Medium MG", "Ranged Weapon", 25, 1200, 10.0, 20, 10, 30],
     ["Heavy MG", "Ranged Weapon", 25, 1200, 30.0, 20, 10, 30],
+    ["Bow", "Ranged Weapon", 25, 1200, 30.0, 20, 10, 30],
+    ["Orc Bow", "Ranged Weapon", 25, 1200, 30.0, 20, 10, 30],
+    ["Troll Bow", "Ranged Weapon", 25, 1200, 30.0, 20, 10, 30],
+    ["Pistol Crossbow", "Ranged Weapon", 25, 1200, 30.0, 20, 10, 30],
+    ["Light Crossbow", "Ranged Weapon", 25, 1200, 30.0, 20, 10, 30],
+    ["Heavy Crossbow", "Ranged Weapon", 25, 1200, 30.0, 20, 10, 30],
     ["Armored Clothing", "Armor", 8, 500, 2.0, 25, 15, 0],
     ["Explorer Jumpsuit", "Armor", 8, 500, 4.0, 25, 15, 0],
     ["Flak Vest", "Armor", 10, 1000, 3.0, 20, 15, 0],
@@ -686,21 +697,55 @@ gameitems = [
 gameitems_nt = namedtuple('gameitem', ['id'] + gameitems[0])
 gameitems_dict = OrderedDict([(entry[0], gameitems_nt(*([i] + entry))) for i, entry in enumerate(gameitems[1:])])
 
+
+# effective strength = strength *1.5 if two handed
+# kind          damage              penetration
+# slashing      minstr/3 + str/6      minstr/3 + str/6
+# impact        minstr/2.5 + str/5    minstr/4 + str/8
+# penetration   minstr/3.5 + str/7    minstr/2 + str/4
+
+closecombatweapons = [
+    ["item", "skill", "skillmod", "damage", "damagetype", "penetration", "minstr", "hands",  "special"],
+    ["Scimitar", "Slashing Weapons", 5., '10.+{Strength}/6.', "impact", '3.33+{Strength}/18.', 30., 1, None],
+    ["Axe", "Impact Weapons", 3., '15.28+{Strength}/6.55', "impact", '12.22+{Strength}/8.18', 50., 1, None],
+    ["Rapier", "Piercing Weapons", 7., '5.+{Strength}/10.', "impact", '7.5.+{Strength}/6.67.', 25., 1, None],
+    ["Baton", "Impact Weapons", 5., '6.94+{Strength}/7.20', "impact", '5..56+{Strength}/9.', 30., 1, None],
+    ["Combat Knife", "Piercing Weapons", 0., '3.33+{Strength}/9.', "impact", '5.+{Strength}/6.', 15., 1, None],
+    ["Katana", "Slashing Weapons", 7., '13.5+{Strength}/4.44', "impact", '4.5.+{Strength}/13.33', 30., 2, None],
+    ["Sword", "Slashing Weapons", 5., '12.21+{Strength}/6.55', "impact", '6.67+{Strength}/12.', 40., 1, None],
+    ["Hammer", "Impact Weapons", 0., '15.+{Strength}/6.67', "impact", '16.67+{Strength}/6.', 50., 1, None],
+    ["Spear", "Piercing Weapons", 10., '8.+{Strength}/7.5', "impact", '12.+{Strength}/5.', 30., 2, None],
+    ["Snap Blades", "Piercing Weapons", 0., '4.44+{Strength}/9.', "impact", '6.67+{Strength}/6.', 20., 1, None],
+    ["Mono Whip", "Slashing Weapons", 10., '20.+{Strength}/99999.', "impact", '20.+{Strength}/99999.', 20., 1, None],
+    ["Chainsaw", "Slashing Weapons", 0., '18.+{Strength}/5.', "impact", '6.+{Strength}/15.', 45., 1, None],
+]
+
+closecombatweapons_nt = namedtuple('rangedweapon', ['id'] + closecombatweapons[0])
+closecombatweapons_dict = OrderedDict(
+    [(entry[0], closecombatweapons_nt(*([i] + entry))) for i, entry in enumerate(closecombatweapons[1:])])
+
+
 rangedweapons = [
     ["item", "skill", "skillmod", "damage", "damagetype", "penetration", "range", "shot", "burst", "auto",
-     "minstr", "recoil", "mag", "magtype", "top", "under", "barrel", "special"],
-    ["Heavy Pistol", "Pistols", 0., 16., "ballistic", 15., 12., 5, 0, 0, 50, 30, 10, "", 1, 0, 1, None],
-    ["Light Pistol", "Pistols", 0., 8., "ballistic", 10., 10., 6, 0, 0, 30, 15, 15, "", 0, 0, 1, None],
-    ["Machine Pistol", "Automatics", 0., 8., "ballistic", 10., 10, 6, 12, 18, 40, 15, 20, "", 1, 0, 1, None],
-    ["Sub-Machine-Gun", "Automatics", 0., 8., "ballistic", 10., 20, 6, 15, 30, 20, 7, 30, "", 1, 0, 1, None],
-    ["Shotgun", "Long Rifle", 0., 18., "ballistic", 20., 20, 5, 0, 0, 40, 15, 6, "", 1, 1, 1, None],
+     "minstr", "recoil", "mag", "magtype", "top", "under", "barrel", "special", "hands"],
+    ["Heavy Pistol", "Pistols", 0., 16., "ballistic", 15., 12., 5, 0, 0, 50, 30, 10, "", 1, 0, 1, None, 1],
+    ["Light Pistol", "Pistols", 0., 8., "ballistic", 10., 10., 6, 0, 0, 30, 15, 15, "", 0, 0, 1, None, 1],
+    ["Machine Pistol", "Automatics", 0., 8., "ballistic", 10., 10, 6, 12, 18, 40, 15, 20, "", 1, 0, 1, None, 1],
+    ["Sub-Machine-Gun", "Automatics", 0., 8., "ballistic", 10., 20, 6, 15, 30, 20, 7, 30, "", 1, 0, 1, None, 2],
+    ["Shotgun", "Long Rifle", 0., 18., "ballistic", 20., 20, 5, 0, 0, 40, 15, 6, "", 1, 1, 1, None, 2],
     ["Battle Rifle", "Automatics", 0., 18., "ballistic", 30., 100, 4, 10, 20, 54, 20, 20, "", 1, 1, 1,
-     None],
-    ["Assault Rifle", "Automatics", 0., 12., "ballistic", 20., 80, 5, 12, 18, 36, 12, 30, "", 1, 1, 1, None],
-    ["Sniper Rifle", "Long Rifles", 0., 18., "ballistic", 30., 160, 2, 0, 0, 60, 15, 10, "", 1, 1, 1, None],
-    ["Light MG", "Automatics", 0., 12., "ballistic", 20., 120, 2, 20, 40, 60, 10, 100, "", 1, 1, 1, None],
-    ["Medium MG", "Automatics", 0., 18., "ballistic", 30., 150, 1, 20, 40, 80, 15, 100, "", 1, 1, 1, None],
-    ["Heavy MG", "Automatics", 0., 60., "ballistic", 80., 300, 1, 30, 50, 180, 25, 100, "", 1, 1, 1, None],
+     None, 2],
+    ["Assault Rifle", "Automatics", 0., 12., "ballistic", 20., 80, 5, 12, 18, 36, 12, 30, "", 1, 1, 1, None, 2],
+    ["Sniper Rifle", "Long Rifles", 0., 18., "ballistic", 30., 160, 2, 0, 0, 60, 15, 10, "", 1, 1, 1, None, 2],
+    ["Light MG", "Automatics", 0., 12., "ballistic", 20., 120, 2, 20, 40, 60, 10, 100, "", 1, 1, 1, None, 2],
+    ["Medium MG", "Automatics", 0., 18., "ballistic", 30., 150, 1, 20, 40, 80, 15, 100, "", 1, 1, 1, None, 2],
+    ["Heavy MG", "Automatics", 0., 60., "ballistic", 80., 300, 1, 30, 50, 180, 25, 100, "", 1, 1, 1, None, 2],
+    ["Bow", "Archery", 0., '5+{Strength}/10.', "impact", '5+{Strength}/10.', 30, 1, 1, 1, 30, 0, 0, "", 1, 1, 1, None, 2],
+    ["Orc Bow", "Archery", 0., '10+{Strength}/10.', "impact", '10+{Strength}/10.', 50, 1, 1, 1, 60, 0, 0, "", 1, 1, 1, None, 2],
+    ["Troll Bow", "Archery", 0., '15+{Strength}/10.', "impact", '15+{Strength}/10.', 60, 1, 1, 1, 90, 0, 0, "", 1, 1, 1, None, 2],
+    ["Pistol Crossbow", "Archery", 0., 6., "impact", 6., 10, 1, 1, 1, 26, 0, 0, "", 1, 1, 1, None, 1],
+    ["Light Crossbow", "Archery", 0., 10., "impact", 10., 30, 1, 1, 1, 30, 0, 0, "", 1, 1, 1, None, 2],
+    ["Heavy Crossbow", "Archery", 0., 16., "impact", 16., 48, 1, 1, 1, 40, 0, 0, "", 1, 1, 1, None, 2],
 ]
 
 rangedweapons_nt = namedtuple('rangedweapon', ['id'] + rangedweapons[0])

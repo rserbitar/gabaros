@@ -1,0 +1,16 @@
+{{extend 'layout.html'}}
+
+<table>
+    <tr>
+        {{for entry in weapons[0]:}}
+        {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
+        {{pass}}
+    </tr>
+    {{for row in weapons[1:]:}}
+    <tr>
+        {{for entry in row:}}
+        {{=TD(entry, _style="padding-right:10px;text-align:left;")}}
+        {{pass}}
+    </tr>
+    {{pass}}
+</table>

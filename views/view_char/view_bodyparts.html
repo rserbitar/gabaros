@@ -1,0 +1,17 @@
+{{extend 'layout.html'}}
+
+<table>
+    <tr>
+        {{for entry in table[0]:}}
+        {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
+        {{pass}}
+    </tr>
+    {{for row in table[1:]:}}
+    <tr>
+        {{=TD(XML(row[0]), _style="padding-right:10px;text-align:left;")}}
+        {{for entry in row[1:]:}}
+        {{=TD(entry, _style="padding-right:10px;text-align:left;")}}
+        {{pass}}
+    </tr>
+    {{pass}}
+</table>

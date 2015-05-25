@@ -219,31 +219,66 @@ class Computer(object):
         return value
 
 
-class Weapon(object):
+class CloseCombatWeapon(object):
     def __init__(self, name, char):
         self.char = char
         self.name = name
         self.char_property_getter = CharPropertyGetter(self.char)
+        self.skill = ''
+        self.skillmod = 0
+        self.minstr = 0
+        self.recoil = 0
+        self.damage = 0
+        self.penetration = 0
         self.get_attributes()
 
     def get_attributes(self):
-        self.skill = data.rangedweapons_dict[self.name].skill
-        self.skillmod = data.rangedweapons_dict[self.name].skillmod
-        self.damage = data.rangedweapons_dict[self.name].damage
-        self.damagetype = data.rangedweapons_dict[self.name].damagetype
-        self.penetration = data.rangedweapons_dict[self.name].penetration
-        self.range = data.rangedweapons_dict[self.name].range
-        self.shot = data.rangedweapons_dict[self.name].shot
-        self.burst = data.rangedweapons_dict[self.name].burst
-        self.auto = data.rangedweapons_dict[self.name].auto
-        self.minstr = data.rangedweapons_dict[self.name].minstr
-        self.recoil = data.rangedweapons_dict[self.name].recoil
-        self.mag = data.rangedweapons_dict[self.name].mag
-        self.magtype = data.rangedweapons_dict[self.name].magtype
-        self.top = data.rangedweapons_dict[self.name].top
-        self.under = data.rangedweapons_dict[self.name].under
-        self.barrel = data.rangedweapons_dict[self.name].barrel
-        self.special = data.rangedweapons_dict[self.name].special
+        weapon_tuple = data.closecombatweapons_dict[self.name]._asdict()
+        for key, value in weapon_tuple.items():
+            setattr(self, key, value)
+        for attribute in ('damage', 'penetration'):
+            if isinstance(getattr(self, attribute), str):
+                setattr(self, attribute,
+                        round(eval(getattr(self, attribute).format(Strength=self.char_property_getter.get_attribute_value('Strength')))))
+
+    def get_net_skill_value(self):
+        minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
+        net_skill_value = self.char_property_getter.get_skill_value(self.skill) + self.skillmod - minstr_mod
+        return net_skill_value
+
+    def get_damage(self, cc_mod):
+        damage = []
+        skill = self.char_property_getter.get_skill_value(self.skill)
+        minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
+        net_value = -rules.shoot_base_difficulty + skill - minstr_mod + cc_mod
+        result = net_value
+        return damage, {'difficulty': rules.shoot_base_difficulty,  'minimum strength mod': minstr_mod,
+                        'skill': skill, 'other mods': cc_mod, 'result': result}
+
+
+class RangedWeapon(object):
+    def __init__(self, name, char):
+        self.char = char
+        self.name = name
+        self.char_property_getter = CharPropertyGetter(self.char)
+        self.range = 0
+        self.skill = ''
+        self.skillmod = 0
+        self.minstr = 0
+        self.recoil = 0
+        self.damage = 0
+        self.penetration = 0
+
+        self.get_attributes()
+
+    def get_attributes(self):
+        weapon_tuple = data.rangedweapons_dict[self.name]._asdict()
+        for key, value in weapon_tuple.items():
+            setattr(self, key, value)
+        for attribute in ('damage', 'penetration', 'range'):
+            if isinstance(getattr(self, attribute), str):
+                setattr(self, attribute,
+                        round(eval(getattr(self, attribute).format(Strength=self.char_property_getter.get_attribute_value('Strength')))))
 
     def get_shooting_difficulty(self, distance, magnification=1.):
         return rules.shooting_difficulty(self.range, magnification, distance)
@@ -826,9 +861,14 @@ class CharPropertyGetter():
         protection = rules.get_stacked_armor_value(protection)
         return protection
 
-    def get_weapons(self):
+    def get_ranged_weapons(self):
         weapons = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Ranged Weapon']
-        weapons = [Weapon(name, self.char) for name in weapons]
+        weapons = [RangedWeapon(name, self.char) for name in weapons]
+        return weapons
+
+    def get_close_combat_weapons(self):
+        weapons = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Close Combat Weapon']
+        weapons = [CloseCombatWeapon(name, self.char) for name in weapons]
         return weapons
 
     def get_maxlife(self):
