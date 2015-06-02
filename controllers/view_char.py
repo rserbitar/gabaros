@@ -1,5 +1,6 @@
 # coding: utf8
 # versuche so etwas wie
+import datetime
 import basic
 import data
 from random import gauss
@@ -556,3 +557,39 @@ def apply_damage():
     else:
        response.flash = 'please fill out the form'
     return dict(form=form)
+
+
+@auth.requires_login()
+def chat():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    player = db.chars[char_id].name
+    form=LOAD('view_char', 'ajax_form', args=char_id, ajax=True)
+    script=SCRIPT("""
+        var text = ''
+        jQuery(document).ready(function(){
+        var callback = function(e){alert(e.data);
+            text = e.data + '<br>' + text;
+            document.getElementById('text').innerHTML = text;};
+          if(!$.web2py.web2py_websocket('ws://127.0.0.1:8888/realtime/""" + str(player) + """', callback))
+            alert("html5 websocket not supported by your browser, try Google Chrome");
+        });""")
+    return dict(form=form, script=script)
+
+@auth.requires_login()
+def ajax_form():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    master = db.chars[char_id].master
+    charname = db.chars[char_id].name
+    now = datetime.datetime.now().time()
+    form=SQLFORM.factory(Field('message'))
+    if form.accepts(request,session):
+        from gluon.contrib.websocket_messaging import websocket_send
+        message = '{}:{} <b>{}</b>: {}'.format(now.hour, now.minute, charname, form.vars.message)
+        websocket_send('http://127.0.0.1:8888', message, 'mykey', master)
+    return form

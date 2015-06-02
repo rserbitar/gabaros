@@ -7,6 +7,41 @@ from random import gauss
 def index():
     return dict()
 
+
+@auth.requires_login()
+def chat():
+    form=LOAD('master', 'ajax_form', ajax=True)
+    script=SCRIPT("""
+        var text = ''
+        jQuery(document).ready(function(){
+        var callback = function(e){alert(e.data);
+            text = e.data + '<br>' + text;
+            document.getElementById('text').innerHTML = text;};
+          if(!$.web2py.web2py_websocket('ws://127.0.0.1:8888/realtime/""" + str(auth.user.id) + """', callback))
+            alert("html5 websocket not supported by your browser, try Google Chrome");
+        });
+    """)
+    return dict(form=form, script=script)
+
+@auth.requires_login()
+def ajax_form():
+    players = db(db.chars.master==auth.user.id).select(db.chars.name)
+    players = [i.name for i in players]
+    form=SQLFORM.factory(Field('message'),
+                         Field('players',
+                               type='list',
+                               requires=IS_IN_SET(players)))
+    if form.accepts(request,session):
+        from gluon.contrib.websocket_messaging import websocket_send
+        players = form.vars.players
+        if not isinstance(players, list):
+            players = [players]
+        for player in players:
+            websocket_send(
+                'http://127.0.0.1:8888', form.vars.message, 'mykey', player)
+    return form
+
+
 @auth.requires_login()
 def live():
     db.rolls.char.represent = lambda char: db.chars[char].name
