@@ -915,7 +915,6 @@ class CharPropertyGetter():
             damagemod = rules.lifemod_absolute(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
         else:
             damagemod = 0
-            damagemod = 0
         return damagemod
 
 
@@ -1195,6 +1194,11 @@ class CharPropertyPutter():
                    percent=False, resist=False):
         charpropertygetter = CharPropertyGetter(self.char, 'stateful')
         armor = charpropertygetter.get_protection(bodypart, typ)
+        if percent:
+            value = charpropertygetter.get_maxlife()*value/100
+        if resist:
+            attribute = charpropertygetter.get_attribute_value(resist[0])
+            value = rules.resist_damage(value, attribute, 0, resist[1])
         damage = float(max(0, value - max(0, armor-penetration)))
         bodykind = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
         if bodykind != 'cyberware':

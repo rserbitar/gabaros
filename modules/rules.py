@@ -7,6 +7,7 @@
 from collections import OrderedDict
 from math import log, e, atan
 from scipy.special import erfinv, erf
+from random import gauss
 # request, response, session, cache, T, db(s)
 # must be passed and cannot be imported!
 
@@ -43,6 +44,10 @@ lighting_conditions = ['clear', 'badly lit office', 'streetlight', 'city glow', 
                        'overcast moonless night']
 particle_conditions = ['clear', 'drizzle', 'light rain', 'heavy rain', 'thunderstorm', 'light fog (100m)',
                        'medium fog (50m)', 'heavy fog (10m)', 'light smoke', 'heavy smoke']
+
+
+def die_roll():
+    return gauss(0,10)
 
 
 def attrib_mod(attribute, base):
@@ -283,6 +288,10 @@ def resist_drain(drain, willpower, resistbonus, roll):
     return drain * 2 ** (-resist / 10.)
 
 
+def resist_damage(damage, attribute, resistbonus, roll):
+    resist = log(attribute / 30) / log(2) * 10 + resistbonus + roll
+    return damage * 2 ** (-resist / 10.)
+
 def summoning_services(force, resistroll, skill, summonroll):
     forcemod = attrib_mod(force, 30)
     result = (skill + summonroll - forcemod - resistroll) / 10.
@@ -382,3 +391,9 @@ def firewall_rating(time, skill, system, users):
 
 def get_stacked_armor_value(values):
     return sum([val/float(i+1) for i,val in enumerate(sorted(values, reverse=True))])
+
+def scale(x):
+    2**(x/10.)
+
+def price_by_rating(baseprice, rating):
+    return (1+(2**(rating/10.)))/9.*baseprice

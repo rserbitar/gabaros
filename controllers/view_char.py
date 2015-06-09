@@ -4,10 +4,36 @@ import datetime
 import basic
 import data
 from random import gauss
+import rules
 
 
 def index():
     redirect(URL('view_chars'))
+
+def roll(char_id, value, name, visible):
+    roll = int(rules.die_roll())
+    if value is None:
+        value = -100
+    else:
+        value = float(value)
+    if name is None:
+        name = ''
+    name = name.replace('_', ' ')
+    result = int(round(value + roll))
+    db.rolls.insert(char=char_id, name=name, value=value, roll=roll, result=result, visible=visible)
+    return result
+
+def roll_button():
+    value = request.args(2)
+    char = int(request.args(0))
+    name = request.args(1)
+    visible = int(request.args(3))
+    result = roll(char, value, name, visible)
+    if visible:
+        response.js = 'jQuery(".flash").html("{}: {}").slideDown();'.format(name, result)
+    else:
+        response.js = 'jQuery(".flash").html("{} roll was sent!").slideDown();'.format(name)
+
 
 @auth.requires_login()
 def view_chars():
@@ -35,27 +61,6 @@ def view_char():
                 A("combat", _href=URL('combat', args=[char])),
                 ]
     return dict(linklist=linklist)
-
-
-def roll_button():
-    value = request.args(2)
-    char = int(request.args(0))
-    name = request.args(1)
-    visible = int(request.args(3))
-    roll = int(round(gauss(0, 10)))
-    if value is None:
-        value = -100
-    else:
-        value = float(value)
-    if name is None:
-        name = ''
-    name = name.replace('_', ' ')
-    result = int(round(value + roll))
-    db.rolls.insert(char=char, name=name, value=value, roll=roll, result=result, visible=visible)
-    if visible:
-        response.js = 'jQuery(".flash").html("{}: {}").slideDown();'.format(name, result)
-    else:
-        response.js = 'jQuery(".flash").html("{} roll was sent!").slideDown();'.format(name)
 
 
 @auth.requires_login()
@@ -509,13 +514,16 @@ def apply_damage():
     if form.process().accepted:
         char = basic.Char(db, char_id)
         char_property_putter = basic.CharPropertyPutter(char)
+        resist = False
+        if form.vars.resist:
+            resist = [form.vars.resist, roll(char_id, 0, 'Resist roll', 1)]
         damage_text = char_property_putter.put_damage(form.vars.damage,
                                                       form.vars.penetration,
                                                       form.vars.bodypart,
                                                       form.vars.kind,
                                                       form.vars.typ,
                                                       form.vars.percent,
-                                                      form.vars.resist
+                                                      resist
                                                       )
         response.flash = damage_text
     elif form.errors:
@@ -536,9 +544,9 @@ def apply_damage():
               Field('bodypart', 'string', requires=IS_IN_SET(['Body'] + data.main_bodyparts), default = 'Body'),
               Field('kind', 'string', requires=IS_IN_SET(data.damagekinds_dict.keys()), default = 'physical',
                     label = 'Damage Kind'),
-              Field('typ', 'string', requires=IS_IN_SET(['ballistic','impact']), default = 'ballistic'),
+              Field('typ', 'string', requires=IS_IN_SET(['ballistic','impact', 'none']), default = 'ballistic'),
               Field('percent', 'boolean', default = False),
-              Field('resist', 'boolean', default = False)]
+              Field('resist', 'str', requires=IS_IN_SET(['', 'Willpower', 'Body']), default = '')]
     form = SQLFORM.factory(*fields, table_name = 'damage_apply')
     if form.process().accepted:
         char = basic.Char(db, char_id)
