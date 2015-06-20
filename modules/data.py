@@ -1033,37 +1033,43 @@ spells_nt = namedtuple('spell', ['id'] + spells[0])
 spells_dict = OrderedDict([(entry[0], spells_nt(*([i] + entry))) for i, entry in enumerate(spells[1:])])
 
 
+#weight:payloads:
+# cars: 1:1
+# rotorcraft 1:1
+# vector thrust: 2:1
+# jets: 3:1
+# bike 2:1
 vehicles = [
     ["name", "weight", "max speed", "acceleration", "load", 'size', 'Body', 'Armor'],
-    ['Lady Bug', 0.0005, 10, '', '', '', 0.01, 20, 1],
-    ['Hummel', 0.001, 12, '', '', '', 0.025, 20, 1],
-    ['Libelle', 0.005, 13, '', '', '', 0.1, 15, 1],
-    ['Roach', 0.01, 1, '', '', '', 0.05, 40, 3], #American Roach
-    ['Kanmushi', 0.0005, 0.2, '', '', '', 0.01, 30, 1],
-    ['Spider', 0.1, 4, '', '', '', 0.2, 30, 1], #Vogelspinne
-    ['Flying Football', 5, 25, '', '', 5, 0.5, 30, 30],
-    ['Ball', 0.5, 10, '', '', 0.5, 0.1, 40, 5],
-    ['Blimp', 10, 15, '', '', 10, 2, 20, 0],
-    ['Cat', 4, 10, '', '', 1, 0.4, 30, 1],
-    ['Wheeled Dog', 20, 25, '', '', 20, 0.5, 40, 40],
-    ['Steel Lynx', 100, 40, '', '', 100, 1, 40, 50],
-    ['Vector Thrust Lynx', 100, 60, '', '', 50, 1, 30, 40],
-    ['Mini Plane', 2, 40, '', '', 1, 1, 20, 1],
-    ['Jet Drone', 8, 120, '', '', 3, 2, 20, 20],
-    ['Hover Drone', 2, 30, '', '', 2, 0.5, 30, 3],
-    ['Google Car', 500, 30, '', '', 300, 2.5, 40, 10],
-    ['Speed Car', 1500, 85, '', '', 300, 4.5, 40, 10],
-    ['Ford Americar', 1500, 50, '', '', 500, 5, 40, 15], # opel astra
-    ['Pizza Van', 2000, 40, '', '', 1500, 5.5, 40, 15], #sprinter kurz
-    ['Runner Van', 2500, 30, '', '', 2500, 7, 40, 15], #sprinter lang
-    ['Speedbike', 200, 85, '', '', 120, 2, 30, 10], # ducati 1199
-    ['Hard Bike', 350, 50, '', '', 200, 2.5, 40, 15], # harley davidson breakout
-    ['Wasp', '', '', '', '', '', ''],
-    ['Commuting Helicopter', '', '', '', '', '', ''],
-    ['APC', 10000, 30, '', '', 5000, 7, 50, 150], # LAV
-    ['IFV', 15000, 20, '', '', 15000, 7, 50, 200], # Bradley
-    ['Tank', 30000, 20, '', '', 30000, 9, 50, 500], # Leopard 2a6
-    ['', '', '', '', '', '', ''],
+    ['Lady Bug', 0.0005, 10, 3, '', '', 0.01, 20, 1],
+    ['Hummel', 0.001, 12, 4, '', '', 0.025, 20, 1],
+    ['Libelle', 0.005, 13, 5, '', '', 0.1, 15, 1],
+    ['Roach', 0.01, 1, 1, '', '', 0.05, 40, 3], #American Roach
+    ['Kanmushi', 0.0005, 0.2, 0.2, '', '', 0.01, 30, 1],
+    ['Spider', 0.1, 4, 4, '', '', 0.2, 30, 1], #Vogelspinne
+    ['Flying Football', 5, 25, 4, 5, 0.5, 30, 30],
+    ['Ball', 0.5, 10, 3, 0.5, 0.1, 40, 5],
+    ['Blimp', 10, 15, 1, 10, 2, 20, 0],
+    ['Cat', 4, 10, 5, 1, 0.4, 30, 1],
+    ['Wheeled Dog', 20, 25, 2, 20, 0.5, 40, 40],
+    ['Steel Lynx', 100, 40, 3, 100, 1, 40, 50],
+    ['Vector Thrust Lynx', 100, 60, 4, 50, 1, 30, 40],
+    ['Mini Plane', 3, 40, 5, 2, 1, 20, 1],
+    ['Jet Drone', 20, 120, 10, 7, 2, 20, 20],
+    ['Hover Drone', 2, 30, 2, 2, 0.5, 30, 3],
+    ['Google Car', 500, 30, 2, 300, 2.5, 40, 10],
+    ['Speed Car', 1500, 85, 5, 300, 4.5, 40, 10],
+    ['Ford Americar', 1500, 50, 2, 500, 5, 40, 15], # opel insignia
+    ['Pizza Van', 2000, 40, 2, 1500, 5.5, 40, 15], #sprinter kurz
+    ['Runner Van', 2500, 30, 1.5, 2500, 7, 40, 15], #sprinter lang
+    ['Speedbike', 200, 85, 6, 120, 2, 30, 10], # ducati 1199
+    ['Hard Bike', 350, 50, 4,  200, 2.5, 40, 15], # harley davidson breakout
+    ['Combat Helicopter', 5000, 80, 6, 3000, 15, 40, 50], # apache
+    #['Commuting Helicopter', '', '', '', '', '', ''],
+    ['APC', 10000, 30, 1, '', 5000, 7, 50, 150], # LAV
+    ['IFV', 15000, 15, 1, '', 15000, 7, 50, 200], # Bradley
+    ['Tank', 30000, 20, 2, '', 30000, 9, 50, 500], # Leopard 2a6
+    #['', '', '', '', '', '', ''],
 ]
 
 vehicles_nt = namedtuple('vehicles', ['id'] + vehicles[0])

@@ -113,11 +113,17 @@ def life(weight, constitution):
 
 
 def woundlimit(weight, constitution):
-    percent = 5 * (erf((1.05 ** constitution ** 0.2))) - 4.25
-    return percent * life(weight, constitution)
+    percent = 5 * (erf((1.05 ** constitution ** 0.204))) - 4.25
+    lifeval = life(weight, constitution)
+    return percent * 3 * lifeval  /((1+lifeval)**(1/3.))
 
-def woundeffect(attribute, wounds):
-    return attribute * (0.5)**wounds
+
+def wound_for_destroy_thresh(weight, constitution):
+    return woundlimit(weight, constitution)/life(weight, constitution)/10.*3
+
+
+def woundeffect(attribute, wounds, weight, constitution):
+    return attribute * (0.5)**(wounds * wound_for_destroy_thresh(weight, constitution)/3.)
 
 
 def action_cost(kind, actionmult):
