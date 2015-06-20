@@ -680,6 +680,7 @@ gameitems = [
     ["Light MG", "Ranged Weapon", 40,   5000, 6.5, 20, 10, 70, False],
     ["Medium MG", "Ranged Weapon", 50, 10000, 10.0, 20, 10, 75, False],
     ["Heavy MG", "Ranged Weapon", 60, 25000, 30.0, 20, 10, 80, False],
+    ["Assault Cannon", "Ranged Weapon", 60, 15000, 15.0, 20, 10, 80, False],
     ["Bow", "Ranged Weapon", 10, 500, 0.0, 20, 10, 40, False],
     ["Orc Bow", "Ranged Weapon", 20, 1000, 30.0, 20, 10, 45, False],
     ["Troll Bow", "Ranged Weapon", 30, 2000, 30.0, 20, 10, 50, False],
@@ -774,13 +775,15 @@ rangedweapons = [
     ["Machine Pistol", "Automatics", 0., 8., "ballistic", 10., 10, 6, 12, 18, 40, 15, 20, "", 1, 0, 1, None, 1],
     ["Sub-Machine-Gun", "Automatics", 0., 8., "ballistic", 10., 20, 6, 15, 30, 20, 7, 30, "", 1, 0, 1, None, 2],
     ["Shotgun", "Long Rifle", 0., 18., "ballistic", 20., 20, 5, 0, 0, 40, 15, 6, "", 1, 1, 1, None, 2],
-    ["Battle Rifle", "Automatics", 0., 18., "ballistic", 30., 100, 4, 10, 20, 54, 20, 20, "", 1, 1, 1,
+    ["Battle Rifle", "Automatics", 0., 18., "ballistic", 30., 100, 4, 10, 20, 54, 20, 20, "", 1, 1, 1, # g3
      None, 2],
-    ["Assault Rifle", "Automatics", 0., 12., "ballistic", 20., 80, 5, 12, 18, 36, 12, 30, "", 1, 1, 1, None, 2],
+    ["Assault Rifle", "Automatics", 0., 12., "ballistic", 20., 80, 5, 12, 18, 36, 12, 30, "", 1, 1, 1, None, 2], #g36
     ["Sniper Rifle", "Long Rifles", 0., 18., "ballistic", 30., 160, 2, 0, 0, 60, 15, 10, "", 1, 1, 1, None, 2],
     ["Light MG", "Automatics", 0., 12., "ballistic", 20., 120, 2, 20, 40, 60, 10, 100, "", 1, 1, 1, None, 2],
     ["Medium MG", "Automatics", 0., 18., "ballistic", 30., 150, 1, 20, 40, 80, 15, 100, "", 1, 1, 1, None, 2],
-    ["Heavy MG", "Automatics", 0., 60., "ballistic", 80., 300, 1, 30, 50, 180, 25, 100, "", 1, 1, 1, None, 2],
+    ["Heavy MG", "Automatics", 0., 42., "ballistic", 76., 300, 1, 30, 50, 180, 25, 100, "", 1, 1, 1, None, 2], #browning m2
+    ["Assault Cannon", "Long Rifles", 0., 42., "ballistic", 76., 300, 1, 0, 0, 120, 25, 5, "", 1, 1, 1, None, 2], #light fifty
+
     ["Bow", "Archery", 0., '5+{Strength}/10.', "impact", '5+{Strength}/10.', 30, 1, 1, 1, 30, 0, 0, "", 1, 1, 1, None, 2],
     ["Orc Bow", "Archery", 0., '10+{Strength}/10.', "impact", '10+{Strength}/10.', 50, 1, 1, 1, 60, 0, 0, "", 1, 1, 1, None, 2],
     ["Troll Bow", "Archery", 0., '15+{Strength}/10.', "impact", '15+{Strength}/10.', 60, 1, 1, 1, 90, 0, 0, "", 1, 1, 1, None, 2],
@@ -1028,3 +1031,40 @@ spells = [
 
 spells_nt = namedtuple('spell', ['id'] + spells[0])
 spells_dict = OrderedDict([(entry[0], spells_nt(*([i] + entry))) for i, entry in enumerate(spells[1:])])
+
+
+vehicles = [
+    ["name", "weight", "max speed", "acceleration", "load", 'size', 'Body', 'Armor'],
+    ['Lady Bug', 0.0005, 10, '', '', '', 0.01, 20, 1],
+    ['Hummel', 0.001, 12, '', '', '', 0.025, 20, 1],
+    ['Libelle', 0.005, 13, '', '', '', 0.1, 15, 1],
+    ['Roach', 0.01, 1, '', '', '', 0.05, 40, 3], #American Roach
+    ['Kanmushi', 0.0005, 0.2, '', '', '', 0.01, 30, 1],
+    ['Spider', 0.1, 4, '', '', '', 0.2, 30, 1], #Vogelspinne
+    ['Flying Football', 5, 25, '', '', 5, 0.5, 30, 30],
+    ['Ball', 0.5, 10, '', '', 0.5, 0.1, 40, 5],
+    ['Blimp', 10, 15, '', '', 10, 2, 20, 0],
+    ['Cat', 4, 10, '', '', 1, 0.4, 30, 1],
+    ['Wheeled Dog', 20, 25, '', '', 20, 0.5, 40, 40],
+    ['Steel Lynx', 100, 40, '', '', 100, 1, 40, 50],
+    ['Vector Thrust Lynx', 100, 60, '', '', 50, 1, 30, 40],
+    ['Mini Plane', 2, 40, '', '', 1, 1, 20, 1],
+    ['Jet Drone', 8, 120, '', '', 3, 2, 20, 20],
+    ['Hover Drone', 2, 30, '', '', 2, 0.5, 30, 3],
+    ['Google Car', 500, 30, '', '', 300, 2.5, 40, 10],
+    ['Speed Car', 1500, 85, '', '', 300, 4.5, 40, 10],
+    ['Ford Americar', 1500, 50, '', '', 500, 5, 40, 15], # opel astra
+    ['Pizza Van', 2000, 40, '', '', 1500, 5.5, 40, 15], #sprinter kurz
+    ['Runner Van', 2500, 30, '', '', 2500, 7, 40, 15], #sprinter lang
+    ['Speedbike', 200, 85, '', '', 120, 2, 30, 10], # ducati 1199
+    ['Hard Bike', 350, 50, '', '', 200, 2.5, 40, 15], # harley davidson breakout
+    ['Wasp', '', '', '', '', '', ''],
+    ['Commuting Helicopter', '', '', '', '', '', ''],
+    ['APC', 10000, 30, '', '', 5000, 7, 50, 150], # LAV
+    ['IFV', 15000, 20, '', '', 15000, 7, 50, 200], # Bradley
+    ['Tank', 30000, 20, '', '', 30000, 9, 50, 500], # Leopard 2a6
+    ['', '', '', '', '', '', ''],
+]
+
+vehicles_nt = namedtuple('vehicles', ['id'] + vehicles[0])
+vehicles_dict = OrderedDict([(entry[0], vehicles_nt(*([i] + entry))) for i, entry in enumerate(vehicles[1:])])
