@@ -231,21 +231,31 @@ def lifemod_relative(life, maxlife):
 #        mult *= (0.6 * atan(4 * (charmodmult - 1.1 + (effectmult - 1) / 3.)) + 1.23)
 #    return mult
 
-def warecostmult(effectmult=1, charmodmult=1, weightmult=1, kind="cyberware"):
+
+def warecost(cost, effectmult = 1, essencemult = 1., kind = 'cyberware'):
+    finalcost = 0
     if kind == 'cyberware':
-        mult = 3 ** (effectmult - 1.)
-        mult *= 1 / charmodmult ** 2
-    if kind == "bioware":
-        mult = 5 ** (effectmult - 1.)
-        mult *= 1 / charmodmult ** 1
+        finalcost = cost * 5**(effectmult-1.) * 10**(1./essencemult-1.)
+    elif kind == 'bioware':
+        finalcost = cost * 7**(effectmult-1.) * 5**(1./essencemult-1)
+    return finalcost
+
+
+#def warecost(basecost, cost, attributes, effectsmult, charmodmult=1, weightmult=1, kind='cyber'):
+#    return basecost + sum([attributes[i] * warecostmult(effectsmult[i], charmodmult, weightmult, kind)
+#                           for i in range(len(attributes))]) * 5000 + cost * warecostmult(1, charmodmult, weightmult,
+#                                                                                          kind)
+
+def essence_charisma_mult(essence):
+    mult = max(0, 0.5 + essence/200.)
     return mult
 
+def essence_magic_mult(essence):
+    mult = max(0,essence/100.)
+    return mult
 
-def warecost(basecost, cost, attributes, effectsmult, charmodmult=1, weightmult=1, kind='cyber'):
-    return basecost + sum([attributes[i] * warecostmult(effectsmult[i], charmodmult, weightmult, kind)
-                           for i in range(len(attributes))]) * 5000 + cost * warecostmult(1, charmodmult, weightmult,
-                                                                                          kind)
-
+def essence_psycho_thresh(essence):
+    return log(1./(1-(essence/100.)))/log(2)*10+10
 
 def weapondamage(damage, testresult):
     if testresult > 60:

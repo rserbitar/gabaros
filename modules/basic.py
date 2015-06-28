@@ -373,7 +373,7 @@ class Ware(object):
         self.db = db
         self.name = name
         self.kind = None
-        self.charismamod = None
+        self.essence = None
         self.part_weight = None
         self.additional_weight = None
         self.description = None
@@ -387,12 +387,13 @@ class Ware(object):
     def load_basic_data(self):
         ware_nt = data.ware_dict[self.name]
         self.kind = ware_nt.kind
-        self.charismamod = ware_nt.charismamod
+        self.essence = ware_nt.essence
         self.part_weight = ware_nt.part_weight
         self.additional_weight = ware_nt.additional_weight
         self.description = ware_nt.description
         self.basecost = ware_nt.basecost
-        self.cost = ware_nt.cost
+        self.effectcost = ware_nt.effectcost
+        self.partcost = ware_nt.partcost
         self.parts = ware_nt.parts
         self.effects = ware_nt.effects
         self.location = ware_nt.location
@@ -413,6 +414,8 @@ class CharWare(Ware):
             if attribute.kind == 'physical' or attribute.name == 'Weight':
                 value = char_property_getter.get_attribute_value(attribute.name)
                 self.db.char_ware_stats.bulk_insert([{'ware': self.db_id, 'stat': attribute.name, 'value': value}])
+        essence_value = data.essence_by_ware[self.kind]
+        self.db.char_ware_stats.bulk_insert([{'ware': self.db_id, 'stat': 'Essence', 'value': essence_value}])
 
     def load_extra_data(self):
         db_cws = self.db.char_ware_stats
@@ -439,6 +442,34 @@ class CharWare(Ware):
 #        else:
 #            weight = self.additional_weight
 #        return weight
+
+    def get_cost(self):
+        essencemult = self.stats['Essence']/100.
+        cost = rules.warecost(self.basecost, kind = self.kind)
+        cost += rules.warecost(self.effectcost, essencemult=essencemult )
+        if self.parts:
+            char_property_getter = CharPropertyGetter(self.char, modlevel='base')
+            size = char_property_getter.get_attribute_value('Size')
+            weight_base = data.attributes_dict['Weight'].base
+            size_base = data.attributes_dict['Size'].base
+            weight = rules.calc_base_weight(weight_base, size, size_base)
+            for part in self.parts:
+                bodypart = char_property_getter.char_body.bodyparts[part].bodypart
+                for attribute in ['Agility', 'Constitution', 'Coordination', 'Strength']:
+                    base = 30.
+                    if attribute == 'Agility':
+                        agility_base = data.attributes_dict['Agility'].base
+                        base = rules.calc_agility_base(agility_base, weight, weight_base)
+                    elif attribute == 'Strength':
+                        strength_base = data.attributes_dict['Strength'].base
+                        base = rules.calc_base_strength(strength_base, size, size_base, weight, weight_base)
+                    value = self.stats[attribute]
+                    frac = bodypart.get_fraction(attribute)
+                    cost += frac * rules.warecost(self.partcost,
+                                                  effectmult=value/base,
+                                                  essencemult=essencemult,
+                                                  kind=self.kind)
+        return cost
 
 
 class AdeptPower(object):
@@ -540,9 +571,11 @@ class CharBody():
     def get_location_ware(self, name):
         pass
 
+    def get_essence(self):
+        pass
 
 BodyFractions = collections.namedtuple('BodyFraction',
-                                       ['Weight', 'Size', 'Charisma', 'Agility',
+                                       ['Weight', 'Size', 'Essence', 'Agility',
                                         'Coordination', 'Strength', 'Constitution'])
 
 
@@ -564,7 +597,7 @@ class Bodypart(object):
         self.parent = self.body.bodyparts.get(bodypart_nt.parent, None)
         self.relative_body_fractions = BodyFractions(Weight=bodypart_nt.weightfrac,
                                                      Size=bodypart_nt.sizefrac,
-                                                     Charisma=bodypart_nt.charismafrac,
+                                                     Essence=bodypart_nt.essencefrac,
                                                      Agility=bodypart_nt.agilityfrac,
                                                      Coordination=bodypart_nt.coordinationfrac,
                                                      Strength=bodypart_nt.strengthfrac,
@@ -607,11 +640,16 @@ class CharBodypart():
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             value = sum([part.get_attribute_absolute(attribute, modlevel) for part in child_char_bodyparts])
             if modlevel == 'stateful':
-                if self.wounds and attribute not in ('Size', 'Weight', 'Constitution'):
-                    value = rules.woundeffect(value, sum(self.wounds.values()))
+                if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
+                    weight = self.get_attribute_relative('Weight')
+                    constitution = self.get_attribute_relative('Constitution')
+                    value = rules.woundeffect(value, sum(self.wounds.values()), weight, constitution)
             return value
         else:
-            value = self.char.attributes[attribute]
+            if attribute == 'Essence':
+                value = 100.
+            else:
+                value = self.char.attributes[attribute]
             if modlevel in ('augmented', 'temporary', 'stateful'):
                 if self.ware:
                     value = self.ware.stats[attribute]
@@ -623,8 +661,10 @@ class CharBodypart():
                                     formula = effect[2].format(Value = adept_power.value, Magic = magic)
                                     value = eval('value {}'.format(formula))
             if modlevel == 'stateful':
-                if self.wounds and attribute not in ('Size', 'Weight', 'Constitution'):
-                    value = rules.woundeffect(value, sum((self.wounds.values())))
+                if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
+                    weight = self.get_attribute_relative('Weight')
+                    constitution = self.get_attribute_relative('Constitution')
+                    value = rules.woundeffect(value, sum(self.wounds.values()), weight, constitution)
             fraction = self.bodypart.get_fraction(attribute)
             value *= fraction
             self.attributes[(attribute, modlevel)] = value
@@ -635,11 +675,14 @@ class CharBodypart():
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             return sum([part.get_life() for part in child_char_bodyparts])
         else:
-            weight = self.get_attribute_relative('Weight')
-            constitution = self.get_attribute_relative('Constitution')
-            fraction = self.bodypart.get_fraction('Weight')
-            life = fraction * rules.life(weight, constitution)
-            return life
+            if self.get_kind() == 'cyberware':
+                return 0.
+            else:
+                weight = self.get_attribute_relative('Weight')
+                constitution = self.get_attribute_relative('Constitution')
+                fraction = self.bodypart.get_fraction('Weight')
+                life = fraction * rules.life(weight, constitution)
+                return life
 
     def get_woundlimit(self, modlevel = 'stateful'):
         constitution = self.get_attribute_relative('Constitution', modlevel)
@@ -671,7 +714,7 @@ class CharPropertyGetter():
         self.maxlife = None
 
     def get_bodypart_table(self):
-        attributes = ['Agility', 'Constitution', 'Coordination', 'Strength', 'Weight']
+        attributes = ['Essence', 'Agility', 'Constitution', 'Coordination', 'Strength', 'Weight']
         table = [['Name'] + attributes + ['Ware', 'Woundlimit', 'Wounds']]
         for bodypartname in data.bodyparts_dict:
             templist = []
@@ -750,7 +793,10 @@ class CharPropertyGetter():
                 value *= getattr(data.races_dict[self.char.race], attribute)
         # unaugmented modlevel includes basic attribute values without any modifiers
         elif self.modlevel == 'unaugmented':
-            value = self.char.attributes[attribute]
+            if attribute == 'Essence':
+                value = 100.
+            else:
+                value = self.char.attributes[attribute]
         # augmented modlevel includes permanent modifications including cyberware, bioware, adept powers and more
         # temporary modlevel includes drugs, spells, encumbrance
         # stateful modlevel includes damage
@@ -759,7 +805,7 @@ class CharPropertyGetter():
             if attribute == 'Weight':
                 #implicitly includes wounds
                 value = self.char_body.bodyparts['Body'].get_attribute_absolute(attribute, self.modlevel)
-            elif data.attributes_dict[attribute].kind == 'physical':
+            elif attribute == 'Essence' or data.attributes_dict[attribute].kind == 'physical':
                 #implicitly includes wounds
                 value = self.char_body.bodyparts['Body'].get_attribute_absolute(attribute, self.modlevel)
             else:
@@ -769,6 +815,16 @@ class CharPropertyGetter():
                 for effect in ware.effects:
                     if effect[0] == 'attributes' and effect[1] == attribute:
                         value = eval('value {}'.format(effect[2]))
+            #subtract Essence from non located ware
+            if attribute == 'Essence':
+                for ware in self.char.ware:
+                    value -= (1 - ware.stats['Essence']/100.) * ware.essence
+            elif attribute == 'Charisma':
+                    essence = self.get_attribute_value('Essence')
+                    value *= rules.essence_charisma_mult(essence)
+            elif attribute == 'Magic':
+                    essence = self.get_attribute_value('Essence')
+                    value *= rules.essence_magic_mult(essence)
             # calculate armor modifications
             if self.modlevel in ('stateful'):
                 if attribute == 'Agility':
@@ -789,7 +845,10 @@ class CharPropertyGetter():
         :param attribute: the attribute to get
         """
         value = self.get_attribute_value(attribute)
-        base = data.attributes_dict[attribute].base
+        if attribute == 'Essence':
+            base = 100.
+        else:
+            base = data.attributes_dict[attribute].base
         return rules.attrib_mod(value, base)
 
     def get_attribute_test_value(self, attribute):
@@ -981,17 +1040,30 @@ class CharPropertyGetter():
         cost = rules.action_cost(kind, actionmult)
         return cost
 
+    def get_psycho_thresh(self):
+        essence = self.get_attribute_value('Essence')
+        thresh = rules.essence_psycho_thresh(essence)
+        return thresh
 
     def get_total_exp(self):
         """
 
-
         """
-        summe = 0
-        #summe += self.get_skill_xp_cost()
-        #summe += self.get_attribute_xp_cost()
-        summe += self.get_spell_xp_cost()
-        return summe
+        xp = {}
+        xp['Attributes'] = 0
+        for attribute in data.attributes_dict:
+            xp['Attributes']  += self.get_attribute_xp_cost(attribute)
+        xp['Skills'] = 0
+        for skill in data.skills_dict:
+            xp['Skills'] += self.get_skill_xp_cost(skill)
+        xp['Spells'] = self.get_spell_xp_cost()
+        return xp
+
+    def get_total_cost(self):
+        cost = {}
+        for ware in self.char.ware:
+            cost[ware.name] = ware.get_cost()
+        return cost
 
 
 class LoadoutPropertyGetter(Loadout):

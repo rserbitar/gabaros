@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+
+<table>
+    <tr>
+        {{for entry in ['Category', 'XP']:}}
+        {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
+        {{pass}}
+    </tr>
+    {{for key, value in xp.items():}}
+    <tr>
+        {{=TD(XML(key), _style="padding-right:10px;text-align:left;")}}
+        {{=TD(int(round(value,0)), _style="padding-right:10px;text-align:left;")}}
+    </tr>
+    {{pass}}
+    <tr>
+    {{=TD(XML('Total'), _style="padding-right:10px;text-align:left;")}}
+    {{=TD(int(round(totalxp)), _style="padding-right:10px;text-align:left;")}}
+    </tr>
+</table>

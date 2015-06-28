@@ -188,7 +188,7 @@ def edit_ware():
 #        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
 #        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
     return dict(ware=ware, form=form, stats=[key for key, value in data.attributes_dict.items()
-                                             if value.kind == 'physical' or value.name == 'Weight'])
+                                             if value.kind == 'physical' or value.name == 'Weight'] + ['Essence'])
 
 
 @auth.requires_login()

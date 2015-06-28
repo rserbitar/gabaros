@@ -5,6 +5,7 @@ import basic
 import data
 from random import gauss
 import rules
+from collections import OrderedDict
 
 
 def index():
@@ -98,7 +99,7 @@ def view_attributes():
     char_property_getter2 = basic.CharPropertyGetter(char, modlevel = 'augmented')
     char_property_getter3 = basic.CharPropertyGetter(char, modlevel = 'temporary')
     char_property_getter4 = basic.CharPropertyGetter(char, modlevel = 'stateful')
-    for attribute in data.attributes_dict.keys():
+    for attribute in data.attributes_dict.keys()+ ['Essence']:
         unaugmented = round(char_property_getter.get_attribute_value(attribute),2)
         augmented = round(char_property_getter2.get_attribute_value(attribute),2)
         temporary = round(char_property_getter3.get_attribute_value(attribute),2)
@@ -442,23 +443,21 @@ def view_stats():
         redirect(URL(f='index'))
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
     char_physical_property_getter = basic.CharPhysicalPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
-    maxlife = int(round(char_property_getter.get_maxlife()))
-    action_mult = round(char_physical_property_getter.get_actionmult(),2)
-    reaction = int(round(char_physical_property_getter.get_reaction()))
-    jump_dist_stand = round(char_physical_property_getter.get_jump_distance(False),2)
-    jump_dist_run = round(char_physical_property_getter.get_jump_distance(True),2)
-    jump_height_stand = round(char_physical_property_getter.get_jump_height(False),2)
-    jump_height_run = round(char_physical_property_getter.get_jump_height(True),2)
+    stats = OrderedDict()
+    stats['Maximum life'] = int(round(char_property_getter.get_maxlife()))
+    stats['Action Multiplier '] = round(char_physical_property_getter.get_actionmult(),2)
+    stats['Physical Reaction'] = int(round(char_physical_property_getter.get_reaction()))
+    stats['Standing Jump Distance']  = round(char_physical_property_getter.get_jump_distance(False),2)
+    stats['Running Jump Distance']  = round(char_physical_property_getter.get_jump_distance(True),2)
+    stats['Standing Jump Height']  = round(char_physical_property_getter.get_jump_height(False),2)
+    stats['Running Jump Height']  = round(char_physical_property_getter.get_jump_height(True),2)
     speed = [round(i,2) for i in char_physical_property_getter.get_speed()]
+    stats['Walk Speed'] = speed[0]
+    stats['Run Speed'] = speed[1]
+    stats['Sprint Speed'] = speed[2]
+    stats['Psychological Threshold'] = char_property_getter.get_psycho_thresh()
 
-    return dict(maxlife=maxlife,
-                action_mult=action_mult,
-                reaction=reaction,
-                jump_dist_stand=jump_dist_stand,
-                jump_dist_run=jump_dist_run,
-                jump_height_stand=jump_height_stand,
-                jump_height_run=jump_height_run,
-                speed=speed)
+    return dict(stats)
 
 
 @auth.requires_login()
@@ -586,6 +585,7 @@ def chat():
         });""")
     return dict(form=form, script=script)
 
+
 @auth.requires_login()
 def ajax_form():
     char_id = request.args(0)
@@ -601,3 +601,26 @@ def ajax_form():
         message = '{}:{} <b>{}</b>: {}'.format(now.hour, now.minute, charname, form.vars.message)
         websocket_send('http://127.0.0.1:8888', message, 'mykey', master)
     return form
+
+
+@auth.requires_login()
+def view_xp():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
+    xp = char_property_getter.get_total_exp()
+    totalxp = sum(xp.values())
+    return dict(totalxp=totalxp, xp=xp)
+
+
+def view_cost():
+    char_id = request.args(0)
+    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
+                                 and db.chars[char_id].master != auth.user.id):
+        redirect(URL(f='index'))
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
+    cost = char_property_getter.get_total_cost()
+    totalcost = sum(cost.values())
+    return dict(totalcost=totalcost, cost=cost)
