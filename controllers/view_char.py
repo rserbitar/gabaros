@@ -456,6 +456,7 @@ def view_stats():
     stats['Run Speed'] = speed[1]
     stats['Sprint Speed'] = speed[2]
     stats['Psychological Threshold'] = char_property_getter.get_psycho_thresh()
+    stats['Sponataneous Modification Maximum'] = char_property_getter.get_spomod_max()
 
     return dict(stats)
 

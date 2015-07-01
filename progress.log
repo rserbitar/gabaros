@@ -354,3 +354,8 @@
 [2015-05-08 20:53:41] EDIT gabaros/models/menu.py: 0
 [2015-05-25 17:59:44] CREATE master/chat.html: 0
 [2015-05-25 17:59:57] CREATE view_char/chat.html: 0
+[2015-06-30 17:33:36] EDIT gabaros/controllers/master.py: -55
+[2015-06-30 17:33:44] EDIT gabaros/controllers/master.py: 0
+[2015-06-30 17:34:07] EDIT gabaros/controllers/master.py: 0
+[2015-06-30 17:34:13] EDIT gabaros/controllers/master.py: 0
+[2015-06-30 17:34:28] EDIT gabaros/controllers/master.py: 0

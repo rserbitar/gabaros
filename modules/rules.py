@@ -28,7 +28,7 @@ baseuplink = attrib_mod_norm
 wound_exp = 200.
 cyberhalf = 20
 shoot_base_difficulty = 20
-spell_xp_cost = 100
+spell_xp_cost = 200
 
 movement_mods = OrderedDict([
     ('standing', 0),
@@ -84,7 +84,7 @@ def get_attrib_xp_cost(attrib):
 
 
 def exp_cost_attribute(attribute, value, base, factor, signmod):
-    if attribute == 0:
+    if value == 0:
         return 0
     val = float(value)/base
     if val >= 1:
@@ -94,10 +94,10 @@ def exp_cost_attribute(attribute, value, base, factor, signmod):
         val = 1./val
     val = (val -1)
     val = (2**val-1)*factor*sign
-    if val < -factor:
-        val = -factor
+    if val < -factor/2.:
+        val = -factor/2.
     if attribute == 'Magic':
-        val += 2*factor
+        val += factor
     return val
 
 
@@ -257,6 +257,11 @@ def essence_magic_mult(essence):
 def essence_psycho_thresh(essence):
     return log(1./(1-(essence/100.)))/log(2)*10+10
 
+
+def spomod_max(logic):
+    return logic/2.
+
+
 def weapondamage(damage, testresult):
     if testresult > 60:
         testresult = 60
@@ -323,7 +328,7 @@ def summoning_drain(force):
 
 
 def distance_modifier(distance):
-    return log(distance)/log(2.)*10 -40
+    return log(distance)/log(2.)*10 -30
 
 
 def size_modifier(size):

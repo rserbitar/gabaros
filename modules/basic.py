@@ -248,7 +248,7 @@ class CloseCombatWeapon(object):
 
     def get_damage(self, cc_mod):
         damage = []
-        skill = self.char_property_getter.get_skill_value(self.skill)
+        skill = self.char_property_getter.get_skilltest_value(self.skill)
         minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
         net_value = -rules.shoot_base_difficulty + skill - minstr_mod + cc_mod
         result = net_value
@@ -285,16 +285,16 @@ class RangedWeapon(object):
 
     def get_net_skill_value(self):
         minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
-        net_skill_value = self.char_property_getter.get_skill_value(self.skill) + self.skillmod - minstr_mod
+        net_skill_value = self.char_property_getter.get_skilltest_value(self.skill) + self.skillmod - minstr_mod
         return net_skill_value
 
-    def get_damage(self, shoot_mod, distance, bullets = 1, magnification = 1., size = 1.):
+    def get_damage(self, shoot_mod, distance, bullets = 1, magnification = 1., size = 2.):
         damage = []
         range_mod = rules.shoot_rangemod(self.range, distance)
         sight_mod = rules.visible_perception_mod(size, distance, magnification)
-        skill = self.char_property_getter.get_skill_value(self.skill)
+        skill = self.char_property_getter.get_skilltest_value(self.skill)
         minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
-        net_value = -rules.shoot_base_difficulty + skill - minstr_mod - range_mod - sight_mod - shoot_mod
+        net_value = -rules.shoot_base_difficulty + skill - minstr_mod - range_mod - sight_mod - shoot_mod + self.skillmod
         result = net_value
         while net_value >= 0 and bullets:
             damage.append(rules.weapondamage(self.damage, net_value))
@@ -444,7 +444,7 @@ class CharWare(Ware):
 #        return weight
 
     def get_cost(self):
-        essencemult = self.stats['Essence']/100.
+        essencemult = 1 - self.stats['Essence']/100.
         cost = rules.warecost(self.basecost, kind = self.kind)
         cost += rules.warecost(self.effectcost, essencemult=essencemult )
         if self.parts:
@@ -1065,6 +1065,10 @@ class CharPropertyGetter():
             cost[ware.name] = ware.get_cost()
         return cost
 
+    def get_spomod_max(self):
+        logic = self.get_attribute_value('Logic')
+        spomod_max = rules.spomod_max(logic)
+        return spomod_max
 
 class LoadoutPropertyGetter(Loadout):
     def __init__(self,db, char):

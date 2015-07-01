@@ -1,4 +1,5 @@
 # coding: utf8
+import collections
 import applications.gabaros.modules.data as data
 import applications.gabaros.modules.rules as rules
 from random import gauss
@@ -66,74 +67,87 @@ def livedata():
     return dict(rows=rows, table=table)
 
 
-@auth.requires_login()
-def combat():
-    fields = []
-    combatants = []
-    rows = db(db.chars.master == auth.user.id).select(db.chars.name)
+def ncombat():
+    db.actions.char.represent = lambda char: db.chars[char].name
+    rows = db(db.actions.char.belongs(db(db.chars.master == auth.user.id)._select(db.chars.id))).select(db.actions.char, db.actions.cost)
+    initiative = DefaultDict(0)
     for row in rows:
-        combatants += [row.name]
-    combatants += [""]
-    combatants = sorted(combatants)
-    fields += [Field("name", type='string', label=T('Name'))]
-    fields += [Field("combatant1", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 1'), default=None)]
-    fields += [Field("combatant2", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 2'), default=None)]
-    fields += [Field("combatant3", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 3'), default=None)]
-    fields += [Field("combatant4", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 4'), default=None)]
-    fields += [Field("combatant5", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 5'), default=None)]
-    fields += [Field("combatant6", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 6'), default=None)]
-    fields += [Field("combatant7", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 7'), default=None)]
-    fields += [Field("combatant8", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 8'), default=None)]
-    form = SQLFORM.factory(*fields)
-    if form.process(formname='form_one').accepted:
-        response.flash = 'form accepted'
-        id = db.combat.bulk_insert([{'name': form.vars.name, 'round': 1, 'master': auth.user.id}])[0]
-        for i in range(1, 9):
-            if form.vars['combatant' + str(i)]:
-                row = db(db.chars.name == form.vars['combatant' + str(i)]).select(db.chars.id).first()
-                combatant = row.id
-                db.combatants.bulk_insert([{'combat': id, 'char': combatant}])
-                initiative = database.get_initiative(db, cache, combatant) + gauss(0, 10)
-                db.combat_initiative.bulk_insert(
-                    [{'combat': id, 'round': 1, 'char': combatant, 'initiative': initiative}])
-    elif form.errors:
-        response.flash = 'form has errors'
-    form2 = SQLFORM.factory(*[Field('add', type='boolean', label=T('Add Round'), default=True, readable=False)],
-                            submit_button='Next Round')
-    combat = database.get_current_combat(db, auth.user.id)
-    if form2.process(formname='form_two').accepted:
-        response.flash = 'form accepted'
-        database.add_combat_round(db, auth.user.id)
-        round = db(db.combat.id == combat).select(db.combat.round).first().round
-        rows = db(db.combatants.combat == combat).select(db.combatants.char)
-        for row in rows:
-            combatant = row.char.id
-            initiative = database.get_initiative(db, cache, combatant) + gauss(0, 10)
-            db.combat_initiative.bulk_insert(
-                [{'combat': combat, 'round': round, 'char': combatant, 'initiative': initiative}])
-    elif form2.errors:
-        response.flash = 'form has errors'
-    cname = None
-    cround = None
-    row = db(db.combat.id == combat).select(db.combat.round, db.combat.name).first()
-    if row:
-        cname = row.name
-        cround = row.round
-    rows = db(db.combatants.combat == combat).select(db.combatants.char)
-    combatants = []
-    for row in rows:
-        charid = row.char.id
-        charname = row.char.name
-        awarecount, timecount = database.get_ccab(db, charid)
-        initiative = db((db.combat_initiative.combat == combat) & (db.combat_initiative.char == charid) & (
-        db.combat_initiative.round == cround)).select(db.combat_initiative.initiative).first()
-        if initiative:
-            initiative = initiative.initiative
-        else:
-            initiative = None
-        combatants += [[charid, charname, initiative, awarecount, timecount]]
-    combatants = sorted(combatants, key=lambda x: x[2], reverse=True)
-    return dict(form=form, form2=form2, cname=cname, cround=cround, combatants=combatants)
+        char = row.char
+        cost = row.cost
+        initiative[char] += cost
+    initiative = [[key, value] for key, value in initiative.items()]
+    initiative = sorted(initiative, key = lambda x: x[1], reverse = True)
+    initiative = [['Char', 'Initiative']].extend(initiative)
+    return dict(initiative=initiative)
+
+#@auth.requires_login()
+#def combat():
+#    fields = []
+#    combatants = []
+#    rows = db(db.chars.master == auth.user.id).select(db.chars.name)
+#    for row in rows:
+#        combatants += [row.name]
+#    combatants += [""]
+#    combatants = sorted(combatants)
+#    fields += [Field("name", type='string', label=T('Name'))]
+#    fields += [Field("combatant1", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 1'), default=None)]
+#    fields += [Field("combatant2", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 2'), default=None)]
+#    fields += [Field("combatant3", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 3'), default=None)]
+#    fields += [Field("combatant4", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 4'), default=None)]
+#    fields += [Field("combatant5", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 5'), default=None)]
+#    fields += [Field("combatant6", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 6'), default=None)]
+#    fields += [Field("combatant7", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 7'), default=None)]
+#    fields += [Field("combatant8", type='string', requires=IS_IN_SET(combatants), label=T('Combatant 8'), default=None)]
+#    form = SQLFORM.factory(*fields)
+#    if form.process(formname='form_one').accepted:
+#        response.flash = 'form accepted'
+#        id = db.combat.bulk_insert([{'name': form.vars.name, 'round': 1, 'master': auth.user.id}])[0]
+#        for i in range(1, 9):
+#            if form.vars['combatant' + str(i)]:
+#                row = db(db.chars.name == form.vars['combatant' + str(i)]).select(db.chars.id).first()
+#                combatant = row.id
+#                db.combatants.bulk_insert([{'combat': id, 'char': combatant}])
+#                initiative = database.get_initiative(db, cache, combatant) + gauss(0, 10)
+#                db.combat_initiative.bulk_insert(
+#                    [{'combat': id, 'round': 1, 'char': combatant, 'initiative': initiative}])
+#    elif form.errors:
+#        response.flash = 'form has errors'
+#    form2 = SQLFORM.factory(*[Field('add', type='boolean', label=T('Add Round'), default=True, readable=False)],
+#                            submit_button='Next Round')
+#    combat = database.get_current_combat(db, auth.user.id)
+#    if form2.process(formname='form_two').accepted:
+#        response.flash = 'form accepted'
+#        database.add_combat_round(db, auth.user.id)
+#        round = db(db.combat.id == combat).select(db.combat.round).first().round
+#        rows = db(db.combatants.combat == combat).select(db.combatants.char)
+#        for row in rows:
+#            combatant = row.char.id
+#            initiative = database.get_initiative(db, cache, combatant) + gauss(0, 10)
+#            db.combat_initiative.bulk_insert(
+#                [{'combat': combat, 'round': round, 'char': combatant, 'initiative': initiative}])
+#    elif form2.errors:
+#        response.flash = 'form has errors'
+#    cname = None
+#    cround = None
+#    row = db(db.combat.id == combat).select(db.combat.round, db.combat.name).first()
+#    if row:
+#        cname = row.name
+#        cround = row.round
+#    rows = db(db.combatants.combat == combat).select(db.combatants.char)
+#    combatants = []
+#    for row in rows:
+#        charid = row.char.id
+#        charname = row.char.name
+#        awarecount, timecount = database.get_ccab(db, charid)
+#        initiative = db((db.combat_initiative.combat == combat) & (db.combat_initiative.char == charid) & (
+#        db.combat_initiative.round == cround)).select(db.combat_initiative.initiative).first()
+#        if initiative:
+#            initiative = initiative.initiative
+#        else:
+#            initiative = None
+#        combatants += [[charid, charname, initiative, awarecount, timecount]]
+#    combatants = sorted(combatants, key=lambda x: x[2], reverse=True)
+#    return dict(form=form, form2=form2, cname=cname, cround=cround, combatants=combatants)
 
 
 @auth.requires_login()
@@ -161,12 +175,12 @@ def calc_deck():
         skill = form.vars["skill"]
         users = form.vars["users"]
         hours_per_week = form.vars["hours_per_week"]
-        cost = (ruleset.processor_cost(processor, size) +
-                ruleset.uplink_cost(uplink, size) +
-                ruleset.system_cost(system, processor) +
-                ruleset.size_cost(size))
-        maintainance = ruleset.maintain_cost(size)
-        firewall = ruleset.firewall_rating(hours_per_week, skill,
+        cost = (rules.processor_cost(processor, size) +
+                rules.uplink_cost(uplink, size) +
+                rules.system_cost(system, processor) +
+                rules.size_cost(size))
+        maintainance = rules.maintain_cost(size)
+        firewall = rules.firewall_rating(hours_per_week, skill,
                                            system, users)
 
     elif form.errors:
