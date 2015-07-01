@@ -60,9 +60,12 @@ response.menu = [
           (T('Combat'), False, URL('gabaros', 'view_char', 'combat', args = [session.char])),
           (T('Apply Damage'), False, URL('gabaros', 'view_char', 'apply_damage', args = [session.char])),
             ]),
+      (T('Gameinformation'), False, '#', [
+          (T('Gametables'), False, URL('gabaros', 'game', 'gametables', args = [session.char])),
+          ]),
 ]
 
-DEVELOPMENT_MENU = True
+DEVELOPMENT_MENU = False
 
 #########################################################################
 ## provide shortcuts for development. remove in production

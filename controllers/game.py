@@ -4,7 +4,7 @@ import applications.gabaros.modules.data as data
 def gametables():
     table = ''
     dictionaries = {i[:-5].replace('_', ' ').capitalize():getattr(data,i) for i in dir(data) if i[-5:] == '_dict'}
-    fields = Field('table', type='str', requires=IS_IN_SET(dictionaries.keys()), label = 'Table')
+    fields = Field('table', type='str', requires=IS_IN_SET(sorted(dictionaries.keys())), label = 'Table')
     form=SQLFORM.factory(fields)
     if form.process().accepted:
         dictionary = dictionaries[form.vars.table]
