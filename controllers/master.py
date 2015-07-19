@@ -69,15 +69,17 @@ def livedata():
 
 def ncombat():
     db.actions.char.represent = lambda char: db.chars[char].name
-    rows = db(db.actions.char.belongs(db(db.chars.master == auth.user.id)._select(db.chars.id))).select(db.actions.char, db.actions.cost)
-    initiative = DefaultDict(0)
+    rows = db().select(db.actions.char, db.actions.cost)
+    initiative = collections.defaultdict(int)
     for row in rows:
-        char = row.char
+        char = row.char.name
         cost = row.cost
         initiative[char] += cost
     initiative = [[key, value] for key, value in initiative.items()]
     initiative = sorted(initiative, key = lambda x: x[1], reverse = True)
-    initiative = [['Char', 'Initiative']].extend(initiative)
+    tempinitiative = [['Char', 'Initiative']]
+    tempinitiative.extend(initiative)
+    initiative = tempinitiative
     return dict(initiative=initiative)
 
 #@auth.requires_login()

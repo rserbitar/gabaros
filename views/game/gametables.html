@@ -17,8 +17,12 @@ $(document).ready( function () {
 <br>
 {{=form}}
 {{if table:}}
-    <table id ='table' class='table table-striped'>
-        {{=THEAD(TR([TH(h) for h in table[0]]))}}
-        {{=TBODY([TR([TD(column) for column in row]) for row in table[1:]])}}
-    </table>
+{{BR()}}
+{{=H1(tablename)}}
+{{BR()}}
+    {{=TABLE(
+        THEAD(TR([TH(h) for h in table[0]])),
+        TBODY([TR([TD(column) if  i else TH(column, _scope="row") for i, column in enumerate(row)]) for row in table[1:]]),
+        _id ='table', _class='table table-striped'
+    )}}
 {{pass}}

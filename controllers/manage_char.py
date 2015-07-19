@@ -61,7 +61,7 @@ def edit_attributes():
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
-            db(db.char_attributes.char == char and db.char_attributes.attribute == entry).update(value=form.vars[entry])
+            db((db.char_attributes.char == char) & (db.char_attributes.attribute == entry)).update(value=form.vars[entry])
         db.commit()
     elif form.errors:
         response.flash = 'form has errors'
@@ -92,12 +92,12 @@ def edit_skills():
     skills = []
     rows = db(db.char_skills.char == char).select(db.char_skills.ALL)
     for row in rows:
-        fields += [Field(row.skill, 'double', default=row.value)]
+        fields += [Field(row.skill.replace(' ', '_'), 'double', default=row.value, label=row.skill)]
     form = SQLFORM.factory(*fields)
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
-            db(db.char_skills.char == char and db.char_skills.skill == entry).update(value=form.vars[entry])
+            db((db.char_skills.char == char) & (db.char_skills.skill == entry.replace('_', ' '))).update(value=form.vars[entry])
         db.commit()
     elif form.errors:
         response.flash = 'form has errors'
@@ -108,19 +108,20 @@ def edit_skills():
     total_xp = 0
     getter = basic.CharPropertyGetter(basic.Char(db, char), 'unaugmented')
     for row in rows:
+        skillfield = row.skill.replace(' ', '_')
         skill = row.skill
-        form.custom.widget[skill]['value'] = row.value
-        form.custom.widget[skill]['_style'] = 'width:50px'
-        form.custom.widget[skill]._postprocessing()
+        form.custom.widget[skillfield]['value'] = row.value
+        form.custom.widget[skillfield]['_style'] = 'width:50px'
+        form.custom.widget[skillfield]._postprocessing()
         parent = data.skills_dict[skill].parent
         base_val = 0
         if parent:
             base_val = getter.get_skill_value(parent)
-        base[skill] = base_val
-        weight[skill] = data.skills_dict[skill].expweight
-        xp[skill] = round(getter.get_skill_xp_cost(skill))
-        total_xp += xp[skill]
-    return dict(charname=charname, form=form, skills=data.skills_dict.keys(),
+        base[skillfield] = base_val
+        weight[skillfield] = data.skills_dict[skill].expweight
+        xp[skillfield] = round(getter.get_skill_xp_cost(skill))
+        total_xp += xp[skillfield]
+    return dict(charname=charname, form=form, skills=[i.replace(" ", "_") for i in data.skills_dict.keys()],
                 xp=xp, base=base, total_xp=total_xp, weight = weight)
 
 

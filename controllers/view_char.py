@@ -145,7 +145,7 @@ def view_computer():
         redirect(URL(f='index'))
     computers = [row.id for row in db(db.char_computers.char == char_id).select(db.char_computers.id)]
     char = basic.Char(db, char_id)
-    table = [['Computer', 'Processor', 'Signal', 'Firewall', 'Uplink', 'Current Uplink', 'Damage']]
+    table = [['Computer', 'Processor', 'System', 'Signal', 'Firewall', 'Uplink', 'Current Uplink', 'Damage']]
     at_least_one_computer = False
     for computer_id in computers:
         at_least_one_computer = True
@@ -153,6 +153,7 @@ def view_computer():
         computer = basic.Computer(db, computer_id, char)
         row.append(A(computer.name, _href=URL('view_matrix_actions', args = [char_id, computer_id])))
         row.append(computer.attributes['Processor'])
+        row.append(computer.attributes['System'])
         row.append(computer.attributes['Signal'])
         row.append(computer.attributes['Firewall'])
         row.append(computer.attributes['Uplink'])
@@ -277,7 +278,7 @@ def shoot_weapon():
     result['roll'] = roll
     result['other mods'] = situation_mod
     difficulty = -(result['difficulty'] + result['other mods'] + result['minimum strength mod']
-                  + result['weapon range mod'] + result['sight range mod'] - result['skill'])   
+                  + result['weapon range mod'] + result['sight range mod'] - result['skill'])
     text = ('damage: {}, {}'.format(damage, result))
     db.rolls.insert(char=char_id, name='shoot', value=difficulty, roll=roll, result=result['result'], visible=True)
     return text
@@ -368,7 +369,7 @@ def insert_situation_mod():
     for var in vars:
         form.element(_name=var)['_onblur']="ajax('/gabaros/view_char/insert_situation_mod/{}', " \
                                             "['{}'], '')".format(char_id, var)
-    if form.process().accepts:
+    if form.process().accepted:
         for i, var in enumerate(vars):
             if form.vars.get(var) is not None:
                 db.state_mods.update_or_insert(query[i],
@@ -389,25 +390,34 @@ def view_actions():
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
     char_property_getter = basic.CharPhysicalPropertyGetter(basic.Char(db, char_id))
+    combat = db(db.actions.char==char_id).select(db.actions.combat).last()
+    if combat:
+        combat = combat.combat
+    else:
+        combat = 1
+    fields = [Field('combat', type = 'reference combats', requires = IS_IN_DB(db,db.combats.id,'%(name)s'), default = combat)]
+    form = SQLFORM.factory(*fields)
+    if form.process().accepted:
+        combat = int(form.vars.combat)
     reaction = int(round(char_property_getter.get_reaction()))
     actions = ['Free', 'Simple', 'Complex']
     action_costs = {i: int(round(char_property_getter.get_actioncost(i))) for i in actions}
-    action_buttons = {i: A(i, callback=URL('perform_action', args=[char_id, i]),
+    action_buttons = {i: A(i, callback=URL('perform_action', args=[char_id, i, combat]),
                      target = 'next_action', _class='btn') for i in actions}
     reaction_button = A("Reaction ({})".format(reaction),
                     callback=URL('roll_button', args=[char_id, 'Reaction', reaction, 1]), _class='btn', _title = 'test')
-    action_history = get_action_history(char_id)
-    return dict(reaction_button=reaction_button, actions=actions, action_costs=action_costs, action_buttons=action_buttons, action_history = action_history)
+    action_history = get_action_history(char_id, combat)
+    return dict(reaction_button=reaction_button, actions=actions, action_costs=action_costs, action_buttons=action_buttons, action_history = action_history, form=form)
 
 
-def get_action_history(char_id):
-    data = db((db.actions.char==char_id) & (db.actions.combat==1)).select(db.actions.action, db.actions.cost)
+def get_action_history(char_id, combat):
+    data = db((db.actions.char==char_id) & (db.actions.combat==combat)).select(db.actions.action, db.actions.cost)
     action_history = [['Action    ', 'Cost    ', 'Phase    ']]
     phase = 0
     for row in data:
         action_history.append([row.action, int(round(row.cost)), int(round(phase))])
         phase += int(round(row.cost))
-    return CAT('Next Action: ', B('{}'.format(int(round(phase)))), P(), TABLE(*([TR(*[TH(i, _style="width:80px") for i in rows]) for rows in action_history[:1]]+[TR(*rows) for rows in reversed(action_history[1:])])))
+    return CAT(H3('Next Action: ', B('{}'.format(int(round(phase))))), P(), TABLE(*([TR(*[TH(i) for i in rows]) for rows in action_history[:1]]+[TR(*rows) for rows in reversed(action_history[1:])]),_class = 'table table-striped table-condensed'))
 
 
 @auth.requires_login()
@@ -417,10 +427,11 @@ def perform_action():
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
     action = request.args(1)
+    combat = request.args(2)
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
     action_cost = char_property_getter.get_actioncost(action)
-    db.actions.insert(char=char_id, combat=1, action=action, cost=action_cost)
-    action_history = get_action_history(char_id)
+    db.actions.insert(char=int(char_id), combat=combat, action=action, cost=action_cost)
+    action_history = get_action_history(char_id, combat)
     return action_history
 
 
@@ -496,41 +507,6 @@ def view_damage_state():
     return dict(wounds=wounds, damage=damage, maxlife=maxlife)
 
 
-@auth.requires_login()
-def apply_damage():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
-    fields = [Field('damage', 'integer', default=0, label = 'Damage'),
-              Field('penetration', 'integer', default=0, label = 'Penetration'),
-              Field('bodypart', 'string', requires=IS_IN_SET(['Body'] + data.main_bodyparts), default = 'Body'),
-              Field('kind', 'string', requires=IS_IN_SET(data.damagekinds_dict.keys()), default = 'physical',
-                    label = 'Damage Kind'),
-              Field('typ', 'string', requires=IS_IN_SET(['ballistic','impact']), default = 'ballistic'),
-              Field('percent', 'boolean', default = False),
-              Field('resist', 'boolean', default = False)]
-    form = SQLFORM.factory(*fields, table_name = 'damage_apply')
-    if form.process().accepted:
-        char = basic.Char(db, char_id)
-        char_property_putter = basic.CharPropertyPutter(char)
-        resist = False
-        if form.vars.resist:
-            resist = [form.vars.resist, roll(char_id, 0, 'Resist roll', 1)]
-        damage_text = char_property_putter.put_damage(form.vars.damage,
-                                                      form.vars.penetration,
-                                                      form.vars.bodypart,
-                                                      form.vars.kind,
-                                                      form.vars.typ,
-                                                      form.vars.percent,
-                                                      resist
-                                                      )
-        response.flash = damage_text
-    elif form.errors:
-       response.flash = 'form has errors'
-    else:
-       response.flash = 'please fill out the form'
-    return dict(form=form)
 
 
 @auth.requires_login()
@@ -551,13 +527,18 @@ def apply_damage():
     if form.process().accepted:
         char = basic.Char(db, char_id)
         char_property_putter = basic.CharPropertyPutter(char)
+        if form.vars.resist:
+            die_roll = roll(char_id, 0, 'Resist', True)
+            resist = (form.vars.resist,die_roll)
+        else:
+            resist = form.vars.resist
         damage_text = char_property_putter.put_damage(form.vars.damage,
                                                       form.vars.penetration,
                                                       form.vars.bodypart,
                                                       form.vars.kind,
                                                       form.vars.typ,
                                                       form.vars.percent,
-                                                      form.vars.resist
+                                                      resist
                                                       )
         response.flash = damage_text
     elif form.errors:
@@ -610,12 +591,13 @@ def view_xp():
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
-    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='unaugmented')
     xp = char_property_getter.get_total_exp()
     totalxp = sum(xp.values())
     return dict(totalxp=totalxp, xp=xp)
 
 
+@auth.requires_login()
 def view_cost():
     char_id = request.args(0)
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id

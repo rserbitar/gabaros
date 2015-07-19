@@ -176,6 +176,7 @@ class Computer(object):
         self.mode = None
         self.actions = data.matrix_actions_dict
         self.load_attributes()
+        self.load_programmes()
         self.char_property_getter = CharPropertyGetter(self.char)
 
     def load_attributes(self):
@@ -195,7 +196,7 @@ class Computer(object):
 
     def load_programmes(self):
         db_cg = self.db.char_items
-        rows = self.db((db_cg.id == self.char) &
+        rows = self.db((db_cg.char == self.char.char_id) &
                       (db_cg.item in data.programmes_dict.keys())).select(db_cg.item,db_cg.rating)
         for row in rows:
             self.programmes[row.item] = row.rating
@@ -902,7 +903,7 @@ class CharPropertyGetter():
         for attribute in data.attributes_dict.keys():
             weight = getattr(skill_attribmods, attribute, None)
             if weight:
-                mod += weight * self.get_attribute_mod(attribute)/2.
+                mod += weight * self.get_attribute_mod(attribute)
         value += mod
         return value
 
@@ -963,10 +964,12 @@ class CharPropertyGetter():
             for effect in ware.effects:
                 if effect[0] == 'stats' and effect[1] == statname:
                     pain_resistance += (1- pain_resistance)* eval('value {}'.format(effect[2]))
-        for power in self.char.adept_powers:
-            for effect in power.effects:
+        for adept_power in self.char.adept_powers:
+            for effect in adept_power.effects:
                 if effect[0] == 'stats' and effect[1] == statname:
-                    pain_resistance += (1- pain_resistance)* eval('value {}'.format(effect[2]))
+                    magic = self.get_attribute_value('Magic')
+                    formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                    value = eval('value {}'.format(formula))
         max_life = self.get_maxlife()
         if kind == 'relative':
             damagemod = rules.lifemod_relative(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
@@ -996,10 +999,12 @@ class CharPropertyGetter():
                 for effect in ware.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
                         value = eval('value {}'.format(effect[2]))
-            for power in self.char.adept_powers:
-                for effect in power.effects:
+            for adept_power in self.char.adept_powers:
+                for effect in adept_power.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
+                        magic = self.get_attribute_value('Magic')
+                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                        value = eval('value {}'.format(formula))
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1025,10 +1030,12 @@ class CharPropertyGetter():
                 for effect in ware.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
                         value = eval('value {}'.format(effect[2]))
-            for power in self.char.adept_powers:
-                for effect in power.effects:
+            for adept_power in self.char.adept_powers:
+                for effect in adept_power.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
+                        magic = self.get_attribute_value('Magic')
+                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                        value = eval('value {}'.format(formula))
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1134,15 +1141,46 @@ class CharPhysicalPropertyGetter(CharPropertyGetter):
                 for effect in ware.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
                         value = eval('value {}'.format(effect[2]))
-            for power in self.char.adept_powers:
-                for effect in power.effects:
+            for adept_power in self.char.adept_powers:
+                for effect in adept_power.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
+                        magic = self.get_attribute_value('Magic')
+                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                        value = eval('value {}'.format(formula))
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
         return value
 
+    def get_actionmult(self):
+        """
+
+        """
+        statname = 'Physical Action Multiplyer'
+        value = self.stats.get(statname)
+        if value:
+            return value
+        if self.modlevel == 'base':
+            value = 0
+        if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
+            value = rules.physical_actionmult(self.get_attribute_mod('Agility'),
+                                              self.get_attribute_mod('Coordination'),
+                                              self.get_attribute_mod('Intuition'))
+        if self.modlevel in ('augmented','temporary','stateful'):
+            for ware in self.char.ware:
+                for effect in ware.effects:
+                    if effect[0] == 'stats' and effect[1] == statname:
+                        value = eval('value {}'.format(effect[2]))
+            for adept_power in self.char.adept_powers:
+                for effect in adept_power.effects:
+                    if effect[0] == 'stats' and effect[1] == statname:
+                        magic = self.get_attribute_value('Magic')
+                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                        value = eval('value {}'.format(formula))
+        if self.modlevel in ('temporary','stateful'):
+            pass
+        self.stats[statname] = value
+        return value
 
 class CharMatrixPropertyGetter(CharPropertyGetter):
     def __init__(self, char, modlevel='stateful', interface='ar'):
@@ -1191,10 +1229,12 @@ class CharMatrixPropertyGetter(CharPropertyGetter):
                 for effect in ware.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
                         value = eval('value {}'.format(effect[2]))
-            for power in self.char.adept_powers:
-                for effect in power.effects:
+            for adept_power in self.char.adept_powers:
+                for effect in adept_power.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
+                        magic = self.get_attribute_value('Magic')
+                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                        value = eval('value {}'.format(formula))
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1249,10 +1289,12 @@ class CharAstralPropertyGetter(CharPropertyGetter):
                 for effect in ware.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
                         value = eval('value {}'.format(effect[2]))
-            for power in self.char.adept_powers:
-                for effect in power.effects:
+            for adept_power in self.char.adept_powers:
+                for effect in adept_power.effects:
                     if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
+                        magic = self.get_attribute_value('Magic')
+                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                        value = eval('value {}'.format(formula))
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value

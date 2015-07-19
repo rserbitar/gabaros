@@ -1,11 +1,38 @@
 {{extend 'layout.html'}}
 
-<div id="attack_result"></div>
-
-{{=insert_situation_mod}}
-
-{{=view_weapons}}
-
-{{=view_cc_weapons}}
-
-{{=view_actions}}
+<div class="container">
+  <div class="row">
+    <div class="col-sm-6">
+        <div id="attack_result"></div>
+    </div>
+    <div class="col-sm-6"></div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6">
+        {{=insert_situation_mod}}
+    </div>
+    <div class="col-sm-6">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6">
+        {{=view_weapons}}
+    </div>
+    <div class="col-sm-6">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6">
+        {{=view_cc_weapons}}
+    </div>
+    <div class="col-sm-6">
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6">
+        {{=view_actions}}
+    </div>
+    <div class="col-sm-6">
+    </div>
+  </div>
+</div>

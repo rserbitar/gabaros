@@ -12,7 +12,7 @@ from random import gauss
 # must be passed and cannot be imported!
 
 
-double_attrib_mod_val = 20
+double_attrib_mod_val = 10
 attrib_mod_norm = 30
 subskill_exp = 0.25
 subskill_norm = 1 / 3.
@@ -255,7 +255,7 @@ def essence_magic_mult(essence):
     return mult
 
 def essence_psycho_thresh(essence):
-    return log(1./(1-(essence/100.)))/log(2)*10+10
+    return log(1./(1-(essence/100.)))/log(2)*10+10 if essence < 100 else float('inf')
 
 
 def spomod_max(logic):

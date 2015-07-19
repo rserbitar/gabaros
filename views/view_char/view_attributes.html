@@ -1,16 +1,15 @@
 {{extend 'layout.html'}}
-
-<table>
-    <tr>
-        {{for entry in attributes[0]:}}
-        {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
-        {{pass}}
-    </tr>
-    {{for row in attributes[1:]:}}
-    <tr>
-        {{for entry in row:}}
-        {{=TD(entry, _style="padding-right:10px;text-align:left;")}}
-        {{pass}}
-    </tr>
-    {{pass}}
-</table>
+<div class="container">
+  <div class="row">
+    <div class="col-sm-3">
+{{=TABLE(
+TAG.caption('Attributes'),
+THEAD(TR([TH(h) for h in attributes[0]])),
+TBODY([TR([TD(column) if  i else TH(column, _scope="row") for i, column in enumerate(row)]) for row in attributes[1:]]),
+_id ='table', _class='table table-striped', _caption = 'Attributes'
+)}}
+    </div>
+    <div class="col-sm-9">
+    </div>
+  </div>
+</div>
