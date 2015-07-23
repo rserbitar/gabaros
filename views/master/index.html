@@ -1,9 +1,7 @@
 {{extend 'layout.html'}}
 
-{{=A('Combat', callback=URL('combat'))}}
+{{=A('Combat', _href=URL('ncombat'))}}
 <br>
-{{=A('Live', callback=URL('live'))}}
+{{=A('Live',  _href=URL('live'))}}
 <br>
-{{=A('Live Data', callback=URL('live'))}}
-<br>
-{{=A('Calc Deck', callback=URL('calc_deck'))}}
+{{=A('Calc Deck',  _href=URL('calc_deck'))}}

@@ -2,7 +2,7 @@
 from datetime import datetime
 
 db.define_table('rolls',
-    Field('char', type='reference chars', label=T('Player'),
+    Field('char', type='reference chars', label=T('Char'),
     writable=False,
     requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
     Field('name', type = 'string', label = T('Name')),
@@ -16,7 +16,7 @@ db.define_table('rolls',
 
 
 db.define_table('state_mods',
-    Field('char', type='reference chars', label=T('Player'),
+    Field('char', type='reference chars', label=T('Char'),
     writable=False,
     requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
     Field('name', type = 'string', label = T('Name')),
@@ -25,17 +25,18 @@ db.define_table('state_mods',
 
 
 db.define_table('combats',
-    Field('char', type='reference chars', label=T('Player'),
+    Field('master', type='reference auth_user', label=T('Master'),
     writable=False,
-    requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
+    requires=IS_IN_DB(db, db.auth_user.id, '%(username)s')),
     Field('name', type = 'string', label = T('Name')),
     Field('lighting', type = 'string', label = T('Lighting')),
     Field('noise', type = 'string', label = T('Noise')),
     Field('environment', type = 'string', label = T('Environment')),
     )
-    
+
+
 db.define_table('actions',
-    Field('char', type='reference chars', label=T('Player'),
+    Field('char', type='reference chars', label=T('Char'),
     writable=False,
     requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
     Field('combat', type = 'reference combats', requires = IS_IN_DB(db,db.combats.id,'%(name)s')),

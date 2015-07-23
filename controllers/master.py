@@ -44,18 +44,6 @@ def ajax_form():
 
 
 @auth.requires_login()
-def live():
-    db.rolls.char.represent = lambda char: db.chars[char].name
-    db.rolls.roll.represent = lambda val: int(round(val))
-    db.rolls.value.represent = lambda val: int(round(val))
-    db.rolls.result.represent = lambda val: int(round(val))
-    rows = db(db.rolls.char.belongs(db(db.chars.master == auth.user.id)._select(db.chars.id))).select(db.rolls.ALL, orderby=~db.rolls.id,
-                                                                         limitby=(0, 10), distinct=True)
-    table = SQLTABLE(rows, headers='labels')
-    return dict(rows=rows, table=table)
-
-
-@auth.requires_login()
 def livedata():
     db.rolls.char.represent = lambda char: db.chars[char].name
     db.rolls.roll.represent = lambda val: int(round(val))
@@ -66,21 +54,50 @@ def livedata():
     table = SQLTABLE(rows, headers='labels')
     return dict(rows=rows, table=table)
 
+@auth.requires_login()
+def live():
+    db.rolls.char.represent = lambda char: db.chars[char].name
+    db.rolls.roll.represent = lambda val: int(round(val))
+    db.rolls.value.represent = lambda val: int(round(val))
+    db.rolls.result.represent = lambda val: int(round(val))
+    rows = db(db.rolls.char.belongs(db(db.chars.master == auth.user.id)._select(db.chars.id))).select(db.rolls.ALL, orderby=~db.rolls.id,
+                                                                         limitby=(0, 10), distinct=True)
+    table = SQLTABLE(rows, headers='labels')
+    return dict(rows=rows, table=table)
 
+@auth.requires_login()
 def ncombat():
-    db.actions.char.represent = lambda char: db.chars[char].name
-    rows = db().select(db.actions.char, db.actions.cost)
-    initiative = collections.defaultdict(int)
+    initiative = [None, None]
+    combats = []
+    combat = session.master_current_combat
+    rows = db(db.combats.master==auth.user.id).select(db.combats.name)
     for row in rows:
-        char = row.char.name
-        cost = row.cost
-        initiative[char] += cost
-    initiative = [[key, value] for key, value in initiative.items()]
-    initiative = sorted(initiative, key = lambda x: x[1], reverse = True)
+        combats.append(row.name)
+    form = SQLFORM.factory(Field('combat', requires=IS_IN_SET(combats), label = 'Combat'))
+    if form.process().accepted:
+        response.flash = 'form accepted'
+        combat = form.vars.combat
+        session.master_current_combat = combat
+    elif form.errors:
+        response.flash = 'form has errors'
+    else:
+        response.flash = 'please fill out the form'
+    if combat:
+        db.actions.char.represent = lambda char: db.chars[char].name
+        rows = db((db.actions.combat==db.combats.id) & (db.combats.name == combat)).select(db.actions.char, db.actions.cost)
+        if rows:
+            initiative = collections.defaultdict(int)
+            for row in rows:
+                char = row.char.name
+                cost = row.cost
+                initiative[char] += cost
+            initiative = [[key, value] for key, value in initiative.items()]
+            initiative = sorted(initiative, key = lambda x: x[1], reverse = True)
     tempinitiative = [['Char', 'Initiative']]
     tempinitiative.extend(initiative)
     initiative = tempinitiative
-    return dict(initiative=initiative)
+
+    return dict(initiative=initiative, form=form, combat = combat)
 
 #@auth.requires_login()
 #def combat():

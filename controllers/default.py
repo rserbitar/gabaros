@@ -18,9 +18,7 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
-    links = [A("Manage", _href=URL('manage_char', 'index')),
-             A("View", _href=URL('view_char', 'index')),]
-    return dict(links=links)
+    redirect(URL('manage_char', 'manage_chars'))
 
 
 def user():

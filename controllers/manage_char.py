@@ -6,11 +6,16 @@ import data
 def index():
     redirect(URL('manage_chars'))
 
+    
+def select_char(id):
+    session.char=id
+    return  A(id, _href=URL("edit_char", args=(id)))
+
 @auth.requires_login()
 def manage_chars():
     table = db.chars
     query = db.chars.player == auth.user.id or db.chars.master == auth.user.id
-    table.id.represent = lambda id: A(id, _href=URL("edit_char", args=(id)))
+    table.id.represent = select_char
     table.player.represent = lambda player: db.auth_user[player].username
     create = crud.create(table)
     form = crud.select(table, query=query, fields=["id", "name"])
@@ -21,6 +26,7 @@ def manage_chars():
 def edit_char():
     char = request.args(0)
     session.char = char
+    response.menu = global_menu(char)
     if not db.chars[char] or (db.chars[char].player != auth.user.id
                               and db.chars[char].master != auth.user.id):
         redirect(URL(f='index'))
@@ -29,20 +35,7 @@ def edit_char():
     table.player.represent = lambda player: db.auth_user[player].username
     basic.Char(db, char)
     form = crud.update(table, char)
-    linklist = [A("attributes", _href=URL('edit_attributes', args=[char])),
-                A("skills", _href=URL('edit_skills', args=[char])),
-                A("damage", _href=URL('edit_damage', args=[char])),
-                A("wounds", _href=URL('edit_wounds', args=[char])),
-                A("items", _href=URL('edit_items', args=[char])),
-                A("loadout", _href=URL('edit_loadout', args=[char])),
-                A("sins", _href=URL('edit_sins', args=[char])),
-                A("locations", _href=URL('edit_locations', args=[char])),
-                A("ware", _href=URL('manage_ware', args=[char])),
-                A("adept powers", _href=URL('manage_powers', args=[char])),
-                A("spells", _href=URL('manage_spells', args=[char])),
-                A("computers", _href=URL('edit_computers', args=[char])),
-                ]
-    return dict(form=form, linklist=linklist)
+    return dict(form=form)
 
 
 @auth.requires_login()
