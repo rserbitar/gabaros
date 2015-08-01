@@ -620,7 +620,7 @@ class Bodypart(object):
         return getattr(self.body_fractions, attribute)
 
     def get_kind(self):
-        return 'unaugmented'
+        return 'unaugmented', 1.
 
 
 class CharBodypart():
@@ -634,7 +634,7 @@ class CharBodypart():
 
     def get_kind(self):
         if self.ware:
-            return self.ware.kind
+            return self.ware.kind, 1.
         elif self.bodypart.children:
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             weights = [part.get_attribute_absolute('Weight', modlevel='augmented') for part in child_char_bodyparts]
@@ -642,9 +642,9 @@ class CharBodypart():
             cyberweight = sum([weights[i] for i,kind in enumerate(kinds) if kind == 'cyberware'])
             bioweight = sum([weights[i] for i,kind in enumerate(kinds) if kind == 'bioware'])
             if cyberweight/sum(weights) > 0.5:
-                return 'cyberware'
+                return 'cyberware', cyberweight/sum(weights)
             elif bioweight/sum(weights) > 0.5:
-                return 'bioware'
+                return 'bioware', cyberweight/sum(weights)
         else:
             return self.bodypart.get_kind()
 
@@ -705,6 +705,18 @@ class CharBodypart():
         weight = self.get_attribute_relative('Weight', 'temporary')
         woundlimit = rules.woundlimit(weight, constitution)
         return woundlimit
+
+    def get_wounds_incapacitated_thresh(self, modlevel = 'stateful'):
+        constitution = self.get_attribute_relative('Constitution', modlevel)
+        weight = self.get_attribute_relative('Weight', 'temporary')
+        thresh = rules.wounds_for_incapacitated_thresh(weight, constitution)
+        return thresh
+
+    def get_wounds_destroyed_thresh(self, modlevel = 'stateful'):
+        constitution = self.get_attribute_relative('Constitution', modlevel)
+        weight = self.get_attribute_relative('Weight', 'temporary')
+        thresh = rules.wounds_for_destroyed_thresh(weight, constitution)
+        return thresh
 
     def get_attribute_relative(self, attribute, modlevel = 'stateful'):
         absolute_value = self.get_attribute_absolute(attribute, modlevel)
@@ -1333,20 +1345,25 @@ class CharPropertyPutter():
             attribute = charpropertygetter.get_attribute_value(resist[0])
             value = rules.resist_damage(value, attribute, 0, resist[1])
         damage = float(max(0, value - max(0, armor-penetration)))
-        bodykind = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
-        if bodykind != 'cyberware':
-            old_damage = self.char.damage.get(kind, 0)
-            new_damage = old_damage + damage
-            self.char.write_damage(kind, new_damage)
-        wounds = 0
+        bodykind, cyberfraction = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
+        woundlimit = charpropertygetter.char_body.bodyparts[bodypart].get_woundlimit()
+        destroy_thresh = charpropertygetter.char_body.bodyparts[bodypart].get_wounds_destroyed_thresh()
+        wounds = int(damage/woundlimit)
+        old_wounds = self.char.wounds.get(bodypart, 0)
+        if old_wounds:
+            old_wounds =  old_wounds.get(kind, 0)
+        else:
+            old_wounds = 0
         if bodykind != 'cyberware' or kind in ('physical'):
-            woundlimit = charpropertygetter.char_body.bodyparts[bodypart].get_woundlimit()
-            wounds = int(damage/woundlimit)
-            old_wounds = self.char.wounds.get(bodypart, 0)
-            if old_wounds:
-                old_wounds = old_wounds.get(kind, 0)
-            new_wounds = wounds + old_wounds
-            self.char.write_wounds(new_wounds, bodypart, kind)
+            wounds = min(wounds, destroy_thresh-old_wounds)
+            if wounds:
+                new_wounds = wounds + old_wounds[kind]
+                self.char.write_wounds(new_wounds, bodypart, kind)
+        if cyberfraction != 1.:
+            damage = min(damage, woundlimit*(wounds))
+            old_damage = self.char.damage.get(kind, 0)
+            new_damage = old_damage + damage*(1-cyberfraction)
+            self.char.write_damage(kind, new_damage)
         return 'damage: {}, wounds: {}'.format(damage, wounds)
 
 
