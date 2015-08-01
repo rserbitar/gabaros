@@ -791,7 +791,7 @@ rangedweapons = [
     ["Light Pistol", "Pistols", 0., 8., "ballistic", 10., 10., 6, 0, 0, 30, 15, 15, "", 0, 0, 1, None, 1],
     ["Machine Pistol", "Automatics", 0., 8., "ballistic", 10., 10, 6, 12, 18, 40, 15, 20, "", 1, 0, 1, None, 1],
     ["Sub-Machine-Gun", "Automatics", 0., 8., "ballistic", 10., 20, 6, 15, 30, 20, 7, 30, "", 1, 0, 1, None, 2],
-    ["Shotgun", "Long Rifles", 0., 18., "ballistic", 20., 20, 5, 0, 0, 40, 15, 6, "", 1, 1, 1, None, 2],
+    ["Shotgun", "Long Rifles", 0., 18., "ballistic", 20., 30, 5, 0, 0, 40, 15, 6, "", 1, 1, 1, None, 2],
     ["Battle Rifle", "Automatics", 0., 18., "ballistic", 30., 100, 4, 10, 20, 54, 20, 20, "", 1, 1, 1, # g3
      None, 2],
     ["Assault Rifle", "Automatics", 0., 12., "ballistic", 20., 80, 5, 12, 18, 36, 12, 30, "", 1, 1, 1, None, 2], #g36

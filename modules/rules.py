@@ -359,6 +359,8 @@ def shooting_difficulty(weaponrange, magnification, distance, size=2.):
     return shoot_base_difficulty + sightmod + rangemod
 
 def shoot_rangemod(weaponrange, distance):
+    if distance < 1:
+        distance = 1
     rangemod = log(distance / float(weaponrange)) / log(2) * 10
     if rangemod < 0:
         rangemod = 0

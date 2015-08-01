@@ -23,49 +23,46 @@ response.google_analytics_id = None
 #########################################################################
 ## this is the main application menu add/remove items as required
 #########################################################################
-def global_menu(char):
-    
-    return [
+response.menu = [
     (T('Home'), False, URL('default', 'index'), []),
       (T('Manage Char'), False, '#', [
           (T('Create/Select'), False, URL('gabaros', 'manage_char', 'index')),
           LI(_class="divider"),
-          (T('Attributes'), False, URL('gabaros', 'manage_char', 'edit_attributes', args = [char])),
-          (T('Skills'), False, URL('gabaros', 'manage_char', 'edit_skills', args = [char])),
-          (T('Adept Powers'), False, URL('gabaros', 'manage_char', 'manage_powers', args = [char])),
-          (T('Spells'), False, URL('gabaros', 'manage_char', 'manage_spells', args = [char])),
-          (T('Ware'), False, URL('gabaros', 'manage_char', 'manage_ware', args = [char])),
+          (T('Attributes'), False, URL('gabaros', 'manage_char', 'edit_attributes')),
+          (T('Skills'), False, URL('gabaros', 'manage_char', 'edit_skills')),
+          (T('Adept Powers'), False, URL('gabaros', 'manage_char', 'manage_powers')),
+          (T('Spells'), False, URL('gabaros', 'manage_char', 'manage_spells')),
+          (T('Ware'), False, URL('gabaros', 'manage_char', 'manage_ware')),
           LI(_class="divider"),
-          (T('Damage'), False, URL('gabaros', 'manage_char', 'edit_damage', args = [char])),
-          (T('Wounds'), False, URL('gabaros', 'manage_char', 'edit_wounds', args = [char])),
+          (T('Damage'), False, URL('gabaros', 'manage_char', 'edit_damage')),
+          (T('Wounds'), False, URL('gabaros', 'manage_char', 'edit_wounds')),
           LI(_class="divider"),
-          (T('Items'), False, URL('gabaros', 'manage_char', 'edit_items', args = [char])),
-          (T('Loadout'), False, URL('gabaros', 'manage_char', 'edit_loadout', args = [char])),
-          (T('Computers'), False, URL('gabaros', 'manage_char', 'edit_computers', args = [char])),
-          (T('Sins'), False, URL('gabaros', 'manage_char', 'edit_sins', args = [char])),
-          (T('Locations'), False, URL('gabaros', 'manage_char', 'edit_locations', args = [char])),
+          (T('Items'), False, URL('gabaros', 'manage_char', 'edit_items')),
+          (T('Loadout'), False, URL('gabaros', 'manage_char', 'edit_loadout')),
+          (T('Computers'), False, URL('gabaros', 'manage_char', 'edit_computers')),
+          (T('Sins'), False, URL('gabaros', 'manage_char', 'edit_sins')),
+          (T('Locations'), False, URL('gabaros', 'manage_char', 'edit_locations')),
             ]),
       (T('View Char'), False, '#', [
-          (T('Attributes'), False, URL('gabaros', 'view_char', 'view_attributes', args = [char])),
-          (T('Stats'), False, URL('gabaros', 'view_char', 'view_stats', args = [char])),
-          (T('Skills'), False, URL('gabaros', 'view_char', 'view_skills', args = [char])),
-          (T('XP'), False, URL('gabaros', 'view_char', 'view_xp', args = [char])),
-          (T('Cost'), False, URL('gabaros', 'view_char', 'view_cost', args = [char])),
-          (T('Bodyparts'), False, URL('gabaros', 'view_char', 'view_bodyparts', args = [char])),
-          (T('Actions'), False, URL('gabaros', 'view_char', 'view_actions', args = [char])),
-          (T('Damage'), False, URL('gabaros', 'view_char', 'view_damage_state', args = [char])),
-          (T('Weapons'), False, URL('gabaros', 'view_char', 'view_weapons', args = [char])),
-          (T('Armor'), False, URL('gabaros', 'view_char', 'view_armor', args = [char])),
-          (T('Computer'), False, URL('gabaros', 'view_char', 'view_computer', args = [char])),
+          (T('Attributes'), False, URL('gabaros', 'view_char', 'view_attributes')),
+          (T('Stats'), False, URL('gabaros', 'view_char', 'view_stats')),
+          (T('Skills'), False, URL('gabaros', 'view_char', 'view_skills')),
+          (T('XP'), False, URL('gabaros', 'view_char', 'view_xp')),
+          (T('Cost'), False, URL('gabaros', 'view_char', 'view_cost')),
+          (T('Bodyparts'), False, URL('gabaros', 'view_char', 'view_bodyparts')),
+          (T('Actions'), False, URL('gabaros', 'view_char', 'view_actions')),
+          (T('Damage'), False, URL('gabaros', 'view_char', 'view_damage_state')),
+          (T('Weapons'), False, URL('gabaros', 'view_char', 'view_weapons')),
+          (T('Armor'), False, URL('gabaros', 'view_char', 'view_armor')),
+          (T('Computer'), False, URL('gabaros', 'view_char', 'view_computer')),
           LI(_class="divider"),
-          (T('Combat'), False, URL('gabaros', 'view_char', 'combat', args = [char])),
-          (T('Apply Damage'), False, URL('gabaros', 'view_char', 'apply_damage', args = [char])),
+          (T('Combat'), False, URL('gabaros', 'view_char', 'combat')),
+          (T('Apply Damage'), False, URL('gabaros', 'view_char', 'apply_damage')),
             ]),
       (T('Gameinformation'), False, '#', [
           (T('Gametables'), False, URL('gabaros', 'game', 'gametables')),
           ]),
 ]
-response.menu = global_menu(session.char)
 
 DEVELOPMENT_MENU = False
 
@@ -175,3 +172,10 @@ def _():
 if DEVELOPMENT_MENU: _()
 
 if "auth" in locals(): auth.wikimenu()
+    
+def get_char():
+    char = session.char
+    if not db.chars[char] or (db.chars[char].player != auth.user.id
+                              and db.chars[char].master != auth.user.id):
+        redirect(URL(f='index'))
+    return char

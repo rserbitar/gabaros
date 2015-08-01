@@ -1,3 +1,123 @@
 {{extend 'layout.html'}}
-<h1>Dies ist das Template view_char/view_stats.html</h1>
-{{=BEAUTIFY(response._vars)}}
+
+ <div class="row">
+   <div class="col-sm-6">
+        <H2>
+        Movement
+        </H2>
+        <table class = 'table table-striped'>
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <th>Walk Speed</th>
+                <td>{{=stats['Walk Speed']}}</td>
+            </tr>
+            <tr>
+                <th>Run Speed</th>
+                <td>{{=stats['Run Speed']}}</td>
+            </tr>
+            <tr>
+                <th>Sprint Speed</th>
+                <td>{{=stats['Sprint Speed']}}</td>
+            </tr>
+        </table>
+     </div>
+    <div class="col-sm-6">
+        <H2>
+        Jumping
+        </H2>
+        <table class = 'table table-striped'>
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <th>Standing Jump Distance</th>
+                <td>{{=stats['Standing Jump Distance']}}</td>
+            </tr>
+            <tr>
+                <th>Standing Jump Height</th>
+                <td>{{=stats['Standing Jump Height']}}</td>
+            </tr>
+            <tr>
+                <th>Running Jump Distance</th>
+                <td>{{=stats['Running Jump Distance']}}</td>
+            </tr>
+            <tr>
+                <th>Running Jump Height</th>
+                <td>{{=stats['Running Jump Height']}}</td>
+            </tr>
+        </table>
+     </div>
+ </div>
+
+
+ <div class="row">
+   <div class="col-sm-6">
+        <H2>
+        Combat
+        </H2>
+        <table class = 'table table-striped'>
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <th>Physical Reaction</th>
+                <td>{{=stats['Physical Reaction']}}</td>
+            </tr>
+            <tr>
+                <th>Action Multiplier</th>
+                <td>{{=stats['Action Multiplier']}}</td>
+            </tr>
+        </table>
+     </div>
+    <div class="col-sm-6">
+        <H2>
+        Damage
+        </H2>
+        <table class = 'table table-striped'>
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <th>Maximum Life</th>
+                <td>{{=stats['Maximum Life']}}</td>
+            </tr>
+            {{for part in ['Body', 'Head', 'Upper Torso', 'Lower Torso', 'Right Arm', 'Left Arm', 'Right Leg', 'Left Leg']:}}
+             <tr>
+                <th>{{='Wound Limit {}'.format(part)}}</th>
+                <td>{{=stats['Wound Limit {}'.format(part)]}}</td>
+            </tr>
+            {{pass}}
+        </table>
+     </div>
+ </div>
+
+
+ <div class="row">
+   <div class="col-sm-6">
+        <H2>
+        Other
+        </H2>
+        <table class = 'table table-striped'>
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <th>Sponataneous Modification Maximum</th>
+                <td>{{=stats['Sponataneous Modification Maximum']}}</td>
+            </tr>
+            <tr>
+                <th>Psychological Threshold</th>
+                <td>{{=stats['Psychological Threshold']}}</td>
+            </tr>
+        </table>
+     </div>
+    <div class="col-sm-6">
+     </div>
+ </div>

@@ -51,7 +51,7 @@ def livedata():
     db.rolls.result.represent = lambda val: int(round(val))
     rows = db(db.rolls.char.belongs(db(db.chars.master == auth.user.id)._select(db.chars.id))).select(db.rolls.ALL, orderby=~db.rolls.id,
                                                                          limitby=(0, 10), distinct=True)
-    table = SQLTABLE(rows, headers='labels')
+    table = SQLTABLE(rows, headers='labels', _class = 'table table-striped')
     return dict(rows=rows, table=table)
 
 @auth.requires_login()
@@ -62,11 +62,11 @@ def live():
     db.rolls.result.represent = lambda val: int(round(val))
     rows = db(db.rolls.char.belongs(db(db.chars.master == auth.user.id)._select(db.chars.id))).select(db.rolls.ALL, orderby=~db.rolls.id,
                                                                          limitby=(0, 10), distinct=True)
-    table = SQLTABLE(rows, headers='labels')
+    table = SQLTABLE(rows, headers='labels', _class = 'table table-striped')
     return dict(rows=rows, table=table)
 
 @auth.requires_login()
-def ncombat():
+def combat():
     initiative = [None, None]
     combats = []
     combat = session.master_current_combat

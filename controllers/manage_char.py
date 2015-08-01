@@ -26,7 +26,6 @@ def manage_chars():
 def edit_char():
     char = request.args(0)
     session.char = char
-    response.menu = global_menu(char)
     if not db.chars[char] or (db.chars[char].player != auth.user.id
                               and db.chars[char].master != auth.user.id):
         redirect(URL(f='index'))
@@ -40,10 +39,7 @@ def edit_char():
 
 @auth.requires_login()
 def edit_attributes():
-    char = request.args(0) or session.char
-    if not db.chars[char] or (db.chars[char].player != auth.user.id
-                              and db.chars[char].master != auth.user.id):
-        redirect(URL(f='index'))
+    char = get_char()
     charname = db.chars[char].name
     fields = []
     attributes = []
@@ -76,10 +72,7 @@ def edit_attributes():
 
 @auth.requires_login()
 def edit_skills():
-    char = request.args(0) or session.char
-    if not db.chars[char] or (db.chars[char].player != auth.user.id
-                              and db.chars[char].master != auth.user.id):
-        redirect(URL(f='index'))
+    char = get_char()
     charname = db.chars[char].name
     fields = []
     skills = []
@@ -120,10 +113,7 @@ def edit_skills():
 
 @auth.requires_login()
 def manage_powers():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_adept_powers
     table.char.default = char_id
     query = (table.char == char_id)
@@ -135,10 +125,7 @@ def manage_powers():
 
 @auth.requires_login()
 def manage_ware():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_ware
     table.char.default = char_id
     query = (table.char == char_id)
@@ -165,7 +152,7 @@ def edit_ware():
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
-            db(db.char_ware_stats.ware == char_ware_id and db.char_ware_stats.stat == entry).update(value=form.vars[entry])
+            db((db.char_ware_stats.ware == char_ware_id) & (db.char_ware_stats.stat == entry)).update(value=form.vars[entry])
         db.commit()
     elif form.errors:
         response.flash = 'form has errors'
@@ -187,10 +174,7 @@ def edit_ware():
 
 @auth.requires_login()
 def edit_damage():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_damage
     table.char.default = char_id
     query = db.char_damage.char == char_id
@@ -200,10 +184,7 @@ def edit_damage():
 
 @auth.requires_login()
 def edit_wounds():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_wounds
     table.char.default = char_id
     query = db.char_wounds.char == char_id
@@ -213,10 +194,7 @@ def edit_wounds():
 
 @auth.requires_login()
 def edit_items():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_items
     table.char.default = char_id
     query = table.char == char_id
@@ -225,10 +203,7 @@ def edit_items():
 
 @auth.requires_login()
 def manage_spells():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_spells
     table.char.default = char_id
     query = table.char == char_id
@@ -238,10 +213,7 @@ def manage_spells():
 
 @auth.requires_login()
 def edit_sins():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_sins
     table.locations.requires = IS_IN_DB(db(db.char_locations.char == char_id), 'char_locations.id', '%(name)s', multiple=True)
     table.char.default = char_id
@@ -252,10 +224,7 @@ def edit_sins():
 
 @auth.requires_login()
 def edit_locations():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_locations
     table.char.default = char_id
     query = table.char == char_id
@@ -265,10 +234,7 @@ def edit_locations():
 
 @auth.requires_login()
 def edit_loadout():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     query = (db.char_loadout.char==char_id)
 
     if request.vars.get('loadout'):
@@ -295,10 +261,7 @@ def edit_loadout():
 
 @auth.requires_login()
 def edit_computers():
-    char_id = request.args(0) or session.char
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                              and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.char_computers
     table.char.default = char_id
     owned_decks =db((db.char_items.char == char_id) &

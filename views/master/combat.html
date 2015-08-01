@@ -1,4 +1,22 @@
-
 {{extend 'layout.html'}}
-<h1>This is the master/combat.html template</h1>
-{{=BEAUTIFY(response._vars)}}
+{{=H2(combat)}}
+{{=form}}
+
+    <table class='table table-striped table-condensed'>
+        <tr>
+            {{for entry in initiative[0]:}}
+            {{=TH(entry)}}
+            {{pass}}
+        </tr>
+        {{if initiative[1:]:}}
+            {{for row in initiative[1:]:}}
+            <tr>
+                {{if row:}}
+                    {{for entry in row:}}
+                    {{=TD(entry)}}
+                    {{pass}}
+                {{pass}}
+            </tr>
+            {{pass}}
+        {{pass}}
+    </table>

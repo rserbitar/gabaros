@@ -251,10 +251,12 @@ class CloseCombatWeapon(object):
         damage = []
         skill = self.char_property_getter.get_skilltest_value(self.skill)
         minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
-        net_value = -rules.shoot_base_difficulty + skill - minstr_mod + cc_mod
+        net_value = skill - minstr_mod - cc_mod + self.skillmod
         result = net_value
-        return damage, {'difficulty': rules.shoot_base_difficulty,  'minimum strength mod': minstr_mod,
-                        'skill': skill, 'other mods': cc_mod, 'result': result}
+        if net_value > 0:
+            damage.append(rules.weapondamage(self.damage, net_value))
+        return damage, {'minimum strength mod': minstr_mod, 'weapon skill mod': self.skillmod,
+                        'skill': skill, 'other mods': cc_mod, 'result': result, 'difficulty': 0.}
 
 
 class RangedWeapon(object):
@@ -552,6 +554,9 @@ class CharBody():
 
     def init_body(self):
         self.place_bodypart(self.body.bodyparts['Body'], None)
+        for part in data.bodyparts_dict:
+            part = self.body.bodyparts[part]
+            self.bodyparts[part.name] = CharBodypart(self.char,self, part, None)
 
     def place_ware(self):
         for ware in self.char.ware:
@@ -630,6 +635,16 @@ class CharBodypart():
     def get_kind(self):
         if self.ware:
             return self.ware.kind
+        elif self.bodypart.children:
+            child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
+            weights = [part.get_attribute_absolute('Weight', modlevel='augmented') for part in child_char_bodyparts]
+            kinds = [part.get_kind() for part in child_char_bodyparts]
+            cyberweight = sum([weights[i] for i,kind in enumerate(kinds) if kind == 'cyberware'])
+            bioweight = sum([weights[i] for i,kind in enumerate(kinds) if kind == 'bioware'])
+            if cyberweight/sum(weights) > 0.5:
+                return 'cyberware'
+            elif bioweight/sum(weights) > 0.5:
+                return 'bioware'
         else:
             return self.bodypart.get_kind()
 

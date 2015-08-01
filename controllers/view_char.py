@@ -11,6 +11,7 @@ from collections import OrderedDict
 def index():
     redirect(URL('view_chars'))
 
+
 def roll(char_id, value, name, visible):
     roll = int(rules.die_roll())
     if value is None:
@@ -23,6 +24,7 @@ def roll(char_id, value, name, visible):
     result = int(round(value + roll))
     db.rolls.insert(char=char_id, name=name, value=value, roll=roll, result=result, visible=visible)
     return result
+
 
 def roll_button():
     value = request.args(2)
@@ -48,28 +50,22 @@ def view_chars():
 
 @auth.requires_login()
 def view_char():
-    char = request.args(0)
-    if not db.chars[char] or (db.chars[char].player != auth.user.id
-                              and db.chars[char].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     table = db.chars
     table.player.writable = False
     table.player.represent = lambda player: db.auth_user[player].username
-    linklist = [A("attributes", _href=URL('view_attributes', args=[char])),
-                A("skills", _href=URL('view_skills', args=[char])),
-                A("computer", _href=URL('view_computer', args=[char])),
-                A("weapons", _href=URL('view_weapons', args=[char])),
-                A("combat", _href=URL('combat', args=[char])),
+    linklist = [A("attributes", _href=URL('view_attributes')),
+                A("skills", _href=URL('view_skills')),
+                A("computer", _href=URL('view_computer')),
+                A("weapons", _href=URL('view_weapons')),
+                A("combat", _href=URL('combat')),
                 ]
     return dict(linklist=linklist)
 
 
 @auth.requires_login()
 def view_skills():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     skills = [["Skill", "Test", "Secret"]]
     skilldepth_dict = {}
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
@@ -88,10 +84,7 @@ def view_skills():
 
 @auth.requires_login()
 def view_attributes():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     attributes = [["Attribute", "Unaugmented", "Augmented", "Temporary", "Value", "Mod", "Test", "Secret"]]
     char = basic.Char(db, char_id)
 
@@ -115,11 +108,8 @@ def view_attributes():
 
 @auth.requires_login()
 def view_matrix_actions():
-    char_id = request.args(0)
-    computer_id = request.args(1)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
+    computer_id = request.args(0)
     computer = basic.Computer(db, computer_id, basic.Char(db, char_id))
     actions = [["Action", "Prerequisite", "Test", "Secret"]]
     for action, item in sorted(data.matrix_actions_dict.items()):
@@ -139,10 +129,7 @@ def view_matrix_actions():
 
 @auth.requires_login()
 def view_computer():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     computers = [row.id for row in db(db.char_computers.char == char_id).select(db.char_computers.id)]
     char = basic.Char(db, char_id)
     table = [['Computer', 'Processor', 'System', 'Signal', 'Firewall', 'Uplink', 'Current Uplink', 'Damage']]
@@ -151,7 +138,7 @@ def view_computer():
         at_least_one_computer = True
         row = []
         computer = basic.Computer(db, computer_id, char)
-        row.append(A(computer.name, _href=URL('view_matrix_actions', args = [char_id, computer_id])))
+        row.append(A(computer.name, _href=URL('view_matrix_actions', args = [computer_id])))
         row.append(computer.attributes['Processor'])
         row.append(computer.attributes['System'])
         row.append(computer.attributes['Signal'])
@@ -169,15 +156,12 @@ def view_computer():
 
 
 def combat():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char = basic.Char(db, char_id)
-    insert_situation_mod = LOAD('view_char','insert_situation_mod.load',ajax=True, args = [char_id], target = 'insert_situation_mod')
-    view_weapons = LOAD('view_char','view_weapons.load',ajax=True, args = [char_id], target = 'view_weapons')
-    view_actions = LOAD('view_char','view_actions.load',ajax=True, args = [char_id], target = 'view_actions')
-    view_cc_weapons = LOAD('view_char','view_cc_weapons.load',ajax=True, args = [char_id], target = 'view_cc_weapons')
+    insert_situation_mod = LOAD('view_char','insert_situation_mod.load',ajax=True, target = 'insert_situation_mod')
+    view_weapons = LOAD('view_char','view_weapons.load',ajax=True, target = 'view_weapons')
+    view_actions = LOAD('view_char','view_actions.load',ajax=True, target = 'view_actions')
+    view_cc_weapons = LOAD('view_char','view_cc_weapons.load',ajax=True, target = 'view_cc_weapons')
     return dict(view_weapons=view_weapons, insert_situation_mod=insert_situation_mod, view_actions=view_actions,
                 view_cc_weapons=view_cc_weapons)
 
@@ -215,17 +199,14 @@ def get_net_cc_test_val(char_id, weapon_name):
     damage, result = weapon.get_damage(net_value)
     result['roll'] = roll
     result['other mods'] = situation_mod
-    test_val = (-result['difficulty'] - result['other mods'] - result['minimum strength mod']
+    test_val = (result['weapon skill mod'] - result['other mods'] - result['minimum strength mod']
                    + result['skill'])
     return int(round(test_val))
 
 
 @auth.requires_login()
 def view_weapons():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char = basic.Char(db, char_id)
     weapons = basic.CharPropertyGetter(char).get_ranged_weapons()
     table = [['Weapon', 'Skill', 'Val', 'Net Val', 'Dam', 'Type', 'Pen', 'Range', 'Bullets', 'Rec', 'Mag', 'Type', 'Hands', 'Shoot']]
@@ -244,7 +225,7 @@ def view_weapons():
         row.append(weapon.mag)
         row.append(weapon.magtype)
         row.append(weapon.hands)
-        row.append(A('Shoot', callback=URL('shoot_weapon', args=[char_id, weapon.name]),
+        row.append(A('Shoot', callback=URL('shoot_weapon', args=[weapon.name]),
                      target = 'attack_result', _class='btn'))
         table.append(row)
     #fields = [Field('val', 'integer', default=0, label = 'Modifications')]
@@ -258,11 +239,8 @@ def view_weapons():
 
 @auth.requires_login()
 def shoot_weapon():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
-    weapon_name = request.args(1).replace('_', ' ')
+    char_id = get_char()
+    weapon_name = request.args(0).replace('_', ' ')
     char = basic.Char(db, char_id)
     weapon = basic.RangedWeapon(weapon_name, char)
     rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod', 'shoot_distance']))
@@ -279,17 +257,64 @@ def shoot_weapon():
     result['other mods'] = situation_mod
     difficulty = -(result['difficulty'] + result['other mods'] + result['minimum strength mod']
                   + result['weapon range mod'] + result['sight range mod'] - result['skill'])
-    text = ('damage: {}, {}'.format(damage, result))
+    text = """
+    <table class='table table-striped table-condensed'>
+            <tr>
+                <th>Stat</th>
+                <th>Value</th>
+                <th>Stat</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <th>Damage</td>
+                <td>{damage}</td>
+                <th>Weapon Range Mod</td>
+                <td>{weapon_range_mod}</td>
+            </tr>
+            <tr>
+                <th>Result</td>
+                <td>{result}</td>
+                <th>Sight Mod</td>
+                <td>{sight_range_mod}</td>
+            </tr>
+            <tr>
+                <th>Roll</td>
+                <td>{roll}</td>
+                <th>Min Strength mod</td>
+                <td>{minimum_strength_mod}</td>
+            </tr>
+            <tr>
+                <th>Skill</td>
+                <td>{skill}</td>
+                <th>Other Mods</td>
+                <td>{other_mods}</td>
+            </tr>
+            <tr>
+                <th>Difficulty</td>
+                <td>{difficulty}</td>
+            </tr>
+    </table>
+    """
+    if damage:
+        damage = damage[0]
+    else:
+        damage = 0.
+    text = text.format(damage=int(round(damage)),
+                weapon_range_mod = int(round(result['weapon range mod'])),
+                sight_range_mod = int(round(result['sight range mod'])),
+                minimum_strength_mod = int(round(result['minimum strength mod'])),
+                other_mods =int(round( result['other mods'])),
+                result = int(round(result['result'])),
+                roll = int(round(result['roll'])),
+                skill = int(round(result['skill'])),
+                difficulty = int(round(result['difficulty'])))
     db.rolls.insert(char=char_id, name='shoot', value=difficulty, roll=roll, result=result['result'], visible=True)
     return text
 
 
 @auth.requires_login()
 def view_cc_weapons():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char = basic.Char(db, char_id)
     weapons = basic.CharPropertyGetter(char).get_close_combat_weapons()
     table = [['Weapon', 'Skill', 'Val', 'Net Val', 'Dam', 'Type', 'Pen', 'Hands', 'Swing']]
@@ -303,7 +328,7 @@ def view_cc_weapons():
         row.append(weapon.damagetype)
         row.append(weapon.penetration)
         row.append(weapon.hands)
-        row.append(A('Swing', callback=URL('swing_weapon', args=[char_id, weapon.name]),
+        row.append(A('Swing', callback=URL('swing_weapon', args=[weapon.name]),
                      target = 'attack_result', _class='btn'))
         table.append(row)
     #fields = [Field('val', 'integer', default=0, label = 'Modifications')]
@@ -317,11 +342,8 @@ def view_cc_weapons():
 
 @auth.requires_login()
 def swing_weapon():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
-    weapon_name = request.args(1).replace('_', ' ')
+    char_id = get_char()
+    weapon_name = request.args(0).replace('_', ' ')
     char = basic.Char(db, char_id)
     weapon = basic.CloseCombatWeapon(weapon_name, char)
     rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod']))
@@ -335,15 +357,62 @@ def swing_weapon():
     damage, result = weapon.get_damage(net_value)
     result['roll'] = roll
     result['other mods'] = situation_mod
-    difficulty = -(result['difficulty'] + result['other mods'] + result['minimum strength mod'] - result['skill'])
-    text = ('damage: {}, {}'.format(damage, result))
+    difficulty = -(-result['weapon skill mod'] + result['other mods'] + result['minimum strength mod'] - result['skill'])
+    text = """
+    <table class='table table-striped table-condensed'>
+            <tr>
+                <th>Stat</th>
+                <th>Value</th>
+                <th>Stat</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <th>Damage</td>
+                <td>{damage}</td>
+                <th>Min Strength mod</td>
+                <td>{minimum_strength_mod}</td>
+            </tr>
+            <tr>
+                <th>Result</td>
+                <td>{result}</td>
+                <th>Weapon Skill Mod</td>
+                <td>{weapon_skill_mod}</td>
+            </tr>
+            <tr>
+                <th>Roll</td>
+                <td>{roll}</td>
+                <th>Other Mods</td>
+                <td>{other_mods}</td>
+            </tr>
+            <tr>
+                <th>Skill</td>
+                <td>{skill}</td>
+            </tr>
+            <tr>
+                <th>Difficulty</td>
+                <td>{difficulty}</td>
+            </tr>
+    </table>
+    """
+    if damage:
+        damage = damage[0]
+    else:
+        damage = 0.
+    text = text.format(damage=int(round(damage)),
+                weapon_skill_mod = int(round(result['weapon skill mod'])),
+                minimum_strength_mod = int(round(result['minimum strength mod'])),
+                other_mods =int(round( result['other mods'])),
+                result = int(round(result['result'])),
+                roll = int(round(result['roll'])),
+                skill = int(round(result['skill'])),
+                difficulty = int(round(result['difficulty'])))
     db.rolls.insert(char=char_id, name='swing', value=difficulty, roll=roll, result=result['result'], visible=True)
     return text
 
 @auth.requires_login()
 def insert_state_mod():
-    char = int(request.args[0])
-    name = request.args[1]
+    char_id = get_char()
+    name = request.args[0]
     db.state_mods.update_or_insert(((db.state_mods.char==char) &
                                     (db.state_mods.name==name)),
                                     value=request.vars.val, char = char, name = name)
@@ -351,7 +420,7 @@ def insert_state_mod():
 
 @auth.requires_login()
 def insert_situation_mod():
-    char_id = request.args(0)
+    char_id = get_char()
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
@@ -367,8 +436,8 @@ def insert_situation_mod():
     fields.append(Field('situation_mod', 'integer', default=0, label = 'Modifications',  requires=IS_NOT_EMPTY()))
     form = SQLFORM.factory(*fields)
     for var in vars:
-        form.element(_name=var)['_onblur']="ajax('/gabaros/view_char/insert_situation_mod/{}', " \
-                                            "['{}'], '')".format(char_id, var)
+        form.element(_name=var)['_onblur']="ajax('/gabaros/view_char/insert_situation_mod', " \
+                                            "['{}'], '')".format(var)
     if form.process().accepted:
         for i, var in enumerate(vars):
             if form.vars.get(var) is not None:
@@ -385,10 +454,7 @@ def insert_situation_mod():
 
 @auth.requires_login()
 def view_actions():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char_property_getter = basic.CharPhysicalPropertyGetter(basic.Char(db, char_id))
     combat = db(db.actions.char==char_id).select(db.actions.combat).last()
     if combat:
@@ -399,15 +465,19 @@ def view_actions():
     form = SQLFORM.factory(*fields)
     if form.process().accepted:
         combat = int(form.vars.combat)
+    combat_name = None
+    rows = db(db.combats.id == combat).select(db.combats.name).first()
+    if rows:
+        combat_name = rows.name
     reaction = int(round(char_property_getter.get_reaction()))
     actions = ['Free', 'Simple', 'Complex']
     action_costs = {i: int(round(char_property_getter.get_actioncost(i))) for i in actions}
-    action_buttons = {i: A(i, callback=URL('perform_action', args=[char_id, i, combat]),
+    action_buttons = {i: A(i, callback=URL('perform_action', args=[i, combat]),
                      target = 'next_action', _class='btn') for i in actions}
     reaction_button = A("Reaction ({})".format(reaction),
                     callback=URL('roll_button', args=[char_id, 'Reaction', reaction, 1]), _class='btn', _title = 'test')
     action_history = get_action_history(char_id, combat)
-    return dict(reaction_button=reaction_button, actions=actions, action_costs=action_costs, action_buttons=action_buttons, action_history = action_history, form=form)
+    return dict(reaction_button=reaction_button, actions=actions, action_costs=action_costs, action_buttons=action_buttons, action_history = action_history, form=form, combat_name = combat_name)
 
 
 def get_action_history(char_id, combat):
@@ -422,12 +492,9 @@ def get_action_history(char_id, combat):
 
 @auth.requires_login()
 def perform_action():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
-    action = request.args(1)
-    combat = request.args(2)
+    char_id = get_char()
+    action = request.args(0)
+    combat = request.args(1)
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
     action_cost = char_property_getter.get_actioncost(action)
     db.actions.insert(char=int(char_id), combat=combat, action=action, cost=action_cost)
@@ -437,10 +504,7 @@ def perform_action():
 
 @auth.requires_login()
 def view_bodyparts():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
     table = char_property_getter.get_bodypart_table()
     return dict(table=table)
@@ -448,15 +512,12 @@ def view_bodyparts():
 
 @auth.requires_login()
 def view_stats():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
     char_physical_property_getter = basic.CharPhysicalPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
     stats = OrderedDict()
-    stats['Maximum life'] = int(round(char_property_getter.get_maxlife()))
-    stats['Action Multiplier '] = round(char_physical_property_getter.get_actionmult(),2)
+    stats['Maximum Life'] = int(round(char_property_getter.get_maxlife()))
+    stats['Action Multiplier'] = round(char_physical_property_getter.get_actionmult(),2)
     stats['Physical Reaction'] = int(round(char_physical_property_getter.get_reaction()))
     stats['Standing Jump Distance']  = round(char_physical_property_getter.get_jump_distance(False),2)
     stats['Running Jump Distance']  = round(char_physical_property_getter.get_jump_distance(True),2)
@@ -466,18 +527,16 @@ def view_stats():
     stats['Walk Speed'] = speed[0]
     stats['Run Speed'] = speed[1]
     stats['Sprint Speed'] = speed[2]
-    stats['Psychological Threshold'] = char_property_getter.get_psycho_thresh()
-    stats['Sponataneous Modification Maximum'] = char_property_getter.get_spomod_max()
-
-    return dict(stats)
+    stats['Psychological Threshold'] = round(char_property_getter.get_psycho_thresh(),2)
+    stats['Sponataneous Modification Maximum'] = round(char_property_getter.get_spomod_max(),2)
+    for part in ['Body', 'Head', 'Upper Torso', 'Lower Torso', 'Right Arm', 'Left Arm', 'Right Leg', 'Left Leg']:
+        stats['Wound Limit {}'.format(part)] = round(char_physical_property_getter.char_body.bodyparts[part].get_woundlimit(),2)
+    return dict(stats=stats)
 
 
 @auth.requires_login()
 def view_armor():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
     armors = char_property_getter.get_armor()
     armor_table = [['Bodypart'] + [armor.name for armor in armors] + ['Total']]
@@ -496,10 +555,7 @@ def view_armor():
 
 @auth.requires_login()
 def view_damage_state():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
     wounds = char_property_getter.char.wounds
     damage = char_property_getter.char.damage
@@ -507,14 +563,9 @@ def view_damage_state():
     return dict(wounds=wounds, damage=damage, maxlife=maxlife)
 
 
-
-
 @auth.requires_login()
 def apply_damage():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     fields = [Field('damage', 'integer', default=0, label = 'Damage'),
               Field('penetration', 'integer', default=0, label = 'Penetration'),
               Field('bodypart', 'string', requires=IS_IN_SET(['Body'] + data.main_bodyparts), default = 'Body'),
@@ -550,10 +601,7 @@ def apply_damage():
 
 @auth.requires_login()
 def chat():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     player = db.chars[char_id].name
     form=LOAD('view_char', 'ajax_form', args=char_id, ajax=True)
     script=SCRIPT("""
@@ -570,10 +618,7 @@ def chat():
 
 @auth.requires_login()
 def ajax_form():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     master = db.chars[char_id].master
     charname = db.chars[char_id].name
     now = datetime.datetime.now().time()
@@ -587,10 +632,7 @@ def ajax_form():
 
 @auth.requires_login()
 def view_xp():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='unaugmented')
     xp = char_property_getter.get_total_exp()
     totalxp = sum(xp.values())
@@ -599,10 +641,7 @@ def view_xp():
 
 @auth.requires_login()
 def view_cost():
-    char_id = request.args(0)
-    if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
-                                 and db.chars[char_id].master != auth.user.id):
-        redirect(URL(f='index'))
+    char_id = get_char()
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
     cost = char_property_getter.get_total_cost()
     totalcost = sum(cost.values())
