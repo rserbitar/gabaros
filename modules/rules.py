@@ -118,12 +118,16 @@ def woundlimit(weight, constitution):
     return percent * 3 * lifeval  /((1+lifeval)**(1/3.))
 
 
-def wound_for_destroy_thresh(weight, constitution):
+def wounds_for_incapacitated_thresh(weight, constitution):
     return woundlimit(weight, constitution)/life(weight, constitution)/10.*3
 
 
+def wounds_for_destroyed_thresh(weight, constitution):
+    return woundlimit(weight, constitution)/life(weight, constitution)/10.*5
+
+
 def woundeffect(attribute, wounds, weight, constitution):
-    return attribute * (0.5)**(wounds * wound_for_destroy_thresh(weight, constitution)/3.)
+    return attribute * (0.5)**(wounds * wounds_for_incapacitated_thresh(weight, constitution)/3.)
 
 
 def action_cost(kind, actionmult):
