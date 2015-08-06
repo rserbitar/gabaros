@@ -119,7 +119,7 @@ def manage_powers():
     query = (table.char == char_id)
     maxlength = {'char_adept_powers.power': 50, 'char_adept_powers.value': 100}
     table.value.represent = lambda value, row: basic.CharAdeptPower(db, row.power, basic.Char(db, char_id)).get_description()
-    form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, args=request.args[:1], maxtextlengths = maxlength)
+    form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, maxtextlengths = maxlength)
     return dict(form=form)
 
 
@@ -129,10 +129,27 @@ def manage_ware():
     table = db.char_ware
     table.char.default = char_id
     query = (table.char == char_id)
-    table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id)))
-    form = SQLFORM.grid(query, fields = [table.id, table.ware], csv = False, args=request.args[:1],
+    table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id))) if data.ware_dict[ware].parts else ware
+    form = SQLFORM.grid(query, fields = [table.id, table.ware], csv = False,
                         oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id))))
     return dict(form=form)
+
+
+@auth.requires_login()
+def manage_fixtures():
+    char_id = get_char()
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), 'augmented')
+    bodyparts = []
+    for bodypart in data.bodyparts_dict:
+        capacity = char_property_getter.char_body.bodyparts[bodypart].get_capacity()
+        if capacity:
+            used = char_property_getter.char_body.bodyparts[bodypart].get_used_capacity()
+            bodyparts.append([bodypart, capacity, used])
+    table = db.char_fixtures
+    table.char.default = char_id
+    query = (table.char == char_id)
+    form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False)
+    return dict(bodyparts = bodyparts, form=form)
 
 
 @auth.requires_login()
@@ -178,7 +195,7 @@ def edit_damage():
     table = db.char_damage
     table.char.default = char_id
     query = db.char_damage.char == char_id
-    form = SQLFORM.grid(query, fields = [table.damagekind, table.value], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.damagekind, table.value], csv = False)
     return dict(form=form)
 
 
@@ -188,7 +205,7 @@ def edit_wounds():
     table = db.char_wounds
     table.char.default = char_id
     query = db.char_wounds.char == char_id
-    form = SQLFORM.grid(query, fields = [table.bodypart, table.damagekind, table.value], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.bodypart, table.damagekind, table.value], csv = False)
     return dict(form=form)
 
 
@@ -198,7 +215,7 @@ def edit_items():
     table = db.char_items
     table.char.default = char_id
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False)
     return dict(form=form)
 
 @auth.requires_login()
@@ -207,7 +224,7 @@ def manage_spells():
     table = db.char_spells
     table.char.default = char_id
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.spell], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.spell], csv = False)
     return dict(form=form)
 
 
@@ -218,7 +235,7 @@ def edit_sins():
     table.locations.requires = IS_IN_DB(db(db.char_locations.char == char_id), 'char_locations.id', '%(name)s', multiple=True)
     table.char.default = char_id
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.name, table.rating, table.permits, table.locations], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.name, table.rating, table.permits, table.locations], csv = False)
     return dict(form=form)
 
 
@@ -228,7 +245,7 @@ def edit_locations():
     table = db.char_locations
     table.char.default = char_id
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.name], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.name], csv = False)
     return dict(form=form)
 
 
@@ -269,5 +286,5 @@ def edit_computers():
                         )
     table.item.requires = IS_IN_DB(owned_decks, 'char_items.id', '%(item)s')
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.item, table.firewall, table.current_uplink, table.damage], csv = False, args=request.args[:1])
+    form = SQLFORM.grid(query, fields = [table.item, table.firewall, table.current_uplink, table.damage], csv = False)
     return dict(form=form)

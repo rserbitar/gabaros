@@ -1,4 +1,5 @@
 # !/usr/bin/env python
+# !/usr/bin/env python
 # coding: utf8
 
 #from gluon import *
@@ -25,6 +26,7 @@ class Char(object):
         self.attributes = {}
         self.skills = {}
         self.ware = []
+        self.fixtures = []
         self.adept_powers = []
         self.items = []
         self.damage = {}
@@ -55,6 +57,7 @@ class Char(object):
         self.load_attributes()
         self.load_skills()
         self.load_ware()
+        self.load_fixtures()
         self.load_damage()
         self.load_wounds()
         self.load_items()
@@ -108,6 +111,15 @@ class Char(object):
         db_cw = self.db.char_ware
         for row in self.db(db_cw.char == self.char_id).select(db_cw.ware, db_cw.id):
             self.ware.append(CharWare(self.db, row.ware, row.id, self))
+
+    def load_fixtures(self):
+        """
+
+        Load character fixtures
+        """
+        db_cf = self.db.char_fixtures
+        for row in self.db(db_cf.char == self.char_id).select(db_cf.fixture):
+            self.fixtures.append(Fixture(row.fixture))
 
     def load_adept_powers(self):
         db_cap = self.db.char_adept_powers
@@ -371,6 +383,25 @@ class Skill(object):
         self.attribmods = attribmods
 
 
+class Fixture(object):
+    def __init__(self, name):
+        self.name = name
+        self.location = None
+        self.relative_capacity = None
+        self.absolute_capacity = None
+        self.weight = None
+        self.description = None
+        self.load_basic_data()
+
+    def load_basic_data(self):
+        fixture = data.fixtures_dict[self.name]
+        self.location = fixture.location
+        self.relative_capacity = fixture.relative_capacity
+        self.absolute_capacity = fixture.absolute_capacity
+        self.weight = fixture.weight
+        self.description = fixture.description
+
+
 class Ware(object):
     def __init__(self, db, name):
         self.db = db
@@ -385,6 +416,7 @@ class Ware(object):
         self.parts = None
         self.effects = None
         self.location = None
+        self.capacity = None
         self.load_basic_data()
 
     def load_basic_data(self):
@@ -400,7 +432,7 @@ class Ware(object):
         self.parts = ware_nt.parts
         self.effects = ware_nt.effects
         self.location = ware_nt.location
-
+        self.capacity = ware_nt.capacity
 
 class CharWare(Ware):
     def __init__(self, db, ware_name, db_id, char):
@@ -551,12 +583,13 @@ class CharBody():
         self.body = Body()
         self.init_body()
         self.place_ware()
+        self.place_fixtures()
 
     def init_body(self):
         self.place_bodypart(self.body.bodyparts['Body'], None)
         for part in data.bodyparts_dict:
             part = self.body.bodyparts[part]
-            self.bodyparts[part.name] = CharBodypart(self.char,self, part, None)
+            self.bodyparts[part.name] = CharBodypart(self.char,self, part, None, None)
 
     def place_ware(self):
         for ware in self.char.ware:
@@ -564,10 +597,15 @@ class CharBody():
                 for part in ware.parts:
                     self.place_bodypart(part, ware)
 
+    def place_fixtures(self):
+        for fixture in self.char.fixtures:
+            for location in fixture.location:
+                self.bodyparts[location].fixtures.append(fixture)
+
     def place_bodypart(self, part, ware):
         if isinstance(part, basestring):
             part = self.body.bodyparts[part]
-        self.bodyparts[part.name] = CharBodypart(self.char, self, part, ware)
+        self.bodyparts[part.name] = CharBodypart(self.char, self, part, ware, None)
         for child in part.children:
             self.place_bodypart(child, ware)
 
@@ -620,31 +658,58 @@ class Bodypart(object):
         return getattr(self.body_fractions, attribute)
 
     def get_kind(self):
-        return 'unaugmented', 1.
+        return 'unaugmented', 0., 0.
 
 
 class CharBodypart():
-    def __init__(self, char, char_body, bodypart, ware):
+    def __init__(self, char, char_body, bodypart, ware, fixtures):
         self.char_body = char_body
         self.char = char
         self.bodypart = bodypart
         self.ware = ware
+        if fixtures:
+            self.fixtures = fixtures
+        else:
+            self.fixtures = []
         self.wounds = char.wounds.get(bodypart.name, {})
         self.attributes = {}
 
+    def get_capacity(self):
+        capacity = 0
+        if self.ware and self.ware.kind == 'cyberware':
+            weight = self.get_attribute_absolute('Weight', 'augmented')
+            capacity = weight * self.ware.capacity if self.ware.capacity else 0
+        return capacity
+
+    def get_used_capacity(self):
+        used = 0
+        if self.fixtures:
+            weight = self.get_attribute_absolute('Weight', 'augmented')
+            for fixture in self.fixtures:
+                used += fixture.absolute_capacity + weight*fixture.relative_capacity
+        return used
+
     def get_kind(self):
         if self.ware:
-            return self.ware.kind, 1.
+            if self.ware.kind == 'cyberware':
+                return self.ware.kind, 1., 0.
+            elif self.ware.kind == 'bioware':
+                return self.ware.kind, 0., 1.
         elif self.bodypart.children:
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             weights = [part.get_attribute_absolute('Weight', modlevel='augmented') for part in child_char_bodyparts]
             kinds = [part.get_kind() for part in child_char_bodyparts]
-            cyberweight = sum([weights[i] for i,kind in enumerate(kinds) if kind == 'cyberware'])
-            bioweight = sum([weights[i] for i,kind in enumerate(kinds) if kind == 'bioware'])
-            if cyberweight/sum(weights) > 0.5:
-                return 'cyberware', cyberweight/sum(weights)
-            elif bioweight/sum(weights) > 0.5:
-                return 'bioware', cyberweight/sum(weights)
+            cyberweight = sum([weights[i]*kind[1] for i,kind in enumerate(kinds)])
+            bioweight = sum([weights[i]*kind[2] for i,kind in enumerate(kinds)])
+            cyberfrac = cyberweight/sum(weights)
+            biofrac = bioweight/sum(weights)
+            if  cyberfrac > 0.5:
+                kind = 'cyberware'
+            elif biofrac > 0.5:
+                kind = 'bioware'
+            else:
+                kind = 'unaugmented'
+            return kind, cyberfrac, biofrac
         else:
             return self.bodypart.get_kind()
 
@@ -755,7 +820,7 @@ class CharPropertyGetter():
                 frac = round(bodypart.bodypart.get_fraction(attribute),2)
                 templist.append('{}/{}/{}'.format(augmented, stateful, frac))
             ware = bodypart.ware.name if bodypart.ware else ''
-            kind = bodypart.get_kind()
+            kind = bodypart.get_kind()[0]
             templist.append('{}/{}'.format(kind, ware))
             woundlimit = int(round(bodypart.get_woundlimit()))
             templist.append(woundlimit)
@@ -845,8 +910,19 @@ class CharPropertyGetter():
                         value = eval('value {}'.format(effect[2]))
             #subtract Essence from non located ware
             if attribute == 'Essence':
-                for ware in self.char.ware:
-                    value -= (1 - ware.stats['Essence']/100.) * ware.essence
+                for essence_ware in self.char.ware:
+                    essence_cost = essence_ware.essence
+                    for ware in self.char.ware:
+                        for effect in ware.effects:
+                            if effect[0] == 'Essence Cost' and effect[1] == essence_ware.location:
+                                essence_cost = eval('essence_cost {}'.format(effect[2]))
+                    for adept_power in self.char.adept_powers:
+                        for effect in adept_power.effects:
+                            if effect[0] == 'Essence Cost' and effect[1] == essence_ware.location:
+                                magic = self.get_attribute_value('Magic')
+                                formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                                essence_cost = eval('essence_cost {}'.format(formula))
+                    value -= essence_cost
             elif attribute == 'Charisma':
                     essence = self.get_attribute_value('Essence')
                     value *= rules.essence_charisma_mult(essence)
@@ -996,7 +1072,7 @@ class CharPropertyGetter():
                 if effect[0] == 'stats' and effect[1] == statname:
                     magic = self.get_attribute_value('Magic')
                     formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                    value = eval('value {}'.format(formula))
+                    pain_resistance += (1- pain_resistance)* eval('value {}'.format(formula))
         max_life = self.get_maxlife()
         if kind == 'relative':
             damagemod = rules.lifemod_relative(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)

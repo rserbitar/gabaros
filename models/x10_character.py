@@ -37,6 +37,9 @@ db.define_table('char_ware', Field('char', type='reference chars', label=T('Char
 db.define_table('char_ware_stats', Field('ware', type='reference char_ware', label=T('Ware')),
                 Field('stat', type='string', label=T('Stat')), Field('value', type='double', label=T('Value')))
 
+db.define_table('char_fixtures', Field('char', type='reference chars', label=T('Character'), writable=False),
+                Field('fixture', type='string', label=T('Fixture'), requires=IS_IN_SET(data.fixtures_dict.keys())))
+
 db.define_table('char_adept_powers', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('power', type='string', label=T('Power'), requires=IS_IN_SET(data.adept_powers_dict.keys())),
                 Field('value', type='double', label=T('Value')),
