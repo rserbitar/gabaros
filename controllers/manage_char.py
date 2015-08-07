@@ -115,11 +115,12 @@ def edit_skills():
 def manage_powers():
     char_id = get_char()
     table = db.char_adept_powers
+    table.value.show_if = (table.power.belongs([power.name for power in data.adept_powers_dict.values() if power.cost == 'X']))
     table.char.default = char_id
     query = (table.char == char_id)
-    maxlength = {'char_adept_powers.power': 50, 'char_adept_powers.value': 100}
+    maxtextlength = {'char_adept_powers.power': 50, 'char_adept_powers.value': 100}
     table.value.represent = lambda value, row: basic.CharAdeptPower(db, row.power, basic.Char(db, char_id)).get_description()
-    form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, maxtextlengths = maxlength)
+    form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, maxtextlengths = maxtextlength)
     return dict(form=form)
 
 
@@ -130,7 +131,13 @@ def manage_ware():
     table.char.default = char_id
     query = (table.char == char_id)
     table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id))) if data.ware_dict[ware].parts else ware
+    maxtextlength = {'table.ware': 50}
+    char = basic.Char(db, char_id)
+    links = [dict(header='Cost', body=lambda row: int(round(basic.CharWare(db, row.ware, row.id, char).get_cost()))),
+             dict(header='Essence', body=lambda row: round(basic.CharWare(db, row.ware, row.id, char).get_essence_cost(),2))]
     form = SQLFORM.grid(query, fields = [table.id, table.ware], csv = False,
+                        maxtextlength = maxtextlength,
+                        links = links,
                         oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id))))
     return dict(form=form)
 
@@ -144,11 +151,13 @@ def manage_fixtures():
         capacity = char_property_getter.char_body.bodyparts[bodypart].get_capacity()
         if capacity:
             used = char_property_getter.char_body.bodyparts[bodypart].get_used_capacity()
-            bodyparts.append([bodypart, capacity, used])
+            bodyparts.append([bodypart, round(capacity,2), round(used,2)])
     table = db.char_fixtures
     table.char.default = char_id
     query = (table.char == char_id)
-    form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False)
+    maxtextlength = {'table.fixture' : 50}
+    links = [dict(header='Cost', body=lambda row: data.fixtures_dict[row.fixture].cost)]
+    form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False, maxtextlength=maxtextlength, links=links)
     return dict(bodyparts = bodyparts, form=form)
 
 

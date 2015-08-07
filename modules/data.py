@@ -964,14 +964,14 @@ ware = [
     ["Right Cyberarm", "cyberware", 0, 1, 0, 0, "Artificial cyberlimb", 0, 1000, 6000, ["Right Arm"], [], ''],
     ["Left Cyberleg", "cyberware", 0, 1, 0, 0, "Artificial cyberlimb", 0, 1000, 6000, ["Left Leg"], [], ''],
     ["Right Cyberleg", "cyberware", 0, 1, 0, 0, "Artificial cyberlimb", 0, 1000, 6000, ["Right Leg"], [], ''],
-    ["High Capacity Left Cyberarm", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 1000, 6500, ["Left Arm"], [], ''],
-    ["High Capacity Right Cyberarm", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 1000, 6500, ["Right Arm"], [], ''],
-    ["High Capacity Left Cyberleg", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 1000, 6500, ["Left Leg"], [], ''],
-    ["High Capacity Right Cyberleg", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 1000, 6500, ["Right Leg"], [], ''],
+    ["High Capacity Left Cyberarm", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 2000, 7000, ["Left Arm"], [], ''],
+    ["High Capacity Right Cyberarm", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 2000, 7000, ["Right Arm"], [], ''],
+    ["High Capacity Left Cyberleg", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 2000, 7000, ["Left Leg"], [], ''],
+    ["High Capacity Right Cyberleg", "cyberware", 0, 1.5, 0, 0, "Artificial cyberlimb", 5000, 2000, 7000, ["Right Leg"], [], ''],
     ["Torso Shell", "cyberware", 0, 1, 0, 0, "Artificial Cybertorso", 0, 5000, 6000,
      ["Upper Torso Bones", "Upper Torso Muscles", "Upper Torso Nerves", "Upper Torso Skin",
       "Lower Torso Bones", "Lower Torso Muscles", "Lower Torso Nerves", "Lower Torso Skin",], [], ''],
-    ["High Capacity Torso Shell", "cyberware", 0, 1.5, 0, 0, "Artificial Cybertorso", 5000, 5000, 6000,
+    ["High Capacity Torso Shell", "cyberware", 0, 1.5, 0, 0, "Artificial Cybertorso", 5000, 8000, 7000,
      ["Upper Torso Bones", "Upper Torso Muscles", "Upper Torso Nerves", "Upper Torso Skin",
       "Lower Torso Bones", "Lower Torso Muscles", "Lower Torso Nerves", "Lower Torso Skin",], [], ''],
     ["Cyberskull", "cyberware", 0, 1, 0, 0, "Artificial Cyberskull, Reduces ", 0, 5000, 6000, ["Head Bones", "Head Skin"], [['Essence Cost', 'Brain', '*0.9']], ''],
@@ -1101,7 +1101,7 @@ ware_nt = namedtuple('ware', ['id'] + ware[0])
 ware_dict = OrderedDict([(entry[0], ware_nt(*([i]+ entry))) for i, entry in enumerate(ware[1:])])
 
 fixtures = [
-    ["name", 'location', 'relative_capacity', 'absolute_capacity', 'weight', 'description', 'effect', 'price'],
+    ["name", 'location', 'relative_capacity', 'absolute_capacity', 'weight', 'description', 'effect', 'cost'],
     ['Image Link', ['Eyes'], 0, 0, 0, "Machine to Video Sense Interface", [], 0 ],
     ['Video Enhancement I', ['Eyes'], 0.2, 0.06, 0, "Add +5 to Visual Perception skill", [['skills', 'Visual', '+5']], 2000],
     ['Video Enhancement II', ['Eyes'], 0.3, 0.09, 0, "Add +10 to Visual Perception skill", [['skills', 'Visual', '+10']], 10000],

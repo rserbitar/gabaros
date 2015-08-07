@@ -391,6 +391,7 @@ class Fixture(object):
         self.absolute_capacity = None
         self.weight = None
         self.description = None
+        self.cost = None
         self.load_basic_data()
 
     def load_basic_data(self):
@@ -399,8 +400,11 @@ class Fixture(object):
         self.relative_capacity = fixture.relative_capacity
         self.absolute_capacity = fixture.absolute_capacity
         self.weight = fixture.weight
+        self.cost = fixture.cost
         self.description = fixture.description
 
+    def get_cost(sefl):
+        return self.cost
 
 class Ware(object):
     def __init__(self, db, name):
@@ -504,6 +508,15 @@ class CharWare(Ware):
                                                   effectmult=value/base,
                                                   essencemult=essencemult,
                                                   kind=self.kind)
+        return cost
+
+    def get_essence_cost(self):
+        cost = self.essence
+        if self.parts:
+            char_body = CharBody(self.char)
+            for part in self.parts:
+                cost += char_body.bodyparts[part].get_attribute_absolute('Essence', modlevel = 'basic')
+        cost *= (1-self.stats['Essence'])
         return cost
 
 
@@ -687,6 +700,8 @@ class CharBodypart():
             weight = self.get_attribute_absolute('Weight', 'augmented')
             for fixture in self.fixtures:
                 used += fixture.absolute_capacity + weight*fixture.relative_capacity
+        for child in self.bodypart.children:
+            used += self.char_body.bodyparts[child.name].get_used_capacity()
         return used
 
     def get_kind(self):
@@ -1143,7 +1158,6 @@ class CharPropertyGetter():
             pass
         self.stats[statname] = value
         return value
-
 
     def get_actioncost(self, kind):
         actionmult = self.get_actionmult()

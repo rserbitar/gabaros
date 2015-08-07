@@ -33,6 +33,7 @@ response.menu = [
           (T('Adept Powers'), False, URL('gabaros', 'manage_char', 'manage_powers')),
           (T('Spells'), False, URL('gabaros', 'manage_char', 'manage_spells')),
           (T('Ware'), False, URL('gabaros', 'manage_char', 'manage_ware')),
+          (T('Fixtures'), False, URL('gabaros', 'manage_char', 'manage_fixtures')),
           LI(_class="divider"),
           (T('Damage'), False, URL('gabaros', 'manage_char', 'edit_damage')),
           (T('Wounds'), False, URL('gabaros', 'manage_char', 'edit_wounds')),
