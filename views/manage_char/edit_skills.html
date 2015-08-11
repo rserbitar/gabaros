@@ -1,9 +1,19 @@
 {{extend 'layout.html'}}
 {{=H1(charname)}}
-<br>
-<table>
-<tr>
-{{=form.custom.begin}}
+<div class='container'>
+  <div class="row">
+      <div class="col-sm-6">
+          {{=H4('XP: {:,.2f}'.format(float(char_xp)))}}
+          {{=H4('Total XP Cost: {:,.2f}'.format(float(total_xp)) )}}
+          {{=H4('Free XP: {:,.2f}'.format(float(char_xp - total_xp)) )}}
+      </div>
+      <div class="col-sm-6">
+      </div>
+    </div>
+    <div class="row">
+  <div class="col-md-6">
+<table class = 'table table-striped'>
+    <tr>
         {{=form.custom.begin}}
         <th>Skill</th>
         <th>Weight</th>
@@ -13,7 +23,7 @@
     </tr>
 {{for skill in skills:}}
     <tr>
-        <td>{{=form.custom.label[skill]}}</td>
+        <th>{{=form.custom.label[skill]}}</td>
         <td>{{=weight[skill]}}</td>
         <td>{{=base[skill]}}</td>
         <td>{{=form.custom.widget[skill]}}</td>
@@ -21,10 +31,15 @@
     </tr>
     {{pass}}
     <tr>
-        <td>Total XP</td>
+        <th>Total Skill XP</td>
         <td></td>
-        <td>{{=total_xp}}</td>
-    </tr>
+        <td></td>
+        <td>{{=total_skill_xp}}</td>
+   </tr>
 </table>
 {{=form.custom.submit}}
 {{=form.custom.end}}
+        </div>
+        <div class="col-md-6"></div>
+    </div>
+</div>

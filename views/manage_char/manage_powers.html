@@ -1,3 +1,39 @@
 {{extend 'layout.html'}}
-<h1>Dies ist das Template manage_char/manage_powers.html</h1>
-{{=BEAUTIFY(response._vars)}}
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.css">
+
+
+
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.js"></script>
+
+
+
+<script>
+$(document).ready( function () {
+    $('#table').DataTable();
+} );
+</script>
+
+<div class="container">
+  <div class="row" id='cost'>
+      <div class="col-sm-6">
+          {{=H4('Magic: {:,.2f}'.format(float(magic)))}}
+          {{=H4('Magic Spent: {:,.2f}'.format(float(cost)) )}}
+          {{=H4('Free Magic: {:,.2f}'.format(float(magic-cost)) )}}
+      </div>
+      <div class="col-sm-6">
+      </div>
+    </div>
+  <div class="row">
+    <div class="col-sm-12">
+        {{=form}}</div>
+  </div>
+    </div>
+
+{{=TABLE(
+        THEAD(TR([TH(h) for h in table[0]])),
+        TBODY([TR([TD(column) if  i else TH(column, _scope="row") for i, column in enumerate(row)]) for row in table[1:]]),
+        _id ='table', _class='table table-striped'
+    )}}

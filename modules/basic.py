@@ -175,6 +175,32 @@ class Char(object):
     def delete_damage(self, damage, value):
         pass
 
+    def ware_fix_power_effect(self, primary, secondary, value, func = None):
+        for adept_power in self.adept_powers:
+            for effect in adept_power.effects:
+                if effect[0] == primary and effect[1] == secondary:
+                    magic = self.get_attribute_value('Magic')
+                    formula = effect[2].format(Value = adept_power.value, Magic = magic)
+                    if not func:
+                        value = eval('value {}'.format(formula))
+                    else:
+                        value = eval(func.format(formula))
+        for ware in self.ware:
+            for effect in ware.effects:
+                if effect[0] == primary and effect[1] == secondary:
+                    if not func:
+                        value = eval('value {}'.format(effect[2]))
+                    else:
+                        value = eval(func.format(effect[2]))
+        for fixture in self.fixtures:
+            for effect in fixture.effects:
+                if effect[0] == primary and effect[1] == secondary:
+                    if not func:
+                        value = eval('value {}'.format(effect[2]))
+                    else:
+                        value = eval(func.format(effect[2]))
+        return value
+
 
 class Computer(object):
     def __init__(self, db, computer_id, char):
@@ -321,8 +347,7 @@ class RangedWeapon(object):
 
 
 class Armor(object):
-    def __init__(self, name, char):
-        self.char = char
+    def __init__(self, name):
         self.name = name
 
     def get_max_agi(self):
@@ -392,6 +417,7 @@ class Fixture(object):
         self.weight = None
         self.description = None
         self.cost = None
+        self.effects = None
         self.load_basic_data()
 
     def load_basic_data(self):
@@ -401,6 +427,7 @@ class Fixture(object):
         self.absolute_capacity = fixture.absolute_capacity
         self.weight = fixture.weight
         self.cost = fixture.cost
+        self.effects = fixture.effects
         self.description = fixture.description
 
     def get_cost(sefl):
@@ -557,7 +584,6 @@ class CharAdeptPower(AdeptPower):
             self.db((db_cap.char == self.char.char_id) & (db_cap.power == self.name)).update(char=self.char.char_id,
                                                                                             power=self.name,
                                                                                             value=self.value)
-
     def delete(self):
         db_cap = self.db.char_adept_powers
         self.db((db_cap.char == self.char.char_id) & (db_cap.power == self.name)).delete()
@@ -749,13 +775,7 @@ class CharBodypart():
             if modlevel in ('augmented', 'temporary', 'stateful'):
                 if self.ware:
                     value = self.ware.stats[attribute]
-                else:
-                    for adept_power in self.char.adept_powers:
-                        for effect in adept_power.effects:
-                            if effect[0] == 'attributes' and effect[1] == attribute:
-                                    magic = CharPropertyGetter(self.char, modlevel=modlevel).get_attribute_value('Magic')
-                                    formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                                    value = eval('value {}'.format(formula))
+                value = self.char.ware_fix_power_effect('attributes', attribute, value)
             if modlevel == 'stateful':
                 if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
                     weight = self.get_attribute_relative('Weight')
@@ -771,14 +791,12 @@ class CharBodypart():
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             return sum([part.get_life() for part in child_char_bodyparts])
         else:
-            if self.get_kind() == 'cyberware':
-                return 0.
-            else:
-                weight = self.get_attribute_relative('Weight')
-                constitution = self.get_attribute_relative('Constitution')
-                fraction = self.bodypart.get_fraction('Weight')
-                life = fraction * rules.life(weight, constitution)
-                return life
+            kind, cyberfraction, biofraction = self.get_kind()
+            weight = self.get_attribute_relative('Weight')
+            constitution = self.get_attribute_relative('Constitution')
+            fraction = self.bodypart.get_fraction('Weight')
+            life = fraction * rules.life(weight, constitution) * (1.-cyberfraction)
+            return life
 
     def get_woundlimit(self, modlevel = 'stateful'):
         constitution = self.get_attribute_relative('Constitution', modlevel)
@@ -919,24 +937,12 @@ class CharPropertyGetter():
             else:
                 value = self.char.attributes[attribute]
             # add ware effects to attribute
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'attributes' and effect[1] == attribute:
-                        value = eval('value {}'.format(effect[2]))
+            value = self.char.ware_fix_power_effect('attributes', attribute, value)
             #subtract Essence from non located ware
             if attribute == 'Essence':
-                for essence_ware in self.char.ware:
-                    essence_cost = essence_ware.essence
-                    for ware in self.char.ware:
-                        for effect in ware.effects:
-                            if effect[0] == 'Essence Cost' and effect[1] == essence_ware.location:
-                                essence_cost = eval('essence_cost {}'.format(effect[2]))
-                    for adept_power in self.char.adept_powers:
-                        for effect in adept_power.effects:
-                            if effect[0] == 'Essence Cost' and effect[1] == essence_ware.location:
-                                magic = self.get_attribute_value('Magic')
-                                formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                                essence_cost = eval('essence_cost {}'.format(formula))
+                for ware in self.char.ware:
+                    essence_cost = ware.essence
+                    essence_cost = self.char.ware_fix_power_effect('Essence Cost', ware.location, essence_cost)
                     value -= essence_cost
             elif attribute == 'Charisma':
                     essence = self.get_attribute_value('Essence')
@@ -972,7 +978,7 @@ class CharPropertyGetter():
 
     def get_attribute_test_value(self, attribute):
 
-        value = self.get_attribute_mod(attribute) + 30
+        value = self.get_attribute_mod(attribute) + rules.attrib_mod_norm
         return value
 
     def get_skill_value(self, skill):
@@ -993,16 +999,7 @@ class CharPropertyGetter():
                 if value < parent_value:
                     value = parent_value
         if self.modlevel in ('augmented','temporary','stateful'):
-            for adept_power in self.char.adept_powers:
-                for effect in adept_power.effects:
-                    if effect[0] == 'skills' and effect[1] == skill:
-                            magic = self.get_attribute_value('Magic')
-                            formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                            value = eval('value {}'.format(formula))
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'skills' and effect[1] == skill:
-                        value = eval('value {}'.format(effect[2]))
+            value = self.char.ware_fix_power_effect('skills', skill, value)
         if self.modlevel in ('temporary','stateful'):
             pass
         if self.modlevel == 'stateful':
@@ -1028,7 +1025,7 @@ class CharPropertyGetter():
 
     def get_armor(self):
         armor = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Armor']
-        armor = [Armor(name, self.char) for name in armor]
+        armor = [Armor(name) for name in armor]
         return armor
 
 
@@ -1036,6 +1033,7 @@ class CharPropertyGetter():
         protection = []
         for armor in self.get_armor():
             protection.append(armor.get_protection(bodypart, typ))
+        protection.append(self.char.ware_fix_power_effect(typ + ' armor', bodypart, 0, func = '(value**2 + {}**2)**0.5'))
         protection = rules.get_stacked_armor_value(protection)
         return protection
 
@@ -1061,10 +1059,7 @@ class CharPropertyGetter():
             pass
         elif self.modlevel in ('augmented', 'temporary', 'stateful'):
             value = self.char_body.bodyparts['Body'].get_life()
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == 'life':
-                        value = eval('value {}'.format(effect[2]))
+            value = self.char.ware_fix_power_effect('stats', 'life', value)
         self.maxlife = value
         return value
 
@@ -1078,16 +1073,7 @@ class CharPropertyGetter():
             totaldamage = 0
         statname = 'Pain Resistance'
         pain_resistance = 0
-        for ware in self.char.ware:
-            for effect in ware.effects:
-                if effect[0] == 'stats' and effect[1] == statname:
-                    pain_resistance += (1- pain_resistance)* eval('value {}'.format(effect[2]))
-        for adept_power in self.char.adept_powers:
-            for effect in adept_power.effects:
-                if effect[0] == 'stats' and effect[1] == statname:
-                    magic = self.get_attribute_value('Magic')
-                    formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                    pain_resistance += (1- pain_resistance)* eval('value {}'.format(formula))
+        pain_resistance = self.char.ware_fix_power_effect('stats', statname, pain_resistance, func = 'value + (1-value) * {}')
         max_life = self.get_maxlife()
         if kind == 'relative':
             damagemod = rules.lifemod_relative(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
@@ -1113,21 +1099,11 @@ class CharPropertyGetter():
             value = rules.physical_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
-            for adept_power in self.char.adept_powers:
-                for effect in adept_power.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        magic = self.get_attribute_value('Magic')
-                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
+            value = self.char.ware_fix_power_effect('stats', statname, value)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
         return value
-
 
     def get_actionmult(self):
         """
@@ -1144,16 +1120,7 @@ class CharPropertyGetter():
                                               self.get_attribute_mod('Coordination'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
-            for adept_power in self.char.adept_powers:
-                for effect in adept_power.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        magic = self.get_attribute_value('Magic')
-                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
+            value = self.char.ware_fix_power_effect('stats', statname, value)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1193,6 +1160,24 @@ class CharPropertyGetter():
         logic = self.get_attribute_value('Logic')
         spomod_max = rules.spomod_max(logic)
         return spomod_max
+
+    def get_drain_resist(self):
+        willpower_mod = self.get_attribute_mod('Willpower')
+        magic_mod = self.get_attribute_mod('Magic')
+        drain_resist = rules.drain_resist(willpower_mod, magic_mod)
+        return drain_resist
+
+    def get_money(self):
+        return 0
+
+    def get_xp(self):
+        return 0
+
+    def get_power_cost(self):
+        cost = 0
+        for power in self.char.adept_powers:
+            cost += power.cost if power.cost != 'X' else power.value
+        return cost
 
 class LoadoutPropertyGetter(Loadout):
     def __init__(self,db, char):
@@ -1254,16 +1239,7 @@ class CharPhysicalPropertyGetter(CharPropertyGetter):
             value = rules.physical_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
-            for adept_power in self.char.adept_powers:
-                for effect in adept_power.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        magic = self.get_attribute_value('Magic')
-                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
+            value = self.char.ware_fix_power_effect('stats', statname, value)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1284,16 +1260,7 @@ class CharPhysicalPropertyGetter(CharPropertyGetter):
                                               self.get_attribute_mod('Coordination'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
-            for adept_power in self.char.adept_powers:
-                for effect in adept_power.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        magic = self.get_attribute_value('Magic')
-                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
+            value = self.char.ware_fix_power_effect('stats', statname, value)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1342,16 +1309,7 @@ class CharMatrixPropertyGetter(CharPropertyGetter):
             value = rules.matrix_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
-            for adept_power in self.char.adept_powers:
-                for effect in adept_power.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        magic = self.get_attribute_value('Magic')
-                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
+            value = self.char.ware_fix_power_effect('stats', statname, value)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1366,9 +1324,6 @@ class CharAstralPropertyGetter(CharPropertyGetter):
         :param modlevel: the modlevel: ['unaugmented', 'augmented', 'temporary', 'stateful']
         """
         CharPropertyGetter.__init__(self, char, modlevel)
-
-    def get_drain_resistance(self):
-        pass
 
     def get_attribute_value(self, attribute):
 
@@ -1402,16 +1357,7 @@ class CharAstralPropertyGetter(CharPropertyGetter):
             value = rules.astral_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            for ware in self.char.ware:
-                for effect in ware.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        value = eval('value {}'.format(effect[2]))
-            for adept_power in self.char.adept_powers:
-                for effect in adept_power.effects:
-                    if effect[0] == 'stats' and effect[1] == statname:
-                        magic = self.get_attribute_value('Magic')
-                        formula = effect[2].format(Value = adept_power.value, Magic = magic)
-                        value = eval('value {}'.format(formula))
+            value = self.char.ware_fix_power_effect('stats', statname, value)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1425,34 +1371,51 @@ class CharPropertyPutter():
         """
         self.char = char
 
-    def put_damage(self, value, penetration, bodypart='body', kind='physical', typ='ballistic',
-                   percent=False, resist=False):
+    def put_damage(self, value, penetration, bodypart='Body', kind='physical', typ='ballistic',
+                   percent=False, resist=False, resistroll=None, wounding = True):
         charpropertygetter = CharPropertyGetter(self.char, 'stateful')
-        armor = charpropertygetter.get_protection(bodypart, typ)
-        if percent:
-            value = charpropertygetter.get_maxlife()*value/100
-        if resist:
-            attribute = charpropertygetter.get_attribute_value(resist[0])
-            value = rules.resist_damage(value, attribute, 0, resist[1])
-        damage = float(max(0, value - max(0, armor-penetration)))
-        bodykind, cyberfraction = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
-        woundlimit = charpropertygetter.char_body.bodyparts[bodypart].get_woundlimit()
-        destroy_thresh = charpropertygetter.char_body.bodyparts[bodypart].get_wounds_destroyed_thresh()
-        wounds = int(damage/woundlimit)
-        old_wounds = self.char.wounds.get(bodypart, 0)
-        if old_wounds:
-            old_wounds =  old_wounds.get(kind, 0)
+        if kind in ['drain stun', 'drain physical']:
+            percent = True
+            typ = 'direct'
+            resist = 'drain'
+            bodypart = 'Body'
+            wounding = False
+        if not typ or typ == 'direct':
+            armor = 0
         else:
-            old_wounds = 0
-        if bodykind != 'cyberware' or kind in ('physical'):
-            wounds = min(wounds, destroy_thresh-old_wounds)
-            if wounds:
-                new_wounds = wounds + old_wounds[kind]
-                self.char.write_wounds(new_wounds, bodypart, kind)
+            armor = charpropertygetter.get_protection(bodypart, typ)
+        if percent:
+            value = charpropertygetter.get_maxlife()*value/100.
+        if resist:
+            if resist in ['Willpower','Body']:
+                attribute_mod = charpropertygetter.get_attribute_mod(resist)
+            elif resist == 'drain':
+                attribute_mod = charpropertygetter.get_drain_resist()
+            value = rules.resist_damage(value, attribute_mod, resistroll, 0)
+        damage = float(max(0, value - max(0, armor-penetration)))
+        bodykind, cyberfraction, biofraction = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
+        woundlimit = charpropertygetter.char_body.bodyparts[bodypart].get_woundlimit()
+        destroy_thresh = 5#charpropertygetter.char_body.bodyparts[bodypart].get_wounds_destroyed_thresh()
+        calc_wounds = float('inf')
+        wounds = 0
+        if wounding:
+            wounds = int(damage/woundlimit)
+            calc_wounds = wounds + 1
+            old_wounds = self.char.wounds.get(bodypart, 0)
+            if old_wounds:
+                old_wounds =  old_wounds.get(kind, 0)
+            else:
+                old_wounds = 0
+            if bodykind != 'cyberware' or kind in ('physical'):
+                wounds = min(wounds, destroy_thresh-old_wounds)
+                calc_wounds = min(calc_wounds, destroy_thresh-old_wounds)
+                if wounds:
+                    new_wounds = wounds + old_wounds
+                    self.char.write_wounds(new_wounds, bodypart, kind)
         if cyberfraction != 1.:
-            damage = min(damage, woundlimit*(wounds))
+            damage = min(damage, woundlimit*(calc_wounds))*(1.-cyberfraction)
             old_damage = self.char.damage.get(kind, 0)
-            new_damage = old_damage + damage*(1-cyberfraction)
+            new_damage = old_damage + damage
             self.char.write_damage(kind, new_damage)
         return 'damage: {}, wounds: {}'.format(damage, wounds)
 

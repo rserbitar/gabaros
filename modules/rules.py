@@ -308,14 +308,14 @@ def damage_heal_after_time(damage, days, healtime):
     return damage * (days / healtime) ** 1.5
 
 
-def resist_drain(drain, willpower, resistbonus, roll):
-    resist = log(willpower / 30) / log(2) * 10 + resistbonus + roll
-    return drain * 2 ** (-resist / 10.)
-
-
-def resist_damage(damage, attribute, resistbonus, roll):
-    resist = log(attribute / 30) / log(2) * 10 + resistbonus + roll
+def resist_damage(damage, attribute_mod, roll, resistmod = 0):
+    resist = attribute_mod - resistmod + roll
     return damage * 2 ** (-resist / 10.)
+
+
+def drain_resist(willpower_mod, magic_mod):
+    return (willpower_mod + magic_mod)/2.
+
 
 def summoning_services(force, resistroll, skill, summonroll):
     forcemod = attrib_mod(force, 30)
@@ -417,7 +417,7 @@ def firewall_rating(time, skill, system, users):
 
 
 def get_stacked_armor_value(values):
-    return sum([val/float(i+1) for i,val in enumerate(sorted(values, reverse=True))])
+    return sum([i**2 for i in values])**0.5
 
 def scale(x):
     2**(x/10.)

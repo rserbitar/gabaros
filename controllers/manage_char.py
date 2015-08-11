@@ -11,6 +11,22 @@ def select_char(id):
     session.char=id
     return  A(id, _href=URL("edit_char", args=(id)))
 
+def get_table(table_name):
+    dictionary = getattr(data, table_name + '_dict')
+    first = dictionary[dictionary.keys()[0]]
+    dict_data = []
+    for entry in dictionary.values():
+        dict_data.append(list(entry))
+    for i, row in enumerate(dict_data):
+        for j, entry in enumerate(row):
+            if isinstance(entry,list):
+                dict_data[i][j] = ', '.join([str(k) for k in entry])
+            if isinstance(entry,float):
+                dict_data[i][j] = round(entry, 2)
+    table = [first._fields]
+    table.extend(dict_data)
+    return table
+
 @auth.requires_login()
 def manage_chars():
     table = db.chars
@@ -39,60 +55,67 @@ def edit_char():
 
 @auth.requires_login()
 def edit_attributes():
-    char = get_char()
-    charname = db.chars[char].name
+    char_id = get_char()
+    charname = db.chars[char_id].name
     fields = []
     attributes = []
-    rows = db(db.char_attributes.char == char).select(db.char_attributes.ALL)
+    rows = db(db.char_attributes.char == char_id).select(db.char_attributes.ALL)
     for row in rows:
         fields += [Field(row.attribute, 'double', default=row.value)]
     form = SQLFORM.factory(*fields)
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
-            db((db.char_attributes.char == char) & (db.char_attributes.attribute == entry)).update(value=form.vars[entry])
+            db((db.char_attributes.char == char_id) & (db.char_attributes.attribute == entry)).update(value=form.vars[entry])
         db.commit()
     elif form.errors:
         response.flash = 'form has errors'
-    rows = db(db.char_attributes.char == char).select(db.char_attributes.ALL)
+    rows = db(db.char_attributes.char == char_id).select(db.char_attributes.ALL)
     base = {}
     xp = {}
-    total_xp = 0
+    total_attribute_xp = 0
+    char = basic.Char(db, char_id)
+    getter_base = basic.CharPropertyGetter(char, 'base')
+    getter_unaugmented = basic.CharPropertyGetter(basic.Char(db, char_id), 'unaugmented')
     for row in rows:
         attribute = row.attribute
         form.custom.widget[attribute]['value'] = row.value
         form.custom.widget[attribute]['_style'] = 'width:50px'
         form.custom.widget[attribute]._postprocessing()
-        base[attribute] = basic.CharPropertyGetter(basic.Char(db, char), 'base').get_attribute_value(attribute)
-        xp[attribute] = round(basic.CharPropertyGetter(basic.Char(db, char), 'unaugmented').get_attribute_xp_cost(attribute))
-        total_xp += xp[attribute]
+        base[attribute] = getter_base.get_attribute_value(attribute)
+        xp[attribute] = round(getter_unaugmented.get_attribute_xp_cost(attribute))
+        total_attribute_xp += xp[attribute]
+    char_property_getter = basic.CharPropertyGetter(char, modlevel='augmented')
+    char_xp = char_property_getter.get_xp()
+    total_xp = sum(char_property_getter.get_total_exp().values())
     return dict(charname=charname, form=form, attributes=data.attributes_dict.keys(),
-                xp=xp, base=base, total_xp=total_xp)
+                xp=xp, base=base, total_attribute_xp=total_attribute_xp, total_xp=total_xp, char_xp = char_xp)
 
 
 @auth.requires_login()
 def edit_skills():
-    char = get_char()
-    charname = db.chars[char].name
+    char_id = get_char()
+    charname = db.chars[char_id].name
     fields = []
     skills = []
-    rows = db(db.char_skills.char == char).select(db.char_skills.ALL)
+    rows = db(db.char_skills.char == char_id).select(db.char_skills.ALL)
     for row in rows:
         fields += [Field(row.skill.replace(' ', '_'), 'double', default=row.value, label=row.skill)]
     form = SQLFORM.factory(*fields)
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
-            db((db.char_skills.char == char) & (db.char_skills.skill == entry.replace('_', ' '))).update(value=form.vars[entry])
+            db((db.char_skills.char == char_id) & (db.char_skills.skill == entry.replace('_', ' '))).update(value=form.vars[entry])
         db.commit()
     elif form.errors:
         response.flash = 'form has errors'
-    rows = db(db.char_skills.char == char).select(db.char_skills.ALL)
+    rows = db(db.char_skills.char == char_id).select(db.char_skills.ALL)
     base = {}
     weight = {}
     xp = {}
-    total_xp = 0
-    getter = basic.CharPropertyGetter(basic.Char(db, char), 'unaugmented')
+    total_skill_xp = 0
+    char = basic.Char(db, char_id)
+    getter = basic.CharPropertyGetter(char, 'unaugmented')
     for row in rows:
         skillfield = row.skill.replace(' ', '_')
         skill = row.skill
@@ -106,10 +129,20 @@ def edit_skills():
         base[skillfield] = base_val
         weight[skillfield] = data.skills_dict[skill].expweight
         xp[skillfield] = round(getter.get_skill_xp_cost(skill))
-        total_xp += xp[skillfield]
+        total_skill_xp += xp[skillfield]
+    char_property_getter = basic.CharPropertyGetter(char, modlevel='augmented')
+    char_xp = char_property_getter.get_xp()
+    total_xp = sum(char_property_getter.get_total_exp().values())
     return dict(charname=charname, form=form, skills=[i.replace(" ", "_") for i in data.skills_dict.keys()],
-                xp=xp, base=base, total_xp=total_xp, weight = weight)
+                xp=xp, base=base, total_skill_xp=total_skill_xp, weight = weight, char_xp = char_xp, total_xp = total_xp)
 
+
+
+def my_ondelete(function):
+    def func(table, id):
+        db(table[table._id.name] == id).delete()
+        redirect(URL(function), client_side=True)
+    return func
 
 @auth.requires_login()
 def manage_powers():
@@ -120,8 +153,12 @@ def manage_powers():
     query = (table.char == char_id)
     maxtextlength = {'char_adept_powers.power': 50, 'char_adept_powers.value': 100}
     table.value.represent = lambda value, row: basic.CharAdeptPower(db, row.power, basic.Char(db, char_id)).get_description()
-    form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, maxtextlengths = maxtextlength)
-    return dict(form=form)
+    form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, maxtextlengths = maxtextlength, ondelete=my_ondelete('manage_powers'))
+    table = get_table('adept_powers')
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
+    cost = char_property_getter.get_power_cost()
+    magic = char_property_getter.get_attribute_value('Magic')
+    return dict(form=form, table=table, cost=cost, magic=magic)
 
 
 @auth.requires_login()
@@ -139,7 +176,13 @@ def manage_ware():
                         maxtextlength = maxtextlength,
                         links = links,
                         oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id))))
-    return dict(form=form)
+    table = get_table('ware')
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
+    cost = char_property_getter.get_total_cost()
+    total_cost = sum(cost.values())
+    money = char_property_getter.get_money()
+    essence = char_property_getter.get_attribute_value('Essence')
+    return dict(form=form, table=table, total_cost = total_cost, money = money, essence = essence)
 
 
 @auth.requires_login()
@@ -158,7 +201,11 @@ def manage_fixtures():
     maxtextlength = {'table.fixture' : 50}
     links = [dict(header='Cost', body=lambda row: data.fixtures_dict[row.fixture].cost)]
     form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False, maxtextlength=maxtextlength, links=links)
-    return dict(bodyparts = bodyparts, form=form)
+    table = get_table('fixtures')
+    cost = char_property_getter.get_total_cost()
+    total_cost = sum(cost.values())
+    money = char_property_getter.get_money()
+    return dict(form=form, bodyparts=bodyparts, table=table, total_cost = total_cost, money = money)
 
 
 @auth.requires_login()
@@ -221,11 +268,17 @@ def edit_wounds():
 @auth.requires_login()
 def edit_items():
     char_id = get_char()
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), 'augmented')
     table = db.char_items
+    table.rating.show_if = (table.item.belongs([item.name for item in data.gameitems_dict.values() if item.rating]))
     table.char.default = char_id
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False)
-    return dict(form=form)
+    table = get_table('gameitems')
+    cost = char_property_getter.get_total_cost()
+    total_cost = sum(cost.values())
+    money = char_property_getter.get_money()
+    return dict(form=form, table=table, total_cost = total_cost, money = money)
 
 @auth.requires_login()
 def manage_spells():

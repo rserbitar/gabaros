@@ -1,7 +1,18 @@
 {{extend 'layout.html'}}
 {{=H1(charname)}}
-<br>
-<table>
+<div class='container'>
+  <div class="row">
+      <div class="col-sm-6">
+          {{=H4('XP: {:,.2f}'.format(float(char_xp)))}}
+          {{=H4('Total XP Cost: {:,.2f}'.format(float(total_xp)) )}}
+          {{=H4('Free XP: {:,.2f}'.format(float(char_xp - total_xp)) )}}
+      </div>
+      <div class="col-sm-6">
+      </div>
+    </div>
+    <div class="row">
+  <div class="col-md-6">
+<table class = 'table table-striped'>
     <tr>
         {{=form.custom.begin}}
         <th>Attribute</th>
@@ -11,17 +22,22 @@
     </tr>
     {{for attribute in attributes:}}
     <tr>
-        <td>{{=form.custom.label[attribute]}}</td>
+        <th>{{=form.custom.label[attribute]}}</td>
         <td>{{=base[attribute]}}</td>
         <td>{{=form.custom.widget[attribute]}}</td>
         <td>{{=xp[attribute]}}</td>
     </tr>
     {{pass}}
-    <tr>
-        <td>Total XP</td>
+      <tr>
+        <th>Total Attribute XP</td>
         <td></td>
-        <td>{{=total_xp}}</td>
-    </tr>
+        <td></td>
+        <td>{{=total_attribute_xp}}</td>
+      </tr>
 </table>
 {{=form.custom.submit}}
 {{=form.custom.end}}
+        </div>
+        <div class="col-md-6"></div>
+    </div>
+</div>

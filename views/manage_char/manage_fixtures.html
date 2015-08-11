@@ -1,9 +1,29 @@
 {{extend 'layout.html'}}
 
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.css">
+
+
+
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.js"></script>
+
+
+
+<script>
+$(document).ready( function () {
+    $('#table').DataTable();
+} );
+</script>
 <div class="container">
   <div class="row">
     <div class="col-sm-6">
-<table class ='table table-striped table-condensed'>
+        {{=H4('Money: {:,.2f}'.format(float(money)))}}
+{{=H4('Total Cost: {:,.2f}'.format(float(total_cost)) )}}
+{{=H4('Free Money: {:,.2f}'.format(float(money-total_cost)) )}}
+     </div>
+    <div class="col-sm-6">
+        <table class ='table table-striped table-condensed'>
     <tr>
         {{for entry in ['Bodypart', 'Capacity', 'Used']:}}
         {{=TH(entry)}}
@@ -18,8 +38,7 @@
     </tr>
     {{pass}}
 </table>
-     </div>
-    <div class="col-sm-6"></div>
+    </div>
   </div>
   <div class="row">
       <div class="col-sm-12">
@@ -29,3 +48,9 @@
   <div class="row">
  </div>
 </div>
+
+{{=TABLE(
+        THEAD(TR([TH(h) for h in table[0]])),
+        TBODY([TR([TD(column) if  i else TH(column, _scope="row") for i, column in enumerate(row)]) for row in table[1:]]),
+        _id ='table', _class='table table-striped'
+    )}}

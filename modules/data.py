@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#!/usr/bin/env python
 # coding: utf8
 # from gluon import *
 
@@ -1101,7 +1100,7 @@ ware_nt = namedtuple('ware', ['id'] + ware[0])
 ware_dict = OrderedDict([(entry[0], ware_nt(*([i]+ entry))) for i, entry in enumerate(ware[1:])])
 
 fixtures = [
-    ["name", 'location', 'relative_capacity', 'absolute_capacity', 'weight', 'description', 'effect', 'cost'],
+    ["name", 'location', 'relative_capacity', 'absolute_capacity', 'weight', 'description', 'effects', 'cost'],
     ['Image Link', ['Eyes'], 0, 0, 0, "Machine to Video Sense Interface", [], 0 ],
     ['Video Enhancement I', ['Eyes'], 0.2, 0.06, 0, "Add +5 to Visual Perception skill", [['skills', 'Visual', '+5']], 2000],
     ['Video Enhancement II', ['Eyes'], 0.3, 0.09, 0, "Add +10 to Visual Perception skill", [['skills', 'Visual', '+10']], 10000],
@@ -1219,16 +1218,16 @@ adept_powers = [
     ["name", "cost", "description", "formdescription", "effects"],
     ["Combat Sense", 'X', 'Enhance Reaction', [['Physical Reaction +', '{Value}*{Magic}/30.']], [['stats', 'Physical Reaction', '+{Value}*{Magic}/30.']]],
     ["Danger Sense", 'X', 'Enhance Reaction for suprise tests (Manual)', [['Physical Reaction in Surprise Tests+', '{Value}*{Magic}/15.']], [['test', 'Surprise', '+{Value}*{Magic}/15.']]],
-    ["Astral Sight", '10', 'Allow Adept to perceive astrally', [], []],
-    ["Traceless Walk", '5', 'Leave no traces when walking. Does not trigger pressure sensors. (Manual)',[], []],
-    ["Wall Running", '10', 'Allow Adept to run on a wall as long as he is sprinting',[], []],
-    ["Killing Hands", '5', 'Cause Physical Damage in Combat',[],  []],
+    ["Astral Sight", 10, 'Allow Adept to perceive astrally', [], []],
+    ["Traceless Walk", 5, 'Leave no traces when walking. Does not trigger pressure sensors. (Manual)',[], []],
+    ["Wall Running", 10, 'Allow Adept to run on a wall as long as he is sprinting',[], []],
+    ["Killing Hands", 5, 'Cause Physical Damage in Combat',[],  []],
     ["Critical Strike", 'X', 'Multiply Unarmed Combat Damage (Manual)', [['Unarmed Combat Damage *', '(1+{Value}*{Magic}/1200.)']], [['stat', 'Unarmed Combat Damage', '*(1+{Value}*{Magic}/1200.)']]],
     ["Spirit Claw", 'X', 'Multiply Unarmed Combat Damage to dual/astral targets (Manual)', [['Unarmed Combat Damage *', '(1+{Value}*{Magic}/600.)']],
      [['stat', 'Unarmed Combat Damage', '*(1+{Value}*{Magic}/600.)']]],
     ["Penetrating Strike", 'X', 'Multiply Unarmed Combat Penetration (Manual)', [['Unarmed Combat Penetration *', '(1+{Value}*{Magic}/120.)']],
      [['stat', 'Unarmed Combat Penetration', '*(1+{Value}*{Magic}/120.)']]],
-    ["Elemental Strike", '5', 'Add elemental Effect to Unarmed Combat Damage (Manual)', [], []],
+    ["Elemental Strike", 5, 'Add elemental Effect to Unarmed Combat Damage (Manual)', [], []],
     ["Elemental Aura", 'X', 'Elemental Aura that deals damage on Contact (successfull attack of being successfully attacked in (un)armed combat). (Manual)',
         [['Elemental Aura Damage ', '{Value}*{Magic}/20.'], ['Elemental Aura Penetration ', '{Value}*{Magic}/60.']], []],
     ["Elemental Resistance", 'X', 'Armor against specific elemental effects (Manual)', [['Elemental Armor', '{Value}*{Magic}/10']], []],
@@ -1237,10 +1236,10 @@ adept_powers = [
     ["Improved Running", 'X', 'Run faster', [['Run Speed *', '(1+{Value}*{Magic}/600)']], [['stat', 'Run Speed', '*(1+{Value}*{Magic}/600)']]],
     ["Improved Swimming", 'X', 'Swim faster', [['Swim Speed *', '(1+{Value}*{Magic}/600)']], [['stat', 'Swim Speed', '*(1+{Value}*{Magic}/600)']]],
     ["Rapid Healing", 'X', 'Increase Heal Time (Manual)', [['Heal Time /', '(1+{Value}*{Magic}/150.)']], [['stat', 'Heal Time', '/(1+{Value}*{Magic}/150.)']]],
-    ["Kinesics", '10', 'Change Face. Same Gender and Metatype. Change time 5 min, Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
-    ["Melain Control", '5', 'Change Hair Color (only natural colors). Change time 1min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
-    ["Voice Control", '5', 'Change Voice. change time 1 min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
-    ["Pain Resistance", 'X', 'Ignore low life penalties', [['Ignore percentage of damage', '{Value}*{Magic}/5.']], [['stat', 'Pain Resistance', '{Value}*{Magic}/500']]],
+    ["Kinesics", 10, 'Change Face. Same Gender and Metatype. Change time 5 min, Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
+    ["Melain Control", 5, 'Change Hair Color (only natural colors). Change time 1min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
+    ["Voice Control", 5, 'Change Voice. change time 1 min. Perception Test with a Test Difficulty Equal to Magic is needed to find faults. (Manual)',[],  []],
+    ["Pain Resistance", 'X', 'Ignore low life penalties', [['Ignore percentage of damage', '{Value}*{Magic}/5.']], [['stat', 'Pain Resistance', '+ (1-value) * {Value}*{Magic}/500']]],
     ["Spell Resistance", 'X', 'Improve resistance to spells (Manual)', [['Spell Resistance +', '{Value}*{Magic}/30.']], [['stat', 'Spell Resistance', '+{Value}*{Magic}/30.']]],
     ] + [
     ["Enhanced Attribute {}".format(i.name), 'X', 'Enhance {}'.format(i.name),
@@ -1249,8 +1248,8 @@ adept_powers = [
     for i in attributes_dict.values() if i.kind != 'special'
     ] + [
     ["Improved Skill {}".format(i.name), 'X', 'Improve {}'.format(i.name),
-     [['{} +'.format(i.name), '+{Value}*{Magic}/30.']],
-     [['skills', '{}'.format(i.name), '+{Value}*{Magic}/30.']]]
+     [['{} +'.format(i.name), '+{Value}*{Magic}/30./' + str(i.expweight)]],
+     [['skills', '{}'.format(i.name), '+{Value}*{Magic}/30./'+ str(i.expweight)]]]
     for i in skills_dict.values()
     ]
 

@@ -6,6 +6,7 @@ import data
 from random import gauss
 import rules
 from collections import OrderedDict
+from math import log
 
 
 def index():
@@ -528,7 +529,10 @@ def view_stats():
     stats['Run Speed'] = speed[1]
     stats['Sprint Speed'] = speed[2]
     stats['Psychological Threshold'] = round(char_property_getter.get_psycho_thresh(),2)
+    drain_resist = round(char_property_getter.get_drain_resist(),2)
+    drain_percent = round(rules.resist_damage(100., drain_resist, 0),2)
     stats['Sponataneous Modification Maximum'] = round(char_property_getter.get_spomod_max(),2)
+    stats['Drain Resistance'] = "{} / {}%".format(drain_resist, drain_percent)
     for part in ['Body', 'Head', 'Upper Torso', 'Lower Torso', 'Right Arm', 'Left Arm', 'Right Leg', 'Left Leg']:
         stats['Wound Limit {}'.format(part)] = round(char_physical_property_getter.char_body.bodyparts[part].get_woundlimit(),2)
     return dict(stats=stats)
@@ -566,30 +570,35 @@ def view_damage_state():
 @auth.requires_login()
 def apply_damage():
     char_id = get_char()
-    fields = [Field('damage', 'integer', default=0, label = 'Damage'),
+    fields = [Field('kind', 'string', requires=IS_IN_SET(data.damagekinds_dict.keys()), default = 'physical',
+                    label = 'Damage Kind'),
+              Field('damage', 'integer', default=0, label = 'Damage'),
               Field('penetration', 'integer', default=0, label = 'Penetration'),
               Field('bodypart', 'string', requires=IS_IN_SET(['Body'] + data.main_bodyparts), default = 'Body'),
-              Field('kind', 'string', requires=IS_IN_SET(data.damagekinds_dict.keys()), default = 'physical',
-                    label = 'Damage Kind'),
               Field('typ', 'string', requires=IS_IN_SET(['ballistic','impact', 'none']), default = 'ballistic'),
               Field('percent', 'boolean', default = False),
-              Field('resist', 'str', requires=IS_IN_SET(['', 'Willpower', 'Body']), default = '')]
+              Field('resist', 'str', requires=IS_IN_SET(['', 'Willpower', 'Body']), default = ''),
+              Field('wounding', 'boolean', default = True)]
     form = SQLFORM.factory(*fields, table_name = 'damage_apply')
     if form.process().accepted:
         char = basic.Char(db, char_id)
         char_property_putter = basic.CharPropertyPutter(char)
-        if form.vars.resist:
+        if form.vars.resist or form.vars.kind in ['drain stun', 'drain physical']:
             die_roll = roll(char_id, 0, 'Resist', True)
-            resist = (form.vars.resist,die_roll)
+            resist = form.vars.resist
+            resist_roll = die_roll
         else:
             resist = form.vars.resist
+            resist_roll = None
         damage_text = char_property_putter.put_damage(form.vars.damage,
                                                       form.vars.penetration,
                                                       form.vars.bodypart,
                                                       form.vars.kind,
                                                       form.vars.typ,
                                                       form.vars.percent,
-                                                      resist
+                                                      resist,
+                                                      resist_roll,
+                                                      form.vars.wounding
                                                       )
         response.flash = damage_text
     elif form.errors:
