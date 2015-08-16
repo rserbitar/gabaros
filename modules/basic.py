@@ -29,6 +29,7 @@ class Char(object):
         self.fixtures = []
         self.adept_powers = []
         self.items = []
+        self.all_items = []
         self.damage = {}
         self.wounds = {}
         self.spells = []
@@ -75,7 +76,7 @@ class Char(object):
     def load_money(self):
         db_cm = self.db.char_money
         for row in self.db(db_cm.char == self.char_id).select(db_cm.money, db_cm.usage, db_cm.timestamp):
-            self.money.append(row.money, row.usage, row.timestamp)
+            self.money.append([row.money, row.usage, row.timestamp])
         for entry in self.xp:
             if entry[1] == 'money':
                 self.money.append([entry[0]*(-1)*rules.money_to_xp if entry[0] > 1 else entry[0] *(-1) *rules.xp_to_money , 'xp', entry[2]])
@@ -135,7 +136,7 @@ class Char(object):
         """
         db_cf = self.db.char_fixtures
         for row in self.db(db_cf.char == self.char_id).select(db_cf.fixture):
-            self.fixtures.append(Fixture(row.fixture))
+            self.fixtures.append(CharFixture(row.fixture, self))
 
     def load_adept_powers(self):
         db_cap = self.db.char_adept_powers
@@ -150,10 +151,13 @@ class Char(object):
             self.loadout = 0
 
     def load_items(self):
-        self.get_loadout()
         db_ci = self.db.char_items
-        for row in self.db((db_ci.char == self.char_id) & (db_ci.loadout.contains(self.loadout))).select(db_ci.id, db_ci.item, db_ci.rating):
-            self.items.append([row.id, row.item, row.rating])
+        for row in self.db(db_ci.char == self.char_id).select(db_ci.id, db_ci.item, db_ci.rating):
+            self.all_items.append([row.id, row.item, row.rating])
+        else:
+            self.get_loadout()
+            for row in self.db((db_ci.char == self.char_id) & (db_ci.loadout.contains(self.loadout))).select(db_ci.id, db_ci.item, db_ci.rating):
+                self.items.append([row.id, row.item, row.rating])
 
 
     def write_attribute(self, attribute, value):
@@ -192,10 +196,10 @@ class Char(object):
         pass
 
     def ware_fix_power_effect(self, primary, secondary, value, func = None):
+        magic = CharPropertyGetter(self, 'stateful').get_attribute_value('Magic')
         for adept_power in self.adept_powers:
             for effect in adept_power.effects:
                 if effect[0] == primary and effect[1] == secondary:
-                    magic = self.get_attribute_value('Magic')
                     formula = effect[2].format(Value = adept_power.value, Magic = magic)
                     if not func:
                         value = eval('value {}'.format(formula))
@@ -217,6 +221,18 @@ class Char(object):
                         value = eval(func.format(effect[2]))
         return value
 
+
+class Item(object):
+    def __init__(self, name, db_id, rating = None):
+        self.name = name
+        self.rating = rating
+
+    def get_cost(self):
+        ratingcost = 0
+        if self.rating:
+            cost = data.gameitems_dict[self.name].rating
+            ratingcost = rules.price_by_rating(cost,self.rating)
+        return data.gameitems_dict[self.name].cost + ratingcost
 
 class Computer(object):
     def __init__(self, db, computer_id, char):
@@ -366,6 +382,9 @@ class Armor(object):
     def __init__(self, name):
         self.name = name
 
+    def get_locations(self):
+        return data.armor_dict[self.name].locations
+
     def get_max_agi(self):
         return data.armor_dict[self.name].maxagi
 
@@ -446,8 +465,24 @@ class Fixture(object):
         self.effects = fixture.effects
         self.description = fixture.description
 
-    def get_cost(sefl):
+    def get_cost(self):
         return self.cost
+
+class CharFixture(Fixture):
+    def __init__(self, fixture_name, char):
+        Fixture.__init__(self, fixture_name)
+        self.char = char
+
+    def get_capacity_dict(self):
+        capacity = {}
+        char_body = CharBody(self.char)
+        for location in self.location:
+            capacity[location] = (self.absolute_capacity +
+                                  self.relative_capacity *
+                                  char_body.bodyparts[location].get_attribute_absolute('Weight', 'augmented'))
+        return capacity
+
+
 
 class Ware(object):
     def __init__(self, db, name):
@@ -777,6 +812,19 @@ class CharBodypart():
         if self.bodypart.children:
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             value = sum([part.get_attribute_absolute(attribute, modlevel) for part in child_char_bodyparts])
+            # calculate armor modifications
+            if modlevel in ('stateful', 'temporary'):
+                char_property_getter = CharPropertyGetter(self.char, modlevel = modlevel)
+                if attribute == 'Agility':
+                    max_agis = []
+                    for armor in char_property_getter.get_armor(self.bodypart.name):
+                        max_agis.append(armor.get_max_agi())
+                    value = rules.get_armor_agility(value, max_agis)
+                if attribute == 'Coordination':
+                    coord_mults = []
+                    for armor in char_property_getter.get_armor(self.bodypart.name):
+                        coord_mults.append(armor.get_coordination_mult())
+                    value = rules.get_armor_coordination(value, coord_mults)
             if modlevel == 'stateful':
                 if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
                     weight = self.get_attribute_relative('Weight')
@@ -966,18 +1014,12 @@ class CharPropertyGetter():
             elif attribute == 'Magic':
                     essence = self.get_attribute_value('Essence')
                     value *= rules.essence_magic_mult(essence)
-            # calculate armor modifications
-            if self.modlevel in ('stateful'):
-                if attribute == 'Agility':
-                    for armor in self.get_armor():
-                        value = min(value, armor.get_max_agi())
-                if attribute == 'Coordination':
-                    for armor in self.get_armor():
-                        value *= armor.get_coordination_mult()
-        # store calculated value
-        if self.modlevel == 'stateful':
-            value *= self.get_damagemod('relative')
-        self.attributes[attribute] = value
+            if self.modlevel in ('stateful', 'temporary'):
+                pass
+            if self.modlevel == 'stateful' and attribute not in ('Size', 'Weight', 'Constitution', 'Essence', 'Magic'):
+                value *= self.get_damagemod('relative')
+            # store calculated value
+            self.attributes[attribute] = value
         return value
 
     def get_attribute_mod(self, attribute):
@@ -1039,9 +1081,11 @@ class CharPropertyGetter():
         return value
 
 
-    def get_armor(self):
-        armor = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Armor']
+    def get_armor(self, bodypart = None):
+        armor = [item.name for item in self.char.items if data.gameitems_dict[item.name].clas == 'Armor']
         armor = [Armor(name) for name in armor]
+        if bodypart:
+            armor = [i for i in armor if bodypart in i.get_locations()]
         return armor
 
 
@@ -1054,12 +1098,12 @@ class CharPropertyGetter():
         return protection
 
     def get_ranged_weapons(self):
-        weapons = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Ranged Weapon']
+        weapons = [item.name for item in self.char.items if data.gameitems_dict[item.name].clas  == 'Ranged Weapon']
         weapons = [RangedWeapon(name, self.char) for name in weapons]
         return weapons
 
     def get_close_combat_weapons(self):
-        weapons = [name for id, name, rating in self.char.items if data.gameitems_dict[name].clas == 'Close Combat Weapon']
+        weapons = [item.name for item in self.char.items if data.gameitems_dict[item.name].clas  == 'Close Combat Weapon']
         weapons = [CloseCombatWeapon(name, self.char) for name in weapons]
         return weapons
 
@@ -1162,8 +1206,18 @@ class CharPropertyGetter():
 
     def get_total_cost(self):
         cost = {}
+        warecost = 0
         for ware in self.char.ware:
-            cost[ware.name] = ware.get_cost()
+            warecost += ware.get_cost()
+        cost['Ware'] = warecost
+        fixturecost = 0
+        for fixture in self.char.fixtures:
+            fixturecost += fixture.get_cost()
+        cost['Fixtures'] = fixturecost
+        itemcost = 0
+        for item in self.char.all_items:
+            itemcost += item.get_cost()
+        cost['Items'] = itemcost
         return cost
 
     def get_spomod_max(self):
@@ -1376,9 +1430,6 @@ class CharAstralPropertyGetter(CharPropertyGetter):
 
 class CharPropertyPutter():
     def __init__(self, char):
-        """"
-        :param modlevel: the modlevel: ['base', 'unaugmented', 'augmented', 'temporary', 'stateful']
-        """
         self.char = char
 
     def put_damage(self, value, penetration, bodypart='Body', kind='physical', typ='ballistic',
@@ -1397,15 +1448,15 @@ class CharPropertyPutter():
         if percent:
             value = charpropertygetter.get_maxlife(bodypart)*value/100.
         if resist:
-            if resist in ['Willpower','Body']:
-                attribute_mod = charpropertygetter.get_attribute_mod(resist)
-            elif resist == 'drain':
+            if resist == 'drain':
                 attribute_mod = charpropertygetter.get_drain_resist()
+            else:
+                attribute_mod = charpropertygetter.get_attribute_mod(resist)
             value = rules.resist_damage(value, attribute_mod, resistroll, 0)
         damage = float(max(0, value - max(0, armor-penetration)))
         bodykind, cyberfraction, biofraction = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
         woundlimit = charpropertygetter.char_body.bodyparts[bodypart].get_woundlimit()
-        destroy_thresh = 5#charpropertygetter.char_body.bodyparts[bodypart].get_wounds_destroyed_thresh()
+        destroy_thresh = charpropertygetter.char_body.bodyparts[bodypart].get_wounds_destroyed_thresh()
         calc_wounds = float('inf')
         wounds = 0
         if wounding:

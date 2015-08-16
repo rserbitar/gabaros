@@ -117,17 +117,17 @@ def life(weight, constitution):
 
 
 def woundlimit(weight, constitution):
-    percent = 5 * (erf((1.05 ** constitution ** 0.204))) - 4.25
+    percent = 5 * (erf((1.0123 ** constitution ** 0.4))) - 4.21
     lifeval = life(weight, constitution)
-    return percent * 3 * lifeval  /((1+lifeval)**(1/3.))
+    return percent *lifeval
 
 
 def wounds_for_incapacitated_thresh(weight, constitution):
-    return woundlimit(weight, constitution)/life(weight, constitution)/10.*3
+    return 3
 
 
 def wounds_for_destroyed_thresh(weight, constitution):
-    return woundlimit(weight, constitution)/life(weight, constitution)/10.*5
+    return 5
 
 
 def woundeffect(attribute, wounds, weight, constitution):
@@ -289,12 +289,6 @@ def auto_fire_damage(basedamage, recoil, testresult, numbullets=float('inf')):
     return damage
 
 
-def armor_reduction(agility, coordination, maxagi=[], coordmult=[]):
-    agility = min([agility] + maxagi)
-    coordination *= reduce(lambda x, y: x * y, [1] + coordmult)
-    return agility, coordination
-
-
 def bleedingdamage_per_round(wounds, woundlimit):
     return wounds ** 3 * woundlimit / 20.
 
@@ -411,8 +405,8 @@ def deck_cost(processor, system, uplink, size):
     return cprocessor, csystem, cuplink, csize, sum([cprocessor, csystem, cuplink, csize])
 
 
-def program_cost(rating):
-    return 1.2 ** rating / 2.37
+def cost_by_rating(cost, basecost, rating):
+    return 5**(rating/10.)/125. * cost + basecost
 
 
 def firewall_rating(time, skill, system, users):
@@ -420,8 +414,28 @@ def firewall_rating(time, skill, system, users):
     return log(skill ** 3 / (system + 50) ** 3 * time / 8. / users) * 10 + skill - 50
 
 
+def square_add(values):
+     return sum([i**2 for i in values])**0.5
+
+
+def negative_square_add(values):
+    return (1./sum([(1./i)**2 for i in values]))**0.5
+
+
+def get_armor_agility(agility, max_agility):
+    if isinstance(max_agility, list):
+        max_agility = negative_square_add(max_agility)
+    return min(agility, max_agility)
+
+
+def get_armor_coordination(coordination, coordination_multiplier):
+    if isinstance(coordination_multiplier, list):
+        coordination_multiplier = reduce(lambda x, y: x * y, [1] + coordination_multiplier)
+    return coordination * coordination_multiplier
+
+
 def get_stacked_armor_value(values):
-    return sum([i**2 for i in values])**0.5
+    return square_add(values)
 
 def scale(x):
     2**(x/10.)
@@ -429,8 +443,8 @@ def scale(x):
 def price_by_rating(baseprice, rating):
     return (1+(2**(rating/10.)))/9.*baseprice
 
-def contact_costs(loyality, rating):
+def contact_costs(loyalty, rating):
     return 2**((loyalty/30.)**2+(30/30.)**2)*50
 
 def contacts_free_value(charisma):
-    return charimsa*charisma
+    return charisma*charisma

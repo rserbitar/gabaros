@@ -197,7 +197,9 @@ def manage_fixtures():
     table.char.default = char_id
     query = (table.char == char_id)
     maxtextlength = {'table.fixture' : 50}
-    links = [dict(header='Cost', body=lambda row: data.fixtures_dict[row.fixture].cost)]
+    char = basic.Char(db, char_id)
+    links = [dict(header='Cost', body=lambda row: data.fixtures_dict[row.fixture].cost),
+             dict(header='Capacity', body=lambda row: {key:round(value,2) for key,value in basic.CharFixture(row.fixture, char).get_capacity_dict().items()})]
     form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False, maxtextlength=maxtextlength, links=links, ondelete=my_ondelete('manage_fixtures'))
     table = get_table('fixtures')
     cost = char_property_getter.get_total_cost()
