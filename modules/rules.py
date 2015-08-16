@@ -29,6 +29,10 @@ wound_exp = 200.
 cyberhalf = 20
 shoot_base_difficulty = 20
 spell_xp_cost = 200
+money_to_xp = 1/60.
+xp_to_money = 40.
+starting_money = 150000
+starting_xp = 10000
 
 movement_mods = OrderedDict([
     ('standing', 0),
@@ -424,3 +428,9 @@ def scale(x):
 
 def price_by_rating(baseprice, rating):
     return (1+(2**(rating/10.)))/9.*baseprice
+
+def contact_costs(loyality, rating):
+    return 2**((loyalty/30.)**2+(30/30.)**2)*50
+
+def contacts_free_value(charisma):
+    return charimsa*charisma

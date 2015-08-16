@@ -1,5 +1,4 @@
 {{extend 'layout.html'}}
-{{=H1(ware)}}
 <div class="container">
   <div class="row">
       <div class="col-sm-6">
@@ -11,25 +10,7 @@
       </div>
     </div>
   <div class="row">
-    <div class="col-sm-6">
-<table class ='table table-striped'>
-<tr>
-{{=form.custom.begin}}
-<th>Stat</th>
-<th>Value</th>
-
-</tr>
-{{for stat in stats:}}
-<tr>
-<th>{{=form.custom.label[stat]}}</td>
-<td>{{=form.custom.widget[stat]}}</td>
-</tr>
-{{pass}}
-</table>
-{{=form.custom.submit}}
-{{=form.custom.end}}
-      </div>
-      <div class="col-sm-6">
-      </div>
+    <div class="col-sm-12">
+        {{=form}}</div>
   </div>
     </div>

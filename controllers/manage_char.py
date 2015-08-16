@@ -6,7 +6,12 @@ import data
 def index():
     redirect(URL('manage_chars'))
 
-    
+def my_ondelete(function):
+    def func(table, id):
+        db(table[table._id.name] == id).delete()
+        redirect(URL(function), client_side=True)
+    return func
+
 def select_char(id):
     session.char=id
     return  A(id, _href=URL("edit_char", args=(id)))
@@ -62,7 +67,7 @@ def edit_attributes():
     rows = db(db.char_attributes.char == char_id).select(db.char_attributes.ALL)
     for row in rows:
         fields += [Field(row.attribute, 'double', default=row.value)]
-    form = SQLFORM.factory(*fields)
+    form = SQLFORM.factory(*fields, ondelete=my_ondelete('edit_attributes'))
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
@@ -101,7 +106,7 @@ def edit_skills():
     rows = db(db.char_skills.char == char_id).select(db.char_skills.ALL)
     for row in rows:
         fields += [Field(row.skill.replace(' ', '_'), 'double', default=row.value, label=row.skill)]
-    form = SQLFORM.factory(*fields)
+    form = SQLFORM.factory(*fields, ondelete=my_ondelete('edit_skills'))
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
@@ -136,14 +141,6 @@ def edit_skills():
     return dict(charname=charname, form=form, skills=[i.replace(" ", "_") for i in data.skills_dict.keys()],
                 xp=xp, base=base, total_skill_xp=total_skill_xp, weight = weight, char_xp = char_xp, total_xp = total_xp)
 
-
-
-def my_ondelete(function):
-    def func(table, id):
-        db(table[table._id.name] == id).delete()
-        redirect(URL(function), client_side=True)
-    return func
-
 @auth.requires_login()
 def manage_powers():
     char_id = get_char()
@@ -175,6 +172,7 @@ def manage_ware():
     form = SQLFORM.grid(query, fields = [table.id, table.ware], csv = False,
                         maxtextlength = maxtextlength,
                         links = links,
+                        ondelete=my_ondelete('manage_ware'),
                         oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id))))
     table = get_table('ware')
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
@@ -200,7 +198,7 @@ def manage_fixtures():
     query = (table.char == char_id)
     maxtextlength = {'table.fixture' : 50}
     links = [dict(header='Cost', body=lambda row: data.fixtures_dict[row.fixture].cost)]
-    form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False, maxtextlength=maxtextlength, links=links)
+    form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False, maxtextlength=maxtextlength, links=links, ondelete=my_ondelete('manage_fixtures'))
     table = get_table('fixtures')
     cost = char_property_getter.get_total_cost()
     total_cost = sum(cost.values())
@@ -210,18 +208,15 @@ def manage_fixtures():
 
 @auth.requires_login()
 def edit_ware():
+    char_id = get_char()
     char_ware_id = request.args(0)
-    char = db(db.char_ware.id==char_ware_id).select(db.char_ware.char).first().char
-    if not db.chars[char] or (db.chars[char].player != auth.user.id
-                              and db.chars[char].master != auth.user.id):
-        redirect(URL(f='index'))
     ware = db.char_ware[char_ware_id].ware
     fields = []
     attributes = []
     rows = db(db.char_ware_stats.ware == char_ware_id).select(db.char_ware_stats.ALL)
     for row in rows:
         fields += [Field(row.stat, 'double', default=row.value)]
-    form = SQLFORM.factory(*fields)
+    form = SQLFORM.factory(*fields, ondelete=my_ondelete('edit_ware'))
     if form.accepts(request.vars, session):
         response.flash = 'form accepted'
         for entry in form.vars:
@@ -241,7 +236,12 @@ def edit_ware():
 #        base[attribute] = database.get_attrib_xp_base(db, cache, char, attribute)
 #        xp[attribute] = database.get_attrib_xpcost(db, cache, char, attribute)
 #        modified[attribute] = database.get_attribute_value(db, cache, attribute, char, mod='modified')
-    return dict(ware=ware, form=form, stats=[key for key, value in data.attributes_dict.items()
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), 'augmented')
+    cost = char_property_getter.get_total_cost()
+    total_cost = sum(cost.values())
+    money = char_property_getter.get_money()
+    return dict(ware=ware, total_cost = total_cost, money = money,
+                form=form, stats=[key for key, value in data.attributes_dict.items()
                                              if value.kind == 'physical' or value.name == 'Weight'] + ['Essence'])
 
 
@@ -273,7 +273,7 @@ def edit_items():
     table.rating.show_if = (table.item.belongs([item.name for item in data.gameitems_dict.values() if item.rating]))
     table.char.default = char_id
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False)
+    form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, ondelete=my_ondelete('edit_items') )
     table = get_table('gameitems')
     cost = char_property_getter.get_total_cost()
     total_cost = sum(cost.values())
@@ -350,3 +350,31 @@ def edit_computers():
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.item, table.firewall, table.current_uplink, table.damage], csv = False)
     return dict(form=form)
+
+@auth.requires_login()
+def manage_money():
+    char_id = get_char()
+    table = db.char_money
+    table.char.default = char_id
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.money, table.usage, table.timestamp], csv = False, ondelete=my_ondelete('manage_money'))
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
+    cost = char_property_getter.get_total_cost()
+    total_cost = sum(cost.values())
+    money = char_property_getter.get_money()
+    return dict(form=form, total_cost = total_cost, money=money)
+
+@auth.requires_login()
+def manage_xp():
+    char_id = get_char()
+    table = db.char_xp
+    table.char.default = char_id
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.xp, table.usage, table.timestamp], csv = False, ondelete=my_ondelete('manage_xp'))
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
+    char_xp = char_property_getter.get_xp()
+    total_xp = sum(char_property_getter.get_total_exp().values())
+    cost = char_property_getter.get_total_cost()
+    total_cost = sum(cost.values())
+    money = char_property_getter.get_money()
+    return dict(form=form, total_cost = total_cost, money=money, total_xp = total_xp, char_xp = char_xp)

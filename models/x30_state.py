@@ -24,7 +24,17 @@ db.define_table('char_damage',
 db.define_table('char_xp',
                 Field('char', type='reference chars', label=T('Character'),
                                      requires=IS_IN_DB(db, db.chars.id, '%(name)s'), writable=False),
-                Field('xp', type='float'))
+                Field('xp', type='float'),
+                Field('usage', type='string', requires=IS_IN_SET(['rewards', 'money', 'hand of god', 'other']), default = 'other'),
+                Field('timestamp', type='date'))
+
+db.define_table('char_money',
+                Field('char', type='reference chars', label=T('Character'),
+                                     requires=IS_IN_DB(db, db.chars.id, '%(name)s'), writable=False),
+                Field('money', type='float'),
+                Field('usage', type='string', requires=IS_IN_SET(['income', 'lifestyle', 'other']), default = 'other'),
+                Field('timestamp', type='date')
+                )
 
 db.define_table('char_loadout',
                 Field('char', type='reference chars', label=T('Character'),

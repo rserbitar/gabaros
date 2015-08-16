@@ -32,6 +32,8 @@ class Char(object):
         self.damage = {}
         self.wounds = {}
         self.spells = []
+        self.money = []
+        self.xp = []
         self.load_char()
 
     def init_attributes(self):
@@ -62,7 +64,21 @@ class Char(object):
         self.load_wounds()
         self.load_items()
         self.load_adept_powers()
+        self.load_xp()
+        self.load_money()
 
+    def load_xp(self):
+        db_cx = self.db.char_xp
+        for row in self.db(db_cx.char == self.char_id).select(db_cx.xp, db_cx.usage, db_cx.timestamp):
+            self.xp.append([row.xp, row.usage, row.timestamp])
+
+    def load_money(self):
+        db_cm = self.db.char_money
+        for row in self.db(db_cm.char == self.char_id).select(db_cm.money, db_cm.usage, db_cm.timestamp):
+            self.money.append(row.money, row.usage, row.timestamp)
+        for entry in self.xp:
+            if entry[1] == 'money':
+                self.money.append([entry[0]*(-1)*rules.money_to_xp if entry[0] > 1 else entry[0] *(-1) *rules.xp_to_money , 'xp', entry[2]])
 
     def load_spells(self):
         db_cs = self.db.char_spells
@@ -837,7 +853,7 @@ class CharPropertyGetter():
         self.attributes = {}
         self.skills = {}
         self.stats = {}
-        self.maxlife = None
+        self.maxlife = {}
 
     def get_bodypart_table(self):
         attributes = ['Essence', 'Agility', 'Constitution', 'Coordination', 'Strength', 'Weight']
@@ -1047,20 +1063,14 @@ class CharPropertyGetter():
         weapons = [CloseCombatWeapon(name, self.char) for name in weapons]
         return weapons
 
-    def get_maxlife(self):
-        value = self.maxlife
+    def get_maxlife(self, bodypart = 'Body'):
+        value = self.maxlife.get(bodypart)
         if value:
             return value
-        if self.modlevel == 'base':
-            weight = self.get_attribute_value('Weight')
-            constitution = self.get_attribute_value('Constition')
-            value = rules.life(weight, constitution)
-        elif self.modlevel == 'unaugmented':
-            pass
-        elif self.modlevel in ('augmented', 'temporary', 'stateful'):
-            value = self.char_body.bodyparts['Body'].get_life()
+        value = self.char_body.bodyparts['Body'].get_life()
+        if self.modlevel in ('augmented', 'temporary', 'stateful'):
             value = self.char.ware_fix_power_effect('stats', 'life', value)
-        self.maxlife = value
+        self.maxlife[bodypart] = value
         return value
 
     def get_damagemod(self, kind):
@@ -1168,10 +1178,10 @@ class CharPropertyGetter():
         return drain_resist
 
     def get_money(self):
-        return 0
+        return sum([i[0] for i in self.char.money]) + rules.starting_money
 
     def get_xp(self):
-        return 0
+        return sum([i[0] for i in self.char.xp]) + rules.starting_xp
 
     def get_power_cost(self):
         cost = 0
@@ -1385,7 +1395,7 @@ class CharPropertyPutter():
         else:
             armor = charpropertygetter.get_protection(bodypart, typ)
         if percent:
-            value = charpropertygetter.get_maxlife()*value/100.
+            value = charpropertygetter.get_maxlife(bodypart)*value/100.
         if resist:
             if resist in ['Willpower','Body']:
                 attribute_mod = charpropertygetter.get_attribute_mod(resist)
@@ -1413,11 +1423,13 @@ class CharPropertyPutter():
                     new_wounds = wounds + old_wounds
                     self.char.write_wounds(new_wounds, bodypart, kind)
         if cyberfraction != 1.:
-            damage = min(damage, woundlimit*(calc_wounds))*(1.-cyberfraction)
+            damage = min(damage, woundlimit*(calc_wounds))
+            if not percent:
+                damage *= (1.-cyberfraction)
             old_damage = self.char.damage.get(kind, 0)
             new_damage = old_damage + damage
             self.char.write_damage(kind, new_damage)
-        return 'damage: {}, wounds: {}'.format(damage, wounds)
+        return 'damage: {}, wounds: {}, {}'.format(damage, wounds, value)
 
 
 if __name__ == '__main__':

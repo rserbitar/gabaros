@@ -28,6 +28,9 @@ response.menu = [
       (T('Manage Char'), False, '#', [
           (T('Create/Select'), False, URL('gabaros', 'manage_char', 'index')),
           LI(_class="divider"),
+          (T('XP'), False, URL('gabaros', 'manage_char', 'manage_xp')),
+          (T('Money'), False, URL('gabaros', 'manage_char', 'manage_money')),
+          LI(_class="divider"),
           (T('Attributes'), False, URL('gabaros', 'manage_char', 'edit_attributes')),
           (T('Skills'), False, URL('gabaros', 'manage_char', 'edit_skills')),
           (T('Adept Powers'), False, URL('gabaros', 'manage_char', 'manage_powers')),

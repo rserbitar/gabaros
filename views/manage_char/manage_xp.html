@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+<div class="container">
+  <div class="row">
+      <div class="col-sm-6">
+          {{=H4('XP: {:,.2f}'.format(float(char_xp)))}}
+          {{=H4('Total XP Cost: {:,.2f}'.format(float(total_xp)) )}}
+          {{=H4('Free XP: {:,.2f}'.format(float(char_xp - total_xp)) )}}
+      </div>
+      <div class="col-sm-6">
+          {{=H4('Money: {:,.2f}'.format(float(money)))}}
+          {{=H4('Total Cost: {:,.2f}'.format(float(total_cost)) )}}
+          {{=H4('Free Money: {:,.2f}'.format(float(money - total_cost)) )}}
+      </div>
+    </div>
+  <div class="row">
+    <div class="col-sm-12">
+        {{=form}}</div>
+  </div>
+    </div>
