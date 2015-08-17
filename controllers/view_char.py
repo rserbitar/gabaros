@@ -564,7 +564,9 @@ def view_damage_state():
     wounds = char_property_getter.char.wounds
     damage = char_property_getter.char.damage
     maxlife = char_property_getter.get_maxlife()
-    return dict(wounds=wounds, damage=damage, maxlife=maxlife)
+    damage_attribute_mod = char_property_getter.get_damagemod('relative')
+    damage_skill_mod = char_property_getter.get_damagemod('absolute')
+    return dict(wounds=wounds, damage=damage, maxlife=maxlife, damage_attribute_mod = damage_attribute_mod, damage_skill_mod=damage_skill_mod)
 
 
 @auth.requires_login()

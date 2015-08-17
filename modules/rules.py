@@ -227,10 +227,14 @@ def combatresource_by_attribute(value, attribute, frac, attribute2):
 
 
 def lifemod_absolute(life, maxlife):
+    if life <= 0:
+        return -float('inf')
     return log(max(1, maxlife / float(life)))/log(2)*-10
 
 def lifemod_relative(life, maxlife):
-    return max(1, maxlife / float(life))**(1/3.)
+    if life <= 0:
+        return 0
+    return max(1, float(life)/maxlife)**(1/3.)
 
 #def warecostmult(effectmult=1, charmodmult=1, weightmult=1, kind="cyberware"):
 #    mult = 2.5 ** (effectmult - 1.)
@@ -419,7 +423,10 @@ def square_add(values):
 
 
 def negative_square_add(values):
-    return (1./sum([(1./i)**2 for i in values]))**0.5
+    result = float('inf')
+    if values:
+        result = (1./sum([(1./i)**2 for i in values]))**0.5
+    return result
 
 
 def get_armor_agility(agility, max_agility):

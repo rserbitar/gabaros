@@ -153,11 +153,11 @@ class Char(object):
     def load_items(self):
         db_ci = self.db.char_items
         for row in self.db(db_ci.char == self.char_id).select(db_ci.id, db_ci.item, db_ci.rating):
-            self.all_items.append([row.id, row.item, row.rating])
+            self.all_items.append(Item(row.item, row.id, row.rating))
         else:
             self.get_loadout()
             for row in self.db((db_ci.char == self.char_id) & (db_ci.loadout.contains(self.loadout))).select(db_ci.id, db_ci.item, db_ci.rating):
-                self.items.append([row.id, row.item, row.rating])
+                self.items.append(Item(row.item, row.id, row.rating))
 
 
     def write_attribute(self, attribute, value):
@@ -196,10 +196,10 @@ class Char(object):
         pass
 
     def ware_fix_power_effect(self, primary, secondary, value, func = None):
-        magic = CharPropertyGetter(self, 'stateful').get_attribute_value('Magic')
         for adept_power in self.adept_powers:
             for effect in adept_power.effects:
                 if effect[0] == primary and effect[1] == secondary:
+                    magic = CharPropertyGetter(self, 'stateful').get_attribute_value('Magic')
                     formula = effect[2].format(Value = adept_power.value, Magic = magic)
                     if not func:
                         value = eval('value {}'.format(formula))
@@ -809,6 +809,9 @@ class CharBodypart():
         value = self.attributes.get((attribute, modlevel))
         if value:
             return value
+        fraction = self.bodypart.get_fraction(attribute)
+        if not fraction:
+            return 0
         if self.bodypart.children:
             child_char_bodyparts = [self.char_body.bodyparts[child.name] for child in self.bodypart.children]
             value = sum([part.get_attribute_absolute(attribute, modlevel) for part in child_char_bodyparts])
@@ -819,7 +822,9 @@ class CharBodypart():
                     max_agis = []
                     for armor in char_property_getter.get_armor(self.bodypart.name):
                         max_agis.append(armor.get_max_agi())
-                    value = rules.get_armor_agility(value, max_agis)
+                        value /= fraction
+                        value = rules.get_armor_agility(value, max_agis)
+                        value *= fraction
                 if attribute == 'Coordination':
                     coord_mults = []
                     for armor in char_property_getter.get_armor(self.bodypart.name):
@@ -839,13 +844,13 @@ class CharBodypart():
             if modlevel in ('augmented', 'temporary', 'stateful'):
                 if self.ware:
                     value = self.ware.stats[attribute]
-                value = self.char.ware_fix_power_effect('attributes', attribute, value)
+                if attribute != 'Magic':
+                    value = self.char.ware_fix_power_effect('attributes', attribute, value)
             if modlevel == 'stateful':
                 if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
                     weight = self.get_attribute_relative('Weight')
                     constitution = self.get_attribute_relative('Constitution')
                     value = rules.woundeffect(value, sum(self.wounds.values()), weight, constitution)
-            fraction = self.bodypart.get_fraction(attribute)
             value *= fraction
             self.attributes[(attribute, modlevel)] = value
             return value
@@ -1001,7 +1006,8 @@ class CharPropertyGetter():
             else:
                 value = self.char.attributes[attribute]
             # add ware effects to attribute
-            value = self.char.ware_fix_power_effect('attributes', attribute, value)
+            if attribute not in ('Magic', 'Constituion', 'Strength', 'Agility', 'Coordindation', 'Weight', 'Size'):
+                value = self.char.ware_fix_power_effect('attributes', attribute, value)
             #subtract Essence from non located ware
             if attribute == 'Essence':
                 for ware in self.char.ware:
@@ -1129,10 +1135,11 @@ class CharPropertyGetter():
         pain_resistance = 0
         pain_resistance = self.char.ware_fix_power_effect('stats', statname, pain_resistance, func = 'value + (1-value) * {}')
         max_life = self.get_maxlife()
+        life = max_life - max(0, totaldamage - pain_resistance * max_life)
         if kind == 'relative':
-            damagemod = rules.lifemod_relative(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
+            damagemod = rules.lifemod_relative(life, max_life)
         elif kind == 'absolute':
-            damagemod = rules.lifemod_absolute(max_life - max(0, totaldamage - pain_resistance * max_life), max_life)
+            damagemod = rules.lifemod_absolute(life, max_life)
         else:
             damagemod = 0
         return damagemod
