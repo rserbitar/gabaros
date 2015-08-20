@@ -1,8 +1,8 @@
 {{extend 'layout.html'}}
-
-<table>
+{{=H1(get_char_name())}}
+<table class = 'table table-striped'>
     <tr>
-        {{for entry in ['Item', 'Cost']:}}
+        {{for entry in ['Category', 'Cost']:}}
         {{=TH(entry, _style="padding-right:10px;text-align:left;")}}
         {{pass}}
     </tr>

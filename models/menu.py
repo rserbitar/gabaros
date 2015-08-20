@@ -12,7 +12,7 @@ response.title = request.application.replace('_',' ').title()
 response.subtitle = ''
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
-response.meta.author = 'Your Name <you@example.com>'
+response.meta.author = 'Serbitar <serbita@sessionmob.de>'
 response.meta.description = 'a cool new app'
 response.meta.keywords = 'web2py, python, framework'
 response.meta.generator = 'Web2py Web Framework'
@@ -26,46 +26,48 @@ response.google_analytics_id = None
 response.menu = [
     (T('Home'), False, URL('default', 'index'), []),
       (T('Manage Char'), False, '#', [
-          (T('Create/Select'), False, URL('gabaros', 'manage_char', 'index')),
+          (T('Create/Select'), False, URL('manage_char', 'index')),
           LI(_class="divider"),
-          (T('XP'), False, URL('gabaros', 'manage_char', 'manage_xp')),
-          (T('Money'), False, URL('gabaros', 'manage_char', 'manage_money')),
+          (T('XP'), False, URL('manage_char', 'manage_xp')),
+          (T('Money'), False, URL('manage_char', 'manage_money')),
           LI(_class="divider"),
-          (T('Attributes'), False, URL('gabaros', 'manage_char', 'edit_attributes')),
-          (T('Skills'), False, URL('gabaros', 'manage_char', 'edit_skills')),
-          (T('Adept Powers'), False, URL('gabaros', 'manage_char', 'manage_powers')),
-          (T('Spells'), False, URL('gabaros', 'manage_char', 'manage_spells')),
-          (T('Ware'), False, URL('gabaros', 'manage_char', 'manage_ware')),
-          (T('Fixtures'), False, URL('gabaros', 'manage_char', 'manage_fixtures')),
+          (T('Attributes'), False, URL('manage_char', 'edit_attributes')),
+          (T('Skills'), False, URL('manage_char', 'edit_skills')),
+          (T('Adept Powers'), False, URL('manage_char', 'manage_powers')),
+          (T('Spells'), False, URL('manage_char', 'manage_spells')),
+          (T('Ware'), False, URL('manage_char', 'manage_ware')),
+          (T('Fixtures'), False, URL('manage_char', 'manage_fixtures')),
           LI(_class="divider"),
-          (T('Damage'), False, URL('gabaros', 'manage_char', 'edit_damage')),
-          (T('Wounds'), False, URL('gabaros', 'manage_char', 'edit_wounds')),
+          (T('Damage'), False, URL('manage_char', 'edit_damage')),
+          (T('Wounds'), False, URL('manage_char', 'edit_wounds')),
           LI(_class="divider"),
-          (T('Items'), False, URL('gabaros', 'manage_char', 'edit_items')),
-          (T('Loadout'), False, URL('gabaros', 'manage_char', 'edit_loadout')),
-          (T('Computers'), False, URL('gabaros', 'manage_char', 'edit_computers')),
-          (T('Sins'), False, URL('gabaros', 'manage_char', 'edit_sins')),
-          (T('Locations'), False, URL('gabaros', 'manage_char', 'edit_locations')),
+          (T('Items'), False, URL('manage_char', 'edit_items')),
+          (T('Loadout'), False, URL('manage_char', 'edit_loadout')),
+          (T('Computers'), False, URL('manage_char', 'edit_computers')),
+          (T('Sins'), False, URL('manage_char', 'edit_sins')),
+          (T('Locations'), False, URL('manage_char', 'edit_locations')),
             ]),
       (T('View Char'), False, '#', [
-          (T('Attributes'), False, URL('gabaros', 'view_char', 'view_attributes')),
-          (T('Stats'), False, URL('gabaros', 'view_char', 'view_stats')),
-          (T('Skills'), False, URL('gabaros', 'view_char', 'view_skills')),
-          (T('XP'), False, URL('gabaros', 'view_char', 'view_xp')),
-          (T('Cost'), False, URL('gabaros', 'view_char', 'view_cost')),
-          (T('Bodyparts'), False, URL('gabaros', 'view_char', 'view_bodyparts')),
-          (T('Actions'), False, URL('gabaros', 'view_char', 'view_actions')),
-          (T('Damage'), False, URL('gabaros', 'view_char', 'view_damage_state')),
-          (T('Weapons'), False, URL('gabaros', 'view_char', 'view_weapons')),
-          (T('Armor'), False, URL('gabaros', 'view_char', 'view_armor')),
-          (T('Computer'), False, URL('gabaros', 'view_char', 'view_computer')),
+          (T('Attributes'), False, URL('view_char', 'view_attributes')),
+          (T('Stats'), False, URL('view_char', 'view_stats')),
+          (T('Skills'), False, URL('view_char', 'view_skills')),
+          (T('XP'), False, URL('view_char', 'view_xp')),
+          (T('Cost'), False, URL('view_char', 'view_cost')),
+          (T('Bodyparts'), False, URL('view_char', 'view_bodyparts')),
+          (T('Actions'), False, URL('view_char', 'view_actions')),
+          (T('Damage'), False, URL('view_char', 'view_damage_state')),
+          (T('Weapons'), False, URL('view_char', 'view_weapons')),
+          (T('Armor'), False, URL('view_char', 'view_armor')),
+          (T('Computer'), False, URL('view_char', 'view_computer')),
           LI(_class="divider"),
-          (T('Combat'), False, URL('gabaros', 'view_char', 'combat')),
-          (T('Apply Damage'), False, URL('gabaros', 'view_char', 'apply_damage')),
+          (T('Combat'), False, URL('view_char', 'combat')),
+          (T('Apply Damage'), False, URL('view_char', 'apply_damage')),
             ]),
       (T('Gameinformation'), False, '#', [
-          (T('Gametables'), False, URL('gabaros', 'game', 'gametables')),
+          (T('Wiki'), False, A('Wiki', _href='http://gabaros.sessionmob.de')),
+          (T('Gametables'), False, URL('game', 'gametables')),
           ]),
+      (T('Toggle Sidebar'), False, A('Toggle Sidebar', _href="#menu-toggle", _id="menu-toggle"), []),
 ]
 
 DEVELOPMENT_MENU = False
@@ -176,10 +178,24 @@ def _():
 if DEVELOPMENT_MENU: _()
 
 if "auth" in locals(): auth.wikimenu()
-    
+
 def get_char():
     char = session.char
     if not db.chars[char] or (db.chars[char].player != auth.user.id
                               and db.chars[char].master != auth.user.id):
         redirect(URL(f='index'))
     return char
+
+def get_char_name():
+    name = ''
+    char = session.char
+    if char:
+        name = db.chars[char].name
+    return name
+
+def wikify(links):
+    baselink = 'http://gabaros.sessionmob.de'
+    sidebar = [A('Wiki', _href=baselink, _target='_blank')]
+    for link in links:
+        sidebar.append(A(link, _href=baselink + '/index.php/' +link.replace(' ', '_'), _target='_blank'))
+    return sidebar

@@ -8,7 +8,6 @@ import rules
 from collections import OrderedDict
 from math import log
 
-
 def index():
     redirect(URL('view_chars'))
 
@@ -80,7 +79,8 @@ def view_skills():
         button2 = A("{:.0f}".format(val),
                     callback=URL('roll_button', args=[char_id, skillname, val, 0]), _class='btn')
         skills += [["* " * skilldepth + skillname, button1, button2]]
-    return dict(skills=skills)
+    sidebar = wikify(['Task Resolution', 'Skill'])
+    return dict(skills=skills, sidebar=sidebar)
 
 
 @auth.requires_login()
@@ -125,7 +125,8 @@ def view_matrix_actions():
             button1 = ''
             button2 = ''
         actions += [[action, prerequisite, button1, button2]]
-    return dict(actions=actions)
+    sidebar = wikify(['Matrix Actions'])
+    return dict(actions=actions, computer = computer.name, sidebar=sidebar)
 
 
 @auth.requires_login()
@@ -153,7 +154,8 @@ def view_computer():
         char_programmes = computer.programmes
         for programme in sorted(data.programmes_dict.keys()):
             programmes.append([programme, char_programmes.get(programme)])
-    return dict(computer=table, programmes=programmes)
+    sidebar = wikify(['Matrix Attributes', 'Programs'])
+    return dict(computer=table, programmes=programmes, sidebar=sidebar)
 
 
 def combat():
@@ -163,8 +165,9 @@ def combat():
     view_weapons = LOAD('view_char','view_weapons.load',ajax=True, target = 'view_weapons')
     view_actions = LOAD('view_char','view_actions.load',ajax=True, target = 'view_actions')
     view_cc_weapons = LOAD('view_char','view_cc_weapons.load',ajax=True, target = 'view_cc_weapons')
+    sidebar = wikify(['Actions', 'Combat Resolution', 'Task Modifier'])
     return dict(view_weapons=view_weapons, insert_situation_mod=insert_situation_mod, view_actions=view_actions,
-                view_cc_weapons=view_cc_weapons)
+                view_cc_weapons=view_cc_weapons, sidebar=sidebar)
 
 
 def get_net_shoottest_val(char_id, weapon_name):

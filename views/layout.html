@@ -25,9 +25,12 @@
     <link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap3.css')}}"/>
     <link rel="shortcut icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
     <link rel="apple-touch-icon" href="{{=URL('static','images/favicon.png')}}">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{=URL('static','css/simple_sidebar.css')}}"/>
     <!-- All JavaScript at the bottom, except for Modernizr which enables
          HTML5 elements & feature detects -->
     <script src="{{=URL('static','js/modernizr-2.8.3.min.js')}}"></script>
+    <!-- Menu Toggle Script -->
     <!--[if lt IE 9]>
         <script src="{{=URL('static','js/respond-1.4.2.min.js')}}"></script>
         <![endif]-->
@@ -75,32 +78,38 @@
     {{end}}
     <!-- Main ========================================= -->
     <!-- Begin page content -->
-    <div class="container-fluid">
-      {{if left_sidebar_enabled:}}
-        <div class="col-md-3 left-sidebar">
-            {{block left_sidebar}}
-            <h3>Left Sidebar</h3>
-            <p></p>
-            {{end}}
-        </div>
-      {{pass}}
+     <div id="wrapper">
 
-      <div class="{{=middle_column}}">
-        {{block center}}
-        {{include}}
-        {{end}}
-      </div>
-
-      {{if right_sidebar_enabled:}}
-        <div class="col-md-3">
-            {{block right_sidebar}}
-            <h3>Right Sidebar</h3>
-            <p></p>
-            {{end}}
+         {{try:}}
+         {{sidebar}}
+         {{except NameError:}}
+         {{else:}}
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                {{=LI(sidebar[0], _class="sidebar-brand")}}
+                {{for i in sidebar[1:]:}}
+                {{=LI(i)}}
+                {{pass}}
+            </ul>
         </div>
-      {{pass}}
+        <!-- /#sidebar-wrapper -->
+        {{pass}}
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                   {{block center}}
+                    {{include}}
+                {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
 
     </div>
+    <!-- /#wrapper -->
+
 
     {{block footer}} <!-- this is default footer -->      
     <footer class="footer">
@@ -128,5 +137,11 @@
     {{pass}}
     <!-- Share ============================y============ -->
     <script src="{{=URL('static','js/share.js',vars=dict(static=URL('static','images')))}}"></script>
-  </body>
+    <script>
+    $("#menu-toggle").click(function(e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
+    });
+    </script>  
+</body>
 </html>

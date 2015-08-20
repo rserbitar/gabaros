@@ -1,6 +1,6 @@
 {{extend 'layout.html'}}
-
-<table>
+{{=H1(get_char_name())}}
+<table class = 'table table-striped'>
     <tr>
         {{for entry in armor_table[0]:}}
         {{=TH(entry, _style="padding-right:10px;text-align:left;")}}

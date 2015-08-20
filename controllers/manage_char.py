@@ -61,7 +61,6 @@ def edit_char():
 @auth.requires_login()
 def edit_attributes():
     char_id = get_char()
-    charname = db.chars[char_id].name
     fields = []
     attributes = []
     rows = db(db.char_attributes.char == char_id).select(db.char_attributes.ALL)
@@ -93,14 +92,13 @@ def edit_attributes():
     char_property_getter = basic.CharPropertyGetter(char, modlevel='augmented')
     char_xp = char_property_getter.get_xp()
     total_xp = sum(char_property_getter.get_total_exp().values())
-    return dict(charname=charname, form=form, attributes=data.attributes_dict.keys(),
+    return dict(form=form, attributes=data.attributes_dict.keys(),
                 xp=xp, base=base, total_attribute_xp=total_attribute_xp, total_xp=total_xp, char_xp = char_xp)
 
 
 @auth.requires_login()
 def edit_skills():
     char_id = get_char()
-    charname = db.chars[char_id].name
     fields = []
     skills = []
     rows = db(db.char_skills.char == char_id).select(db.char_skills.ALL)
@@ -138,7 +136,7 @@ def edit_skills():
     char_property_getter = basic.CharPropertyGetter(char, modlevel='augmented')
     char_xp = char_property_getter.get_xp()
     total_xp = sum(char_property_getter.get_total_exp().values())
-    return dict(charname=charname, form=form, skills=[i.replace(" ", "_") for i in data.skills_dict.keys()],
+    return dict(form=form, skills=[i.replace(" ", "_") for i in data.skills_dict.keys()],
                 xp=xp, base=base, total_skill_xp=total_skill_xp, weight = weight, char_xp = char_xp, total_xp = total_xp)
 
 @auth.requires_login()

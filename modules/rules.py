@@ -381,20 +381,24 @@ def matrix_action_rating(program_rating, matrix_attribute, skill):
     return (matrix_attribute + program_rating) / 4. + skill/2.
 
 
-def processor_cost(proc, size):
-    return 2 ** ((proc + 50) / 4. - log(size) / log(5) - 1) * 0.004
+def processor_cost(proc, volume):
+    return 6**(processor/10.-log(volume)/5.)/3.
 
 
-def uplink_cost(up, size):
-    return 2 ** ((up + 50) / 5.5 - log(size) / log(30) - 1) * 0.3
+def uplink_cost(uplink, volume):
+    return 6**(uplink/10.+log(volume)/10.+1.)/2.
 
 
-def size_cost(size):
-    return size * 10000
+def signal_cost(signal, volume):
+    return 20**(signal/10.-log((volume)**(1/3.))/3.-2.5)
+
+
+def size_cost(volume):
+    return volume * 10000
 
 
 def system_cost(system, processor):
-    return 2 ** ((system + 50) / 6.5) * (processor + 50 + 5) ** 1.5 * 0.006
+    return  2**((system+processor)/10.)*10.
 
 
 def maintain_cost(size):
