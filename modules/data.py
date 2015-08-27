@@ -8,6 +8,7 @@
 # must be passed and cannot be imported!
 
 from collections import namedtuple, OrderedDict
+import rules
 
 
 def replace_stars(data):
@@ -664,6 +665,30 @@ replace_stars(bodyparts)
 bodyparts_dict = OrderedDict([(entry[0], bodyparts_nt(*([i] + entry))) for i, entry in enumerate(bodyparts[1:])])
 
 
+computer = [
+    ["name", "Processor", "System", "Uplink", "Signal", "Volume"],
+    ["Meta Link", 15, 15, 20, 20, 0.00005],
+    ["Sony Emperor", 20, 25, 30, 30, 0.00005],
+    ["Renraku Sensei", 30, 30, 30, 30, 0.00005],
+    ["Erika Elite", 30, 40, 40, 40, 0.00005],
+    ["Hermes Ikon", 40, 50, 50, 40, 0.00005],
+    ["Fairlight Caliban", 45, 60, 60, 45, 0.00005],
+    ["Erika MCD-1", 30, 30, 30, 40, 0.005],
+    ["Hermes Chariot", 40, 40, 40, 40, 0.005],
+    ["Novatech Navigator", 45, 45, 45, 45, 0.005],
+    ["Renraku Tsurugi", 50, 50, 50, 50, 0.005],
+    ["Sony CIY-720", 55, 55, 55, 50, 0.005],
+    ["Fairlight Excalibur", 65, 65, 60, 50, 0.005],
+    ["Small Business Tower", 40, 30, 30, 0, 0.128],
+    ["Medium Business Tower", 50, 40, 40, 0, 0.128],
+    ["Cheap Mainframe", 60, 30, 40, 0, 2],
+    ["Expensive Mainframe", 60, 40, 50, 0, 2],
+    ["Super Cluster", 100, 60, 60, 0, 5000],
+]
+
+computer_nt = namedtuple('computer', ['id'] + computer[0])
+computer_dict = OrderedDict([(entry[0], computer_nt(*([i] + entry))) for i, entry in enumerate(computer[1:])])
+
 #Legality: AAA: 10, AA: 20, A: 30, B: 40, C: 50, D: 60, E: 70, Z: Any
 #restricted 40+
 #Forbidden 70+
@@ -711,12 +736,23 @@ gameitems = [
     ["Light Carapace", "Armor", 40, 4000, 8.0, -10, -30, 40, False],
     ["Heavy Carapace", "Armor", 45, 6000, 14.0, -20, -40, 50, False],
     ["Form Fitting Body Armor", "Armor", 20, 5000, 4.0, 50, 30, 10, False],
-    ["Radio Shack 0815", "Computer", 20, 100, 0.05, 15, 40, 20, False],
-    ["Renraku Hackset", "Computer", 40, 50000, 2.0, 15, 40, 20, False],
-    ["Fairlight Excalibur", "Computer", 90, 10000, 0.05, 15, 40, 20, False],
-    ["Tower", "Computer", 0, 10000, 5.0, None, None, 0, False],
-    ["Mainframe", "Computer", 10, 100, 10, None, None, 0, False],
-    ["Cluster", "Computer", 20, 10000, 100, None, None, 0, False],
+    ["Erika MCD-1", "Computer", 30, round(rules.deck_cost(*computer_dict["Erika MDC-1"][1:]),0), 2.0, -5, 10, 20, False],
+    ["Hermes Chariot", "Computer", 35, round(rules.deck_cost(*computer_dict["Hermes Chariot"][1:]),0), 2.0, -5, 10, 20, False],
+    ["Novatech Navigator", "Computer", 40, round(rules.deck_cost(*computer_dict["Novatech Navigator"][1:]),0), 2.0, -5, 10, 20, False],
+    ["Renraku Tsurugi", "Computer", 50, round(rules.deck_cost(*computer_dict["Ranraku Turugi"][1:]),0), 2.0, -5, 10, 20, False],
+    ["Sony CIY-720", "Computer", 60, round(rules.deck_cost(*computer_dict["Sony CIY-720"][1:]),0),  2.0, -5, 10, 20, False],
+    ["Fairlight Excalibur", "Computer", 80, round(rules.deck_cost(*computer_dict["Fairlight Excalibur"][1:]),0),  2.0, -5, 10, 20, False],
+    ["Meta Link", "Computer", 0, round(rules.deck_cost(*computer_dict["Meta Link"][1:]),0),  .1, 40, 40, 0, False],
+    ["Sony Emperor", "Computer", 5, round(rules.deck_cost(*computer_dict["Sony Emperor"][1:]),0),  .1, 40, 40, 0, False],
+    ["Renraku Sensei", "Computer", 10, round(rules.deck_cost(*computer_dict["Renraku Sensei"][1:]),0),  .1, 40, 40, 0, False],
+    ["Erika Elite", "Computer", 15, round(rules.deck_cost(*computer_dict["Erika ELite"][1:]),0),  .1, 40, 40, 0, False],
+    ["Transys Avalon", "Computer", 30, round(rules.deck_cost(*computer_dict["Transys Avalon"][1:]),0),  .1, 40, 40, 0, False],
+    ["Fairlight Caliban", "Computer", 40, round(rules.deck_cost(*computer_dict["Fairlight Caliban"][1:]),0),  .1, 40, 40, 0, False],
+    ["Small Business Tower", "Computer", 0, round(rules.deck_cost(*computer_dict["Small Business Tower"][1:]),0),  10.0, None, None, 0, False],
+    ["Medium Business Tower", "Computer", 10, round(rules.deck_cost(*computer_dict["Medium Busines Tower"][1:]),0),  10.0, None, None, 0, False],
+    ["Cheap Mainframe", "Computer", 20, round(rules.deck_cost(*computer_dict["Cheap Mainframe"][1:]),0),  200.0, None, None, 0, False],
+    ["Expensive Mainframe", "Computer", 30, round(rules.deck_cost(*computer_dict["Expensive Mainframe"][1:]),0),  200.0, None, None, 0, False],
+    ["Super Cluster", "Computer", 80, round(rules.deck_cost(*computer_dict["Super Cluster"][1:]),0),  None, None, None, 0, False],
     ["Optotronics Kit", "", 0, 1000, 3, 10, 50, 0, False],
     ["Vibropicker", "Anti-Security Tools", 30, 500, 0.1, 35, 40, 40, False],
     ["Voice Emulator", "Anti-Security Tools", 30, 30, 0.1, 35, 70, 60, 270],
@@ -1266,18 +1302,6 @@ adept_powers_nt = namedtuple('adept_power', ['id'] + adept_powers[0])
 adept_powers_dict = OrderedDict([(entry[0], adept_powers_nt(*([i] + entry))) for i, entry in enumerate(adept_powers[1:])])
 
 
-computer = [
-    ["name", "Processor", "System", "Uplink", "Signal", "Size"],
-    ["Radio Shack 0815", 5, 20, 10, 30, 2],
-    ["Renraku Hackset", 50, 50, 50, 50, 2],
-    ["Fairlight Excalibur", 60, 60, 60, 60, 2],
-    ["Tower", 30, 30, 60, 0, 10],
-    ["Mainframe", 40, 20, 60, 0, 100],
-    ["Cluster", 100, 30, 100, 0, 1000],
-]
-
-computer_nt = namedtuple('computer', ['id'] + computer[0])
-computer_dict = OrderedDict([(entry[0], computer_nt(*([i] + entry))) for i, entry in enumerate(computer[1:])])
 
 spells = [
     ['name', 'category', 'difficulty', 'cast_time', 'resist', 'effect', 'drain', 'range', 'volume', 'anchor',

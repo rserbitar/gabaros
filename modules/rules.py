@@ -378,11 +378,11 @@ def weapon_minstr_mod(minimum_strength, strength):
 
 
 def matrix_action_rating(program_rating, matrix_attribute, skill):
-    return (matrix_attribute + program_rating) / 4. + skill/2.
+    return negative_square_avg([(matrix_attribute + program_rating) / 2, skill])
 
 
-def processor_cost(proc, volume):
-    return 6**(processor/10.-log(volume)/5.)/3.
+def processor_cost(processor, volume):
+    return 11**(processor/10.-log(volume)/5.)/200.
 
 
 def uplink_cost(uplink, volume):
@@ -394,23 +394,31 @@ def signal_cost(signal, volume):
 
 
 def size_cost(volume):
-    return volume * 10000
+    return volume * 1000
 
 
 def system_cost(system, processor):
-    return  2**((system+processor)/10.)*10.
+    result = 0
+    if system > processor:
+        result = 6**(((system**10+processor**10)/2.)**(1/10.)/10.)*2
+    elif system <= processor:
+        result = 6**((system+processor)/20.)*2
+    return result
 
+#def system_cost2(system, processor):
+#   return  6**((system+processor)/20.)*2.
 
 def maintain_cost(size):
     return size ** 1.5 * 100
 
 
-def deck_cost(processor, system, uplink, size):
-    cprocessor = processor_cost(processor, size)
+def deck_cost(processor, system, uplink, signal, volume):
+    cprocessor = processor_cost(processor, volume)
     csystem = system_cost(system, processor)
-    cuplink = uplink_cost(uplink, size)
-    csize = size_cost(size)
-    return cprocessor, csystem, cuplink, csize, sum([cprocessor, csystem, cuplink, csize])
+    cuplink = uplink_cost(uplink, volume)
+    cvolume = size_cost(volume)
+    csignal = signal_cost(signal, volume)
+    return cprocessor, csystem, cuplink, csignal, cvolume, sum([cprocessor, csystem, csignal, cuplink, cvolume])
 
 
 def cost_by_rating(cost, basecost, rating):
@@ -421,6 +429,16 @@ def firewall_rating(time, skill, system, users):
     #time in hours per week
     return log(skill ** 3 / (system + 50) ** 3 * time / 8. / users) * 10 + skill - 50
 
+
+def negative_square_avg(values):
+    result = float('inf')
+    if values:
+        result = (1./sum([(1./i)**2 for i in values]))**0.5
+        result *= len(values)**0.5
+    return result
+
+def square_avg(values):
+     return sum([i**2 for i in values])**0.5/len(values)**0.5
 
 def square_add(values):
      return sum([i**2 for i in values])**0.5
