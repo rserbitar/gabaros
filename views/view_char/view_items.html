@@ -1,0 +1,24 @@
+{{extend 'layout.html'}}
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.7/css/jquery.dataTables.css">
+
+
+
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.js"></script>
+
+
+
+<script>
+$(document).ready( function () {
+    $('#table').DataTable();
+} );
+</script>
+{{=H1(get_char_name())}}
+
+{{=TABLE(
+        THEAD(TR([TH(h) for h in table[0]])),
+        TBODY([TR([TD(column) if  i else TH(column, _scope="row") for i, column in enumerate(row)]) for row in table[1:]]),
+        _id ='table', _class='table table-striped'
+    )}}

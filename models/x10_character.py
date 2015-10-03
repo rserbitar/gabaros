@@ -26,10 +26,15 @@ db.define_table('char_locations', Field('char', type='reference chars', label=T(
 db.define_table('char_items', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('item', type='string', label=T('Item'), requires=IS_IN_SET(data.gameitems_dict.keys())),
                 Field('rating', type='integer', label=T('Rating')),
+                #Field('form_factor', type='string', label=T('Form Factor'), requires=IS_IN_SET(data.form_factors.keys())),
                 Field('location', type='reference char_locations', label=T('Location')),
                 Field('loadout', type='list:integer', label=T('Loadout'),
                       requires=IS_IN_SET([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], multiple=True), default=0),
                 format=lambda x: x.item)
+
+db.define_table('item_upgrades', Field('char', type='reference chars', label=T('Character'), writable=False),
+                Field('item', type='reference char_items', label=T('Item')),
+                Field('upgrade', type='reference char_items', label=T('Upgrade')))
 
 db.define_table('char_ware', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('ware', type='string', label=T('Ware'), requires=IS_IN_SET(data.ware_dict.keys())))

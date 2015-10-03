@@ -170,19 +170,25 @@ class Char(object):
 
     def write_damage(self, kind, value):
         db_cd = self.db.char_damage
-        db_cd.update_or_insert((db_cd.char == self.char_id) & (db_cd.damagekind == kind),
-                               value=value,
-                               char = self.char_id,
-                               damagekind = kind)
+        if value:
+            db_cd.update_or_insert((db_cd.char == self.char_id) & (db_cd.damagekind == kind),
+                                   value=value,
+                                   char = self.char_id,
+                                   damagekind = kind)
+        else:
+            self.db((db_cd.char == self.char_id) & (db_cd.damagekind == kind)).delete()
 
     def write_wounds(self, number, bodypart, kind):
         db_cw = self.db.char_wounds
-        db_cw.update_or_insert((db_cw.char == self.char_id) & (db_cw.damagekind == kind) &
-                               (db_cw.bodypart == bodypart),
-                               value=number,
-                               char = self.char_id,
-                               damagekind = kind,
-                               bodypart = bodypart)
+        if number:
+            db_cw.update_or_insert((db_cw.char == self.char_id) & (db_cw.damagekind == kind) &
+                                   (db_cw.bodypart == bodypart),
+                                   value=number,
+                                   char = self.char_id,
+                                   damagekind = kind,
+                                   bodypart = bodypart)
+        else:
+            self.db((db_cw.char == self.char_id) & (db_cw.damagekind == kind) & (db_cw.bodypart == bodypart)).delete()
 
     @staticmethod
     def write_ware(ware):
@@ -352,30 +358,61 @@ class RangedWeapon(object):
             if isinstance(getattr(self, attribute), str):
                 setattr(self, attribute,
                         round(eval(getattr(self, attribute).format(Strength=self.char_property_getter.get_attribute_value('Strength')))))
+        self.recoil = rules.recoil_by_strength(self.recoil, self.char_property_getter.get_attribute_value('Strength'), self.minstr)
 
-    def get_shooting_difficulty(self, distance, magnification=1.):
-        return rules.shooting_difficulty(self.range, magnification, distance)
+    def get_shooting_difficulty(self, distance, magnification=1., burst = False):
+        if burst == 'Wide Shot':
+            wide_burst_bullets = self.shot
+        elif burst == 'Wide Burst':
+            wide_burst_bullets = self.burst
+        elif burst == 'Wide Auto':
+            wide_burst_bullets = self.auto
+        else:
+            wide_burst_bullets = 0
+        return rules.shooting_difficulty(self.range, magnification, distance, 2, wide_burst_bullets)
 
-    def get_net_skill_value(self):
-        minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
+    def get_net_skill_value(self, braced = False):
+        if not braced:
+            minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
+        else:
+            min_str_mod = 0
         net_skill_value = self.char_property_getter.get_skilltest_value(self.skill) + self.skillmod - minstr_mod
         return net_skill_value
 
-    def get_damage(self, shoot_mod, distance, bullets = 1, magnification = 1., size = 2.):
+    def get_damage(self, shoot_mod, distance, magnification = 1., size = 2., braced = False, burst=False):
         damage = []
         range_mod = rules.shoot_rangemod(self.range, distance)
         sight_mod = rules.visible_perception_mod(size, distance, magnification)
         skill = self.char_property_getter.get_skilltest_value(self.skill)
-        minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
-        net_value = -rules.shoot_base_difficulty + skill - minstr_mod - range_mod - sight_mod - shoot_mod + self.skillmod
+        if not braced:
+            minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
+        else:
+            minstr_mod = 0
+        if burst == 'Wide Shot':
+            wide_burst_mod = self.shot
+        elif burst == 'Wide Burst':
+            wide_burst_mod = self.burst
+        elif burst == 'Wide Auto':
+            wide_burst_mod = self.auto
+        else:
+            wide_burst_mod = 0
+        net_value = -rules.shoot_base_difficulty + skill - minstr_mod - range_mod - sight_mod - shoot_mod + self.skillmod - wide_burst_mod
         result = net_value
+        if burst == 'Narrow Shot':
+            bullets = self.shot
+        elif burst == 'Narrow Burst':
+            bullets = self.burst
+        elif burst == 'Narrow Auto':
+            bullets = self.auto
+        else:
+            bullets = 1
         while net_value >= 0 and bullets:
             damage.append(rules.weapondamage(self.damage, net_value))
             net_value -= self.recoil
             bullets -= 1
         return damage, {'difficulty': rules.shoot_base_difficulty, 'weapon range mod': range_mod,
                         'sight range mod': sight_mod, 'minimum strength mod': minstr_mod,
-                        'skill': skill, 'other mods': shoot_mod, 'result': result}
+                        'skill': skill, 'other mods': shoot_mod, 'result': result, 'wide burst mod': wide_burst_mod}
 
 
 class Armor(object):
@@ -1439,6 +1476,76 @@ class CharPropertyPutter():
     def __init__(self, char):
         self.char = char
 
+    def first_aid(self, test_value):
+        char_property_getter = CharPropertyGetter(self.char, modlevel='stateful')
+        max_life = char_property_getter.get_maxlife()
+        damage = char_property_getter.char.damage.get('physical', 0)
+        damagepercent = damage/float(maxlife)
+        healing_mod = rules.healing_mod()
+        test_value -= healing_mod
+        healed_damage = min(damage, rules.first_aid(test_value)*damagepercent*max_life)
+        self.heal_damage(healed_damage, 'physical')
+        return 'Healed {} physical damage'.format(healed_damage)
+
+    def rest(self, total_time, medic_test, die_roll):
+        timedict = {'m': 1./24./60., 's': 1/24./60./60., 'h': 1/24., 'd': 1, 'w': 7,}
+        result = 'Heal Roll: {}\n'.format(die_roll)
+        if isinstance(total_time, str):
+            splits = total_time.split(',')
+            total_time = 0
+            for i in splits:
+                value, id = float(i.strip()[:-1]), i.strip()[-1]
+                total_time += value * timedict.get(id.lower(), 0)
+        total_wound_time = total_time
+        char_property_getter = CharPropertyGetter(self.char, modlevel='stateful')
+        max_life = char_property_getter.get_maxlife()
+        test = die_roll + char_property_getter.get_attribute_mod('Constitution')
+        test += medic_test if medic_test > 0 else 0
+        for damage_kind in sorted(data.damagekinds_dict.values(), key = lambda x: x.priority):
+            damage = char_property_getter.char.damage.get(damage_kind.name, 0)
+            if damage:
+                damagepercent = float(damage)/max_life
+                healing_time = rules.healingtime(damagepercent, damage_kind.healing_time, test)
+                if total_time >= healing_time:
+                    total_time -= healing_time
+                    self.heal_damage(damage, damage_kind.name)
+                    result += 'Healed all {} {} damage in {} hours\n'.format(damage, damage_kind.name, healing_time * 24.)
+                else:
+                    damage = rules.damage_heal_after_time(damage, total_time, healing_time)
+                    self.heal_damage(damage, damage_kind.name)
+                    result += 'Healed {} {} damage in {} hours\n'.format(damage, damage_kind.name, total_time * 24.)
+                    break
+        wounds = char_property_getter.char.wounds
+        for location, wounds_by_location in wounds.items():
+            for damage_kind, wound_num in wounds_by_location.items():
+                base_time = data.damagekinds_dict[damage_kind].healing_time
+                healing_time = rules.healingtime_wounds(wound_num, base_time, test)
+                if total_wound_time < healing_time:
+                    wound_num = rules.wound_heal_after_time(wound_num, total_wound_time, healing_time)
+                    result += 'Healed {} {} wounds at {} in {} hours\n'.format(wound_num, damage_kind, location, total_wound_time * 24.)
+                else:
+                    result += 'Healed all {} {} wounds at {} in {} hours\n'.format(wound_num, damage_kind, location, healing_time * 24.)
+                self.heal_wounds(wound_num, location, damage_kind)
+        return result
+
+    def heal_wounds(self, healed_wounds, location, damage_kind=None):
+        char_property_getter = CharPropertyGetter(self.char, modlevel='stateful')
+        if not damage_kind:
+            location, damage_kind = location.split(',')
+        wounds = char_property_getter.char.wounds.get(location, {}).get(damage_kind,0)
+        wounds = wounds - healed_wounds
+        if wounds < 0:
+            wounds = 0
+        self.char.write_wounds(wounds, location, damage_kind)
+
+    def heal_damage(self, healed_damage, damage_kind):
+        char_property_getter = CharPropertyGetter(self.char, modlevel='stateful')
+        damage = char_property_getter.char.damage.get(damage_kind, 0)
+        damage = damage - healed_damage
+        if damage < 0:
+            damage = 0
+        self.char.write_damage(damage_kind, damage)
+
     def put_damage(self, value, penetration, bodypart='Body', kind='physical', typ='ballistic',
                    percent=False, resist=False, resistroll=None, wounding = True):
         charpropertygetter = CharPropertyGetter(self.char, 'stateful')
@@ -1462,6 +1569,7 @@ class CharPropertyPutter():
             value = rules.resist_damage(value, attribute_mod, resistroll, 0)
         damage = float(max(0, value - max(0, armor-penetration)))
         bodykind, cyberfraction, biofraction = charpropertygetter.char_body.bodyparts[bodypart].get_kind()
+        max_life = charpropertygetter.get_maxlife()
         woundlimit = charpropertygetter.char_body.bodyparts[bodypart].get_woundlimit()
         destroy_thresh = charpropertygetter.char_body.bodyparts[bodypart].get_wounds_destroyed_thresh()
         calc_wounds = float('inf')
@@ -1486,8 +1594,12 @@ class CharPropertyPutter():
                 damage *= (1.-cyberfraction)
             old_damage = self.char.damage.get(kind, 0)
             new_damage = old_damage + damage
+            new_damage = min(new_damage, 2*max_life)
             self.char.write_damage(kind, new_damage)
-        return 'damage: {}, wounds: {}, {}'.format(damage, wounds, value)
+        result = 'damage: {}, wounds: {}'.format(damage, wounds)
+        if resistroll:
+            result += '; resistroll:{}'.format(resistroll)
+        return result
 
 
 if __name__ == '__main__':

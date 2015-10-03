@@ -298,16 +298,34 @@ def bleedingdamage_per_round(wounds, woundlimit):
 
 
 # healing time in days
-def healingtime(damagepercent, base_healtime):
-    return damagepercent ** 1.5 * base_healtime
+def healingtime(damagepercent, base_healtime, test):
+    return damagepercent ** 1.5 * base_healtime / scale(test)
 
 
-def healing_mod(damagepercent):
-    return damagepercent ** 1.5 * 30
+def healingtime_wounds(wounds, base_healtime, test):
+    return wounds**2 * base_healtime/2. / scale(test)
 
 
 def damage_heal_after_time(damage, days, healtime):
     return damage * (days / healtime) ** 1.5
+
+
+def wound_heal_after_time(wounds, days, healtime):
+    return int(wounds * (days / healtime) ** 1.5)
+
+
+def healing_mod(damagepercent):
+    return damagepercent ** 2. * 30
+
+
+def firt_aid(test_value):
+    if test_value > 0:
+        healed = 0.05*scale(test_value)
+    elif test_value > -10:
+        healed = 0
+    else:
+        healed = -0.05*scale(-test_value+10)
+    return healed
 
 
 def resist_damage(damage, attribute_mod, roll, resistmod = 0):
@@ -359,10 +377,11 @@ def percept_blind(sensitivity, background):
     return -min(0, background + sensitivity)
 
 
-def shooting_difficulty(weaponrange, magnification, distance, size=2.):
+def shooting_difficulty(weaponrange, magnification, distance, size=2., wide_burst_bullets=0):
     sightmod = visible_perception_mod(size, distance, magnification)
     rangemod = shoot_rangemod(weaponrange, distance)
-    return shoot_base_difficulty + sightmod + rangemod
+    bulletmod = wide_burst_bullets
+    return shoot_base_difficulty + sightmod + rangemod + wide_burst_bullets
 
 def shoot_rangemod(weaponrange, distance):
     if distance < 1:
@@ -467,7 +486,7 @@ def get_stacked_armor_value(values):
     return square_add(values)
 
 def scale(x):
-    2**(x/10.)
+    return 2**(x/10.)
 
 def price_by_rating(baseprice, rating):
     return (1+(2**(rating/10.)))/9.*baseprice
@@ -477,3 +496,6 @@ def contact_costs(loyalty, rating):
 
 def contacts_free_value(charisma):
     return charisma*charisma
+
+def recoil_by_strength(recoil, strength, min_strength):
+    return recoil/(strength/min_strength)

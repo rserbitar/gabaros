@@ -39,6 +39,32 @@ def roll_button():
 
 
 @auth.requires_login()
+def view_items():
+    char_id = get_char()
+    table = db.char_items
+    table2 = db.item_upgrades
+    itemdata = db(table.char==char_id).select(table.id, table.item, table.rating, table.location, table.loadout)
+    upgrades = db(table2.char==char_id).select(table2.id, table2.item, table2.upgrade)
+    upgrades = {row.upgrade.id: (row.item.item, row.item.id) for row in upgrades}
+    itemdata2 = [['Item', 'Rating', 'Weight', 'Visible Stealth', 'Scan Stealth', 'Location', 'Loadout']]
+    for row in itemdata:
+        item = data.gameitems_dict[row.item]
+        if row.id not in upgrades:
+            itemdata2.append([row.item, row.rating, item.weight, item.vis_stealth, item.scan_stealth, row.location.name if row.location else '', row.loadout])
+            if item.clas == 'Ranged Weapon':
+                for upgrade in data.rangedweapons_dict[item.name].special:
+                    if isinstance(upgrade, str):
+                        upgrade = data.gameitems_dict[upgrade]
+                        itemdata2.append(['{} - {}'.format(row.item, upgrade.name), None, upgrade.weight, upgrade.vis_stealth, upgrade.scan_stealth, None, None])
+        else:
+            if upgrades[row.id][1] not in upgrades:
+                itemdata2.append(['{} - {}'.format(upgrades[row.id][0], row.item), row.rating, item.weight, item.vis_stealth, item.scan_stealth, row.location.name if row.location else '', row.loadout])
+            else:
+                itemdata2.append(['{} - {} - {}'.format(upgrades[upgrades[row.id][1]][0], upgrades[row.id][0], row.item), row.rating, item.weight, item.vis_stealth, item.scan_stealth, row.location.name if row.location else '', row.loadout])
+    table = itemdata2
+    return dict(table=table)
+
+@auth.requires_login()
 def view_chars():
     table = db.chars
     query = db.chars.player == auth.user.id or db.chars.master == auth.user.id
@@ -169,34 +195,46 @@ def combat():
     return dict(view_weapons=view_weapons, insert_situation_mod=insert_situation_mod, view_actions=view_actions,
                 view_cc_weapons=view_cc_weapons, sidebar=sidebar)
 
+def damage():
+    char_id = get_char()
+    char = basic.Char(db, char_id)
+    view_damage_state = LOAD('view_char','view_damage_state.load',ajax=True, target = 'view_damage_state')
+    apply_damage = LOAD('view_char','apply_damage.load',ajax=True, target = 'apply_damage')
+    heal_damage = LOAD('view_char','heal_damage.load',ajax=True, target = 'heal_damage')
+    sidebar = wikify(['Damage'])
+    return dict(view_damage_state=view_damage_state, apply_damage=apply_damage, heal_damage=heal_damage)
+
 
 def get_net_shoottest_val(char_id, weapon_name):
     char = basic.Char(db, char_id)
     weapon = basic.RangedWeapon(weapon_name, char)
-    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod', 'shoot_distance']))
-    ).select(db.state_mods.name, db.state_mods.value)
+    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod', 'shoot_distance', 'magnification', 'braced', 'burst']))
+    ).select(db.state_mods.name, db.state_mods.value, db.state_mods.type)
     resultdict = {'situation_mod': 0.,
-                  'shoot_distance': 10.}
+                  'shoot_distance': 10.,
+                  'magnification': 1.,
+                  'braced': False,
+                  'burst': 'None'}
     for row in rows:
-        resultdict[row.name] = row.value
+        resultdict[row.name] = convert(row.value, row.type)
     roll = gauss(0, 10)
     situation_mod = resultdict['situation_mod']
     net_value = situation_mod - roll
-    damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'])
+    damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'], resultdict['magnification'], 2., resultdict['braced'], resultdict['burst'])
     result['roll'] = roll
     result['other mods'] = situation_mod
     test_val = (-result['difficulty'] - result['other mods'] - result['minimum strength mod']
-                  - result['weapon range mod'] - result['sight range mod'] + result['skill'])
+                  - result['weapon range mod'] - result['sight range mod'] + result['skill'] - result['wide burst mod'])
     return int(round(test_val))
 
 def get_net_cc_test_val(char_id, weapon_name):
     char = basic.Char(db, char_id)
     weapon = basic.CloseCombatWeapon(weapon_name, char)
     rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod']))
-    ).select(db.state_mods.name, db.state_mods.value)
+    ).select(db.state_mods.name, db.state_mods.value, db.state_mods.type)
     resultdict = {'situation_mod': 0.}
     for row in rows:
-        resultdict[row.name] = row.value
+        resultdict[row.name] = convert(row.value, row.type)
     roll = gauss(0, 10)
     situation_mod = resultdict['situation_mod']
     net_value = situation_mod - roll
@@ -241,26 +279,43 @@ def view_weapons():
     return dict(weapons=table)
 
 
+def convert(value, type_indicator):
+    if type_indicator == 'str':
+        result = value
+    elif type_indicator == 'float':
+        result = float(value)
+    elif type_indicator == 'bool':
+        if value == 'False':
+            result = False
+        else:
+            result = True
+    else:
+        result = value
+    return result
+
 @auth.requires_login()
 def shoot_weapon():
     char_id = get_char()
     weapon_name = request.args(0).replace('_', ' ')
     char = basic.Char(db, char_id)
     weapon = basic.RangedWeapon(weapon_name, char)
-    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod', 'shoot_distance']))
-    ).select(db.state_mods.name, db.state_mods.value)
+    rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod', 'shoot_distance', 'magnification', 'braced', 'burst']))
+    ).select(db.state_mods.name, db.state_mods.value, db.state_mods.type)
     resultdict = {'situation_mod': 0.,
-                  'shoot_distance': 10.}
+                  'shoot_distance': 10.,
+                  'magnification': 1.,
+                  'braced': False,
+                  'burst': 'None'}
     for row in rows:
-        resultdict[row.name] = row.value
+        resultdict[row.name] = convert(row.value, row.type)
     roll = gauss(0, 10)
     situation_mod = resultdict['situation_mod']
     net_value = situation_mod - roll
-    damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'])
+    damage, result = weapon.get_damage(net_value, resultdict['shoot_distance'], resultdict['magnification'], 2., resultdict['braced'], resultdict['burst'])
     result['roll'] = roll
     result['other mods'] = situation_mod
     difficulty = -(result['difficulty'] + result['other mods'] + result['minimum strength mod']
-                  + result['weapon range mod'] + result['sight range mod'] - result['skill'])
+                  + result['weapon range mod'] + result['sight range mod'] - result['skill'] + result['wide burst mod'])
     text = """
     <table class='table table-striped table-condensed'>
             <tr>
@@ -290,12 +345,14 @@ def shoot_weapon():
             <tr>
                 <th>Skill</td>
                 <td>{skill}</td>
-                <th>Other Mods</td>
-                <td>{other_mods}</td>
+                <th>Wide Burst Mod</td>
+                <td>{wide_burst_mod}</td>
             </tr>
             <tr>
                 <th>Difficulty</td>
                 <td>{difficulty}</td>
+                <th>Other Mods</td>
+                <td>{other_mods}</td>
             </tr>
     </table>
     """
@@ -307,6 +364,7 @@ def shoot_weapon():
                 weapon_range_mod = int(round(result['weapon range mod'])),
                 sight_range_mod = int(round(result['sight range mod'])),
                 minimum_strength_mod = int(round(result['minimum strength mod'])),
+                wide_burst_mod = int(round(result['wide burst mod'])),
                 other_mods =int(round( result['other mods'])),
                 result = int(round(result['result'])),
                 roll = int(round(result['roll'])),
@@ -337,9 +395,9 @@ def view_cc_weapons():
         table.append(row)
     #fields = [Field('val', 'integer', default=0, label = 'Modifications')]
     #form = SQLFORM.factory(*fields, table_name = 'weapons',  buttons=[], _method = '', _action = None)
-    #form.element(_name='val')['_onblur']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
+    #form.element(_name='val')['_onblur']="ajax('/gabaros/view_char/insert_state_mod/shoot', " \
     #                                     "['val'], '')".format(char_id)
-    #form.element(_name='val')['_onkeypress']="ajax('/gabaros/view_char/insert_state_mod/{}/shoot', " \
+    #form.element(_name='val')['_onkeypress']="ajax('/gabaros/view_char/insert_state_mod/shoot', " \
     #                                     "['val'], '')".format(char_id)
     return dict(weapons=table)
 
@@ -351,10 +409,10 @@ def swing_weapon():
     char = basic.Char(db, char_id)
     weapon = basic.CloseCombatWeapon(weapon_name, char)
     rows = db((db.state_mods.char==char_id) & (db.state_mods.name.belongs(['situation_mod']))
-    ).select(db.state_mods.name, db.state_mods.value)
+    ).select(db.state_mods.name, db.state_mods.value, db.state_mods.type)
     resultdict = {'situation_mod': 0.}
     for row in rows:
-        resultdict[row.name] = row.value
+        resultdict[row.name] = convert(row.value, row.type)
     roll = gauss(0, 10)
     situation_mod = resultdict['situation_mod']
     net_value = situation_mod - roll
@@ -428,16 +486,24 @@ def insert_situation_mod():
     if not db.chars[char_id] or (db.chars[char_id].player != auth.user.id
                                  and db.chars[char_id].master != auth.user.id):
         redirect(URL(f='index'))
-    vars = ['situation_mod','shoot_distance']
+    situation_mod_types = {'shoot_distance': 'float',
+                           'situation_mod': 'float',
+                           'magnification': 'float',
+                           'braced': 'bool',
+                           'burst': 'str'}
+    vars = situation_mod_types.keys()
     query = [((db.state_mods.char==char_id) & (db.state_mods.name==i)) for i in vars]
 
     for i, var in enumerate(vars):
         if request.vars.get(var):
             db.state_mods.update_or_insert(query[i],
-                                            value=request.vars.get(var), char = char_id, name = var)
+                                            value=request.vars.get(var), char = char_id, name = var, type = situation_mod_types[var])
             response.js =  "jQuery('#view_weapons').get(0).reload()"
     fields = [Field('shoot_distance', 'integer', default=0, label = 'Distance',  requires=IS_NOT_EMPTY())]
-    fields.append(Field('situation_mod', 'integer', default=0, label = 'Modifications',  requires=IS_NOT_EMPTY()))
+    fields.append(Field('situation_mod', 'integer', default=0, label = 'Situation Mod',  requires=IS_NOT_EMPTY()))
+    fields.append(Field('magnification', 'integer', default=1, label = 'Magnification',  requires=IS_IN_SET([1, 2, 4, 8])))
+    fields.append(Field('braced', 'boolean', default=False, label = 'Braced'))
+    fields.append(Field('burst', 'string', default='None', label = 'Burst',  requires=IS_IN_SET(['None','Narrow Shot','Wide Shot','Narrow Burst','Wide Burst','Narrow Auto','Wide Auto'])))
     form = SQLFORM.factory(*fields)
     for var in vars:
         form.element(_name=var)['_onblur']="ajax('/gabaros/view_char/insert_situation_mod', " \
@@ -446,12 +512,12 @@ def insert_situation_mod():
         for i, var in enumerate(vars):
             if form.vars.get(var) is not None:
                 db.state_mods.update_or_insert(query[i],
-                                            value=form.vars.get(var), char = char_id, name = var)
+                                            value=form.vars.get(var), char = char_id, name = var, type = situation_mod_types[var])
                 response.js =  "jQuery('#view_weapons').get(0).reload()"
     for i,var in enumerate(vars):
-        val = db(query[i]).select(db.state_mods.value).first()
-        if val:
-            val = int(val.value)
+        valpair = db(query[i]).select(db.state_mods.value, db.state_mods.type).first()
+        if valpair:
+            val = convert(valpair.value, valpair.type)
             form.element(_name=var).update(_value=val)
     return dict(form = form)
 
@@ -606,11 +672,79 @@ def apply_damage():
                                                       form.vars.wounding
                                                       )
         response.flash = damage_text
+        response.js = "jQuery('#view_damage_state').get(0).reload()"
     elif form.errors:
        response.flash = 'form has errors'
-    else:
-       response.flash = 'please fill out the form'
     return dict(form=form)
+
+
+@auth.requires_login()
+def heal_damage():
+    char_id = get_char()
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='stateful')
+    wounds = char_property_getter.char.wounds
+    wounds = ['{},{}'.format(location, kind) for location, values in wounds.items() for kind in values]
+    damage = char_property_getter.char.damage
+    damage = damage.keys()
+    fields = [Field('heal_time', 'string',
+                    label = 'Healing Time'),
+              Field('med_test', 'integer', default=0, label = 'Medical Care Test'),]
+    form = SQLFORM.factory(*fields, table_name = 'rest')
+    fields2 = [Field('damage_healed', 'float', default = 0, label = 'Damage Healed'),
+              Field('damage_kind', 'string', requires=IS_IN_SET(damage), label = 'Damage Kind'),]
+    form2 = SQLFORM.factory(*fields2, table_name = 'heal_damage')
+    fields3 = [Field('wounds_healed', 'integer', requires=IS_IN_SET([1,2,3,4,5]), default = 1, label = 'Wounds Healed'),
+              Field('location', 'string', requires=IS_IN_SET(wounds), label = 'Location and Damage Kind')]
+    form3 = SQLFORM.factory(*fields3, table_name = 'heal_wounds')
+    fields4 = [Field('first_aid_test', 'float',label = 'First Aid Test')]
+    form4 = SQLFORM.factory(*fields4, table_name = 'first_aid')
+    if form.process(formname='form_one').accepted:
+        char = basic.Char(db, char_id)
+        char_property_putter = basic.CharPropertyPutter(char)
+        die_roll = roll(char_id, 0, 'Rest', True)
+        text = char_property_putter.rest(form.vars.heal_time,
+                                                      form.vars.med_test,
+                                                      die_roll
+                                                      )
+        response.flash = text
+        response.js = "jQuery('#view_damage_state').get(0).reload()"
+    elif form.errors:
+       response.flash = 'form has errors'
+
+
+    if form2.process(formname='form_two').accepted:
+        char = basic.Char(db, char_id)
+        char_property_putter = basic.CharPropertyPutter(char)
+        text = char_property_putter.heal_damage(form2.vars.damage_healed,
+                                                      form2.vars.damage_kind
+                                                      )
+        response.flash = text
+        response.js = "jQuery('#view_damage_state').get(0).reload()"
+    elif form.errors:
+       response.flash = 'form has errors'
+
+
+    if form3.process(formname='form_three').accepted:
+        char = basic.Char(db, char_id)
+        char_property_putter = basic.CharPropertyPutter(char)
+        text = char_property_putter.heal_wounds(int(form3.vars.wounds_healed),
+                                                      form3.vars.location
+                                                      )
+        response.flash = text
+        response.js = "jQuery('#view_damage_state').get(0).reload()"
+    elif form.errors:
+       response.flash = 'form has errors'
+
+    if form4.process(formname='form_four').accepted:
+        char = basic.Char(db, char_id)
+        char_property_putter = basic.CharPropertyPutter(char)
+        text = char_property_putter.first_aid(form4.vars.first_aid
+                                                      )
+        response.flash = text
+        response.js = "jQuery('#view_damage_state').get(0).reload()"
+    elif form.errors:
+       response.flash = 'form has errors'
+    return dict(form=form, form2 = form2, form3=form3, form4=form4)
 
 
 @auth.requires_login()

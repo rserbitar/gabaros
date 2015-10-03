@@ -1,0 +1,54 @@
+{{extend 'layout.html'}}
+{{=H1(get_char_name())}}
+{{=H2(name)}}
+<div class="container">
+  <div class="row">
+    <div class="col-sm-6">
+        {{=H4('Capacity: {}'.format(capacity))}}
+{{=H4('Free Capacity: {}'.format(free_capacity))}}
+     </div>
+    <div class="col-sm-6">
+    </div>
+  </div>
+  <div class="row">
+      <div class="col-sm-12">
+{{=form}}
+  </div>
+ </div>
+  <div class="row">
+      <div class="col-sm-12">
+<table class = 'table table-striped'>
+    <tr>
+        <th>Installed Upgrade</th>
+        <th>Capacity</th>
+        <th></th>
+        <th></th>
+    </tr>
+    {{for row in upgrades:}}
+    <tr>
+        {{for entry in row:}}
+        {{=TD(entry)}}
+        {{pass}}
+    </tr>
+    {{pass}}
+</table>
+  </div>
+ </div>
+  <div class="row">
+      <div class="col-sm-12">
+<table class = 'table table-striped'>
+    <tr>
+        <th>Available Upgrade</th>
+        <th>Capacity</th>
+    </tr>
+    {{for row in upgradeables:}}
+    <tr>
+        {{for entry in row:}}
+        {{=TD(entry)}}
+        {{pass}}
+    </tr>
+    {{pass}}
+</table>
+  </div>
+ </div>
+</div>

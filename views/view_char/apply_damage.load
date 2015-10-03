@@ -1,0 +1,35 @@
+{{=form}}
+
+
+<script>
+jQuery(document).ready(function(){
+   if(jQuery.inArray(jQuery('#damage_apply_kind').prop('value'),['drain stun', 'drain physical']) > -1)
+        jQuery('#damage_apply_penetration__row').hide(),
+        jQuery('#damage_apply_bodypart__row').hide(),
+        jQuery('#damage_apply_typ__row').hide(),
+        jQuery('#damage_apply_percent__row').hide(),
+        jQuery('#damage_apply_resist__row').hide(),
+        jQuery('#damage_apply_wounding__row').hide();
+   else jQuery('#damage_apply_penetration__row').show(),
+        jQuery('#damage_apply_bodypart__row').show(),
+        jQuery('#damage_apply_typ__row').show(),
+        jQuery('#damage_apply_percent__row').show(),
+        jQuery('#damage_apply_presist__row').hide(),
+        jQuery('#damage_apply_wounding__row').show();
+   jQuery('#damage_apply_kind').change(function(){
+       if(jQuery.inArray(jQuery('#damage_apply_kind').prop('value'),['drain stun', 'drain physical']) > -1)
+        jQuery('#damage_apply_penetration__row').hide(),
+        jQuery('#damage_apply_bodypart__row').hide(),
+        jQuery('#damage_apply_typ__row').hide(),
+        jQuery('#damage_apply_percent__row').hide(),
+        jQuery('#damage_apply_resist__row').hide(),
+        jQuery('#damage_apply_wounding__row').hide();
+   else jQuery('#damage_apply_penetration__row').show(),
+        jQuery('#damage_apply_bodypart__row').show(),
+        jQuery('#damage_apply_typ__row').show(),
+        jQuery('#damage_apply_percent__row').show(),
+        jQuery('#damage_apply_presist__row').hide(),
+        jQuery('#damage_apply_wounding__row').show();
+   });
+});
+</script>

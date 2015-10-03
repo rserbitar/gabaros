@@ -1,0 +1,47 @@
+<H3>
+Max Life:
+</H3>
+{{=maxlife}}
+<br>
+<H3>
+Attribute Damage Mod:
+</H3>
+{{=damage_attribute_mod}}
+<br>
+<H3>
+Attribute Skill Mod:
+</H3>
+{{=damage_skill_mod}}
+<br>
+<div class="container">
+  <div class="row">
+    <div class="col-sm-6">
+        <table class = 'table table-striped'>
+            <tr>
+                <th>Bodypart</th>
+                <th>Wounds</th>
+            </tr>
+                {{for bodypart, wound in wounds.items():}}
+            <tr>
+                <th>{{=bodypart}}</th>
+                <td>{{=wound}}</td>
+            </tr>
+            {{pass}}
+        </table>
+     </div>
+    <div class="col-sm-6">
+        <table class = 'table table-striped'>
+            <tr>
+                <th>Damagekind</th>
+                <th>Value</th>
+            </tr>
+                {{for damagekind, value in damage.items():}}
+            <tr>
+                <th>{{=damagekind}}</th>
+                <td>{{=value}}</td>
+            </tr>
+            {{pass}}
+        </table>
+    </div>
+  </div>
+</div>

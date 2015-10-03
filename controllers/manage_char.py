@@ -13,7 +13,7 @@ def my_ondelete(function):
     return func
 
 def select_char(id):
-    session.char=id
+    session.char=int(id)
     return  A(id, _href=URL("edit_char", args=(id)))
 
 def get_table(table_name):
@@ -46,7 +46,7 @@ def manage_chars():
 @auth.requires_login()
 def edit_char():
     char = request.args(0)
-    session.char = char
+    session.char = int(char)
     if not db.chars[char] or (db.chars[char].player != auth.user.id
                               and db.chars[char].master != auth.user.id):
         redirect(URL(f='index'))
@@ -207,6 +207,92 @@ def manage_fixtures():
 
 
 @auth.requires_login()
+def manage_upgrades():
+    char_id = get_char()
+    table = db.item_upgrades
+    table.char.default = char_id
+    query = (table.char == char_id)
+    char = basic.Char(db, char_id)
+    form = SQLFORM.grid(query, fields = [table.id, table.item, table.upgrade], csv = False, ondelete=my_ondelete('manage_upgrades'))
+    return dict(form=form)
+
+@auth.requires_login()
+def upgrade_item():
+    char_id = get_char()
+    char_gameitem_id = int(request.args(0))
+    table = db.char_items
+    gameitem_name = table[char_gameitem_id].item
+    if not table[char_gameitem_id].char == char_id:
+        redirect(URL('manage_chars'))
+    gameitem = data.gameitems_dict[gameitem_name]
+    capacity = gameitem.capacity
+    upgradeables = gameitem.upgradeables[:]
+    if gameitem.clas == 'Ranged Weapon':
+        capacity = []
+        ranged_weapon = data.rangedweapons_dict[gameitem.name]
+        if ranged_weapon.top:
+            upgradeables.extend(data.rangedweapon_upgrades['top'])
+            capacity.append('top')
+        if ranged_weapon.barrel:
+            upgradeables.extend(data.rangedweapon_upgrades['barrel'])
+            capacity.append('barrel')
+        if ranged_weapon.under:
+            upgradeables.extend(data.rangedweapon_upgrades['under'])
+            capacity.append('under')
+    fields = [Field('upgrade', 'string', requires=IS_IN_SET(upgradeables))]
+    upgradeables = [data.gameitems_dict[i] for i in upgradeables]
+    if gameitem.clas not in  ['Ranged Weapon']:
+        upgradeables = [(i.name, i.absolute_capacity+i.relative_capacity*capacity) for i in upgradeables]
+    else:
+        upgradeables = [(i.name) for i in upgradeables]
+    form = SQLFORM.factory(*fields)
+    if form.accepts(request.vars, session):
+        response.flash = 'form accepted'
+        upgrade = form.vars.upgrade
+        id = db.char_items.insert(char=char_id, item=upgrade, location = None, loadout = None, rating = None)
+        db.item_upgrades.insert(char=char_id, item = char_gameitem_id, upgrade = id)
+    elif form.errors:
+        response.flash = 'form has errors'
+    upgrades = db(db.item_upgrades.item==char_gameitem_id).select(db.item_upgrades.id, db.item_upgrades.upgrade)
+    if gameitem.clas not in  ['Ranged Weapon']:
+        upgrades = [(A(i.upgrade.item, _href=URL("upgrade_item", args=(i.upgrade.id))),
+                     data.gameitems_dict[i.upgrade.item].absolute_capacity+data.gameitems_dict[i.upgrade.item].relative_capacity*capacity,
+                    A("Unlink", callback=URL('unlink_upgrade', args=[i.id, char_gameitem_id]), _class='btn'),
+                    A("Delete", callback=URL('delete_upgrade', args=[i.upgrade.id, i.id, char_gameitem_id]), _class='btn'))
+                    for i in upgrades]
+    else:
+        upgrades = [(A(i.upgrade.item, _href=URL("upgrade_item", args=(i.upgrade.id))),
+                       data.rangedweapon_upgrades_reverse[i.upgrade.item],
+                    A("Unlink", callback=URL('unlink_upgrade', args=[i.id, char_gameitem_id]), _class='btn'),
+                    A("Delete", callback=URL('delete_upgrade', args=[i.upgrade.id, i.id, char_gameitem_id]), _class='btn'))
+                for i in upgrades]
+    if isinstance(capacity, float) or isinstance(capacity, int):
+        free_capacity = capacity - sum([i[1] for i in upgrades])
+    else:
+        free_capacity = set(capacity) - set([i[1] for i in upgrades])
+    return dict(name = gameitem_name, form=form, upgrades=upgrades, upgradeables=upgradeables, capacity=capacity, free_capacity=free_capacity)
+
+@auth.requires_login()
+def unlink_upgrade():
+    char_id = get_char()
+    id = int(request.args(0))
+    char_gameitem_id = int(request.args(1))
+    db(db.item_upgrades.id == id).delete()
+    redirect(URL('upgrade_item', args=[char_gameitem_id]), client_side=True)
+
+
+@auth.requires_login()
+def delete_upgrade():
+    char_id = get_char()
+    item_id = int(request.args(0))
+    unlink_id = int(request.args(1))
+    char_gameitem_id = int(request.args(2))
+    db(db.item_upgrades.id == unlink_id).delete()
+    db(db.char_items.id == item_id).delete()
+    redirect(URL('upgrade_item', args=[char_gameitem_id]), client_side=True)
+
+
+@auth.requires_login()
 def edit_ware():
     char_id = get_char()
     char_ware_id = request.args(0)
@@ -272,6 +358,7 @@ def edit_items():
     table = db.char_items
     table.rating.show_if = (table.item.belongs([item.name for item in data.gameitems_dict.values() if item.rating]))
     table.char.default = char_id
+    table.item.represent = lambda item, row: A(item, _href=URL("upgrade_item", args=(row.id)))
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, ondelete=my_ondelete('edit_items') )
     table = get_table('gameitems')

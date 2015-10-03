@@ -20,7 +20,8 @@ db.define_table('state_mods',
     writable=False,
     requires = IS_IN_DB(db,db.chars.id,'%(name)s')),
     Field('name', type = 'string', label = T('Name')),
-    Field('value', type = 'double', label = T('Value')),
+    Field('value', type = 'string', label = T('Value')),
+    Field('type', type = 'string', label = T('Type')),
     )
 
 
