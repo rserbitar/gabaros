@@ -29,8 +29,8 @@ wound_exp = 200.
 cyberhalf = 20
 shoot_base_difficulty = 20
 spell_xp_cost = 250
-money_to_xp = 1/62.5
-xp_to_money = 40.
+money_to_xp = 1/(50*2**0.5)
+xp_to_money = 50/(2**0.5)
 starting_money = 150000
 starting_xp = 10000
 

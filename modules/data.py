@@ -288,16 +288,16 @@ skills = [
     ["Persuasion", "Interaction", 1, 'passive'],
     ["Oratory", "Interaction", 1, 'passive'],
     ["Etiquette", "Empathy", 2.25, None],
-    ["Academic", "Interaction", 0.5, 'passive'],
-    ["Corporate", "Interaction", 0.5, 'passive'],
-    ["Criminals", "Interaction", 0.5, 'passive'],
-    ["Scene", "Interaction", 0.5, 'passive'],
-    ["Security", "Interaction", 0.5, 'passive'],
-    ["Street", "Interaction", 0.5, 'passive'],
+    ["Academic", "Etiquette", 0.5, 'passive'],
+    ["Corporate", "Etiquette", 0.5, 'passive'],
+    ["Criminals", "Etiquette", 0.5, 'passive'],
+    ["Scene", "Etiquette", 0.5, 'passive'],
+    ["Security", "Etiquette", 0.5, 'passive'],
+    ["Street", "Etiquette", 0.5, 'passive'],
     ["Magic", None, 6.39, None],
     ["Assensing", "Magic", 1, 'magic'],
-    ["Sorcery", "Magic", 2.25, 'magic'],
-    ["Spellcasting", "Sorcery", 1, 'magic'],
+    ["Sorcery", "Magic", 3, 'magic'],
+    ["Spellcasting", "Sorcery", 2, 'magic'],
     ["Counterspelling", "Sorcery", 1, 'magic'],
     ["Ritual Magic", "Sorcery", 1, 'magic'],
     ["Invocation", "Magic", 2.25, 'magic'],
@@ -315,7 +315,7 @@ skills = [
     ["Cracking", "Hacking", 2, 'passive'],
     ["Cybercombat", "Hacking", 1, 'passive'],
     ["Decryption", "Hacking", 1, 'passive'],
-    ["Security", "Hacking", 2, 'passive'],
+    ["Matrix Security", "Hacking", 2, 'passive'],
     ["Technical", None, 7.88, None],
     ["Chemistry", "Technical", 1.5, None],
     ["Toxins", "Chemistry", 1, 'passive'],
@@ -467,7 +467,7 @@ skill_attribmods = [['skill', 'Agility', 'Constitution', 'Coordination', 'Streng
                     ["Cracking", 0, 0, 0, 0, 0, 0, 0.25, 0.75, 0, 0., 0],
                     ["Cybercombat", 0, 0, 0, 0, 0, 0, 0., .75, 0.25, 0., 0],
                     ["Decryption", 0, 0, 0, 0, 0, 0, 0., 1., 0, 0., 0],
-                    ["Security", 0, 0, 0, 0, 0, 0, 0.25, 0.75, 0, 0., 0],
+                    ["Matrix Security", 0, 0, 0, 0, 0, 0, 0.25, 0.75, 0, 0., 0],
                     ["Technical", 0, 0, 0.25, 0, 0, 0, 0.25, 0.5, 0, 0., 0],
                     ["Chemistry", 0, 0, 0.25, 0, 0, 0, 0.25, .5, 0, 0., 0],
                     ["Toxins", 0, 0, 0, 0, 0, 0, 0.25, .75, 0, 0., 0],
@@ -884,17 +884,17 @@ gameitems = [
     ["Chem Patch", "Biotech", 0, 50, 0.1, 50, 100, 0, False, 0,
      ['Antidote I, Antidote II, Antidote III', 'Stim', 'Elysium', 'Oblivion', 'Joy', 'Truth', 'Narcojet', 'Gamma-Skopolamine'], 0, 0],
     ["Search", "Programmes", 0, 0, 0, None, None, 0, 100, 0, [], 0, 0],
-    ["Stealth", "Programmes", 30, 0, 0, None, None, 40, 200, 0, [], 0, 0],
-    ["Scan", "Programmes", 0, 0, 0, None, None, 0, 100, 0, [], 0, 0],
-    ["Analyze", "Programmes", 0, 0, 0, None, None, 0, 100, 0, [], 0, 0],
+    ["Stealth", "Programmes", 30, 0, 0, None, None, 40, 500, 0, [], 0, 0],
+    ["Scan", "Programmes", 0, 0, 0, None, None, 0, 200, 0, [], 0, 0],
+    ["Analyze", "Programmes", 0, 0, 0, None, None, 0, 200, 0, [], 0, 0],
     ["Access", "Programmes", 0, 0, 0, None, None, 0, 50, 0, [], 0, 0],
-    ["Exploit", "Programmes", 40, 0, 0, None, None, 80, 300, 0, [], 0, 0],
+    ["Exploit", "Programmes", 40, 0, 0, None, None, 80, 1000, 0, [], 0, 0],
     ["Crypt", "Programmes", 0, 0, 0, None, None, 20, 100, 0, [], 0, 0],
     ["Break", "Programmes", 40, 0, 0, None, None, 70, 200, 0, [], 0, 0],
     ["Edit", "Programmes", 0, 0, 0, None, None, 0, 100, 0, [], 0, 0],
     ["Control", "Programmes", 0, 0, 0, None, None, 0, 50, 0, [], 0, 0],
     ["Find", "Programmes", 0, 0, 0, None, None, 0, 100, 0, [], 0, 0],
-    ["Corrupt", "Programmes", 30, 0, 0, None, None, 60, 200, 0, [], 0, 0],
+    ["Corrupt", "Programmes", 30, 0, 0, None, None, 60, 500, 0, [], 0, 0],
     ["Medic", "Programmes", 10, 0, 0, None, None, 10, 150, 0, [], 0, 0],
     ["Small Backpack", "Carrying Gear", Availability, Cost, Weight, Wis_stealth, Scan_stealth, legality, False, 0, [], 0, 0],
     ["Large Backpack", "Carrying Gear", Availability, Cost, Weight, Wis_stealth, Scan_stealth, legality, False, 0, [], 0, 0],
@@ -958,13 +958,6 @@ gameitems = [
 
     ["Latex Face Mask", "Deception", 40, 200, 0.2, 40, 60, 60, False, 0, [], 0, 0],
     ["Nanopaste Face Mask", "Deception", 50, 2000, 0.2, 40, 70, 70, False, 0, [], 0, 0],
-]
-
-gameitems.extend([["Activesoft: {}", "Skillsoft".format(key), 30, 0, None, None, None, 40, 4000*value.expweight, 0, [], 0, 0] for key, value in skills_dict.items() if value.kind == 'active'])
-gameitems.extend([["Passivesoft: {}", "Skillsoft".format(key), 30, 0, None, None, None, 40, 6000*value.expweight, 0, [], 0, 0] for key, value in skills_dict.items() if value.kind == 'passive'])
-gameitems.extend([
-    ["Knowsoft", "Skillsoft", 10, 0, None, None, None, 0, 3000, 0, [], 0, 0],
-    ["Linguasoft", "Skillsoft", 10, 0, None, None, None, 0, 2000, 0, [], 0, 0],
 
     ["Image Link", "Upgrade", 0, 0, None, None, None, 0, False, 0, [], 0., 0.],
     ["Video Enhancement I", "Upgrade", 10, 2000, None, None, None, 0, False, 0, [], 0.08, 0.02],
@@ -1017,7 +1010,30 @@ gameitems.extend([
     ["Chem Seal I", "Upgrade", 10, 500, None, None, None, 20, False, 0, [], 1, 0],
     ["Chem Seal II", "Upgrade", 10, 500, None, None, None, 20, False, 0, [], 1, 0],
     ["Chem Seal III", "Upgrade", 10, 500, None, None, None, 20, False, 0, [], 1, 0],
+    
+    ["Sustaining Focus Creation", "Focus", 30, 8000, 0.3, 80, None, 20, 2000, 0, [], 0, 0],
+    ["Sustaining Focus Destruction", "Focus", 30, 8000, 0.3, 80, None, 50, 2000, 0, [], 0, 0],
+    ["Sustaining Focus Detection", "Focus", 30, 8000, 0.3, 80, None, 40, 2000, 0, [], 0, 0],
+    ["Sustaining Focus Manipulation", "Focus", 30, 8000, 0.3, 80, None, 40, 2000, 0, [], 0, 0],
+    ["Weapon Focus", "Focus", 40, 10000, None, None, None, 0, 1000000, 50, [], 0, 0],
+    ["Spell Focus Creation", "Focus", 40, 5000, 0.3, 80, None, 20, 1000000, 0, [], 0, 0],
+    ["Spell Focus Destruction", "Focus", 40, 5000, 0.3, 80, None, 50, 1000000, 0, [], 0, 0],
+    ["Spell Focus Detection", "Focus", 40, 5000, 0.3, 80, None, 40, 1000000, 0, [], 0, 0],
+    ["Spell Focus Manipulation", "Focus", 40, 5000, 0.3, 80, None, 40, 1000000, 0, [], 0, 0],
+    ["Power Focus", "Focus", 50, 20000, None, None, None, 0, 200000, 40, [], 0, 0],
+    ["Spirit Focus Creation", "Focus", 35, 8000, 0.3, 80, None, 20, 800000, 0, [], 0, 0],
+    ["Spirit Focus Destruction", "Focus", 35, 8000, 0.3, 80, None, 50, 800000,0, [], 0, 0],
+    ["Spirit Focus Detection", "Focus", 35, 8000, 0.3, 80, None, 40, 800000, 0, [], 0, 0],
+    ["Spirit Focus Manipulation", "Focus", 35, 8000, 0.3, 80, None, 40, 800000, 0, [], 0, 0],
+    ["Banishing Focus", "Focus", 20, 1000, 0.3, 80, None, 20, 500000, 0, [], 0, 0],
+    ["Counterspelling Focus", "Focus", 20, 1000, 0.3, 80, None, 20, 500000, 0, [], 0, 0],
+]
 
+gameitems.extend([["Activesoft: {}".format(key), "Skillsoft", 30, 0, None, None, None, 40, 4000*value.expweight, 0, [], 0, 0] for key, value in skills_dict.items() if value.kind == 'active'])
+gameitems.extend([["Passivesoft: {}".format(key), "Skillsoft".format, 30, 0, None, None, None, 40, 6000*value.expweight, 0, [], 0, 0] for key, value in skills_dict.items() if value.kind == 'passive'])
+gameitems.extend([
+    ["Knowsoft", "Skillsoft", 10, 0, None, None, None, 0, 3000, 0, [], 0, 0],
+    ["Linguasoft", "Skillsoft", 10, 0, None, None, None, 0, 2000, 0, [], 0, 0],
 #small-armspistol: 30/-
 #small-arms light: 45/30
 #small-arms medium: 55/40
@@ -1473,9 +1489,9 @@ ware = [
      [], [['stats', 'Bleeding', '*0.5']], 'Body'],
 ]
 
-ware.extend([["Reflex Recorder I: {}".format(key), "cyberware", 3, None, 0, 0, "Skill increase", 0, 12000*value.expweight, 6000, ["Vertebrae"], ['skills', key, '+5'], ''] for key, value in skills_dict.items() if value.kind == 'active'])
-ware.extend([["Reflex Recorder II: {}".format(key), "cyberware", 4, None, 0, 0, "Skill increase", 0, 36000*value.expweight, 6000, ["Vertebrae"], ['skills', key, '+10'], ''] for key, value in skills_dict.items() if value.kind == 'active'])
-ware.extend([["Reflex Recorder III: {}".format(key), "cyberware", 5, None, 0, 0, "Skill increase", 0, 108000*value.expweight, 6000, ["Vertebrae"], ['skills', key, '+15'], ''] for key, value in skills_dict.items() if value.kind == 'active'])
+ware.extend([["Reflex Recorder I: {}".format(key), "cyberware", 3, None, 0, 0, "Skill increase", 0, 12000*value.expweight, 6000, ["Vertebrae"], [['skills', key, '+5']], ''] for key, value in skills_dict.items() if value.kind == 'active'])
+ware.extend([["Reflex Recorder II: {}".format(key), "cyberware", 4, None, 0, 0, "Skill increase", 0, 36000*value.expweight, 6000, ["Vertebrae"], [['skills', key, '+10']], ''] for key, value in skills_dict.items() if value.kind == 'active'])
+ware.extend([["Reflex Recorder III: {}".format(key), "cyberware", 5, None, 0, 0, "Skill increase", 0, 108000*value.expweight, 6000, ["Vertebrae"], [['skills', key, '+15']], ''] for key, value in skills_dict.items() if value.kind == 'active'])
 
 ware_nt = namedtuple('ware', ['id'] + ware[0])
 ware_dict = OrderedDict([(entry[0], ware_nt(*([i]+ entry))) for i, entry in enumerate(ware[1:])])
@@ -2128,5 +2144,3 @@ Agents = [
 vehicles = [
     ["chassis", "agent", "sensors"]
     ]
-
-

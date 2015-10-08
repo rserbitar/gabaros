@@ -79,7 +79,7 @@ class Char(object):
             self.money.append([row.money, row.usage, row.timestamp])
         for entry in self.xp:
             if entry[1] == 'money':
-                self.money.append([entry[0]*(-1)*rules.money_to_xp if entry[0] > 1 else entry[0] *(-1) *rules.xp_to_money , 'xp', entry[2]])
+                self.money.append([entry[0]*(-1)/rules.money_to_xp if entry[0] > 1 else entry[0] *(-1) *rules.xp_to_money , 'xp', entry[2]])
 
     def load_spells(self):
         db_cs = self.db.char_spells
