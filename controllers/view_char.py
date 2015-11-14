@@ -52,8 +52,9 @@ def view_items():
         if row.id not in upgrades:
             itemdata2.append([row.item, row.rating, item.weight, item.vis_stealth, item.scan_stealth, row.location.name if row.location else '', row.loadout])
             if item.clas == 'Ranged Weapon':
-                for upgrade in data.rangedweapons_dict[item.name].special:
-                    if isinstance(upgrade, str):
+                special = data.rangedweapons_dict[item.name].special
+                if special and 'upgrades' in special:
+                    for upgrade in special['upgrades']:
                         upgrade = data.gameitems_dict[upgrade]
                         itemdata2.append(['{} - {}'.format(row.item, upgrade.name), None, upgrade.weight, upgrade.vis_stealth, upgrade.scan_stealth, None, None])
         else:
@@ -357,10 +358,10 @@ def shoot_weapon():
     </table>
     """
     if damage:
-        damage = damage[0]
+        damage = damage
     else:
         damage = 0.
-    text = text.format(damage=int(round(damage)),
+    text = text.format(damage=[(int(i[0]), i[1]) for i in damage],
                 weapon_range_mod = int(round(result['weapon range mod'])),
                 sight_range_mod = int(round(result['sight range mod'])),
                 minimum_strength_mod = int(round(result['minimum strength mod'])),
@@ -457,10 +458,10 @@ def swing_weapon():
     </table>
     """
     if damage:
-        damage = damage[0]
+        damage = damage
     else:
         damage = 0.
-    text = text.format(damage=int(round(damage)),
+    text = text.format(damage=[(int(i[0]), i[1]) for i in damage],
                 weapon_skill_mod = int(round(result['weapon skill mod'])),
                 minimum_strength_mod = int(round(result['minimum strength mod'])),
                 other_mods =int(round( result['other mods'])),

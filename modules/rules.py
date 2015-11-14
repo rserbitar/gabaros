@@ -7,7 +7,7 @@
 from collections import OrderedDict
 from math import log, e, atan
 from scipy.special import erfinv, erf
-from random import gauss
+from random import gauss, random
 # request, response, session, cache, T, db(s)
 # must be passed and cannot be imported!
 
@@ -29,6 +29,7 @@ wound_exp = 200.
 cyberhalf = 20
 shoot_base_difficulty = 20
 spell_xp_cost = 250
+metamagic_xp_cost = 500
 money_to_xp = 1/(50*2**0.5)
 xp_to_money = 50/(2**0.5)
 starting_money = 150000
@@ -55,7 +56,7 @@ def die_roll():
 
 
 def attrib_mod(attribute, base):
-    if not attribute:
+    if not attribute or attribute < 0:
         return float('-infinity')
     else:
         return double_attrib_mod_val * log(attribute / base) / log(2)
@@ -107,6 +108,11 @@ def exp_cost_attribute(attribute, value, base, factor, signmod):
 
 def get_spell_xp_cost():
     return spell_xp_cost
+
+
+def get_metamagic_xp_cost():
+    return metamagic_xp_cost
+
 
 def calc_charisma_degrade(cyberindex):
     return 1 / (1. + (cyberindex / cyberhalf) ** 2)
@@ -272,6 +278,26 @@ def essence_psycho_thresh(essence):
 
 def spomod_max(logic):
     return logic/2.
+
+
+def damage_location():
+    value = random()
+    result = 'Body'
+    if value < .05:
+        result = 'Head'
+    elif value < .40:
+        result = 'Upper Torso'
+    elif value < .60:
+        result = 'Lower Torso'
+    elif value < .70:
+        result = 'Right Arm'
+    elif value < .80:
+        result = 'Left Arm'
+    elif value < .9:
+        result = 'Right Leg'
+    elif value < 1:
+        result = 'Left Leg'
+    return result
 
 
 def weapondamage(damage, testresult):
@@ -441,7 +467,11 @@ def deck_cost(processor, system, uplink, signal, volume):
 
 
 def cost_by_rating(cost, basecost, rating):
-    return 5**(rating/10.)/125. * cost + basecost
+    if cost and rating:
+        cost = 5**(rating/10.)/125. * cost + basecost
+    else:
+        cost = basecost
+    return cost
 
 
 def firewall_rating(time, skill, system, users):

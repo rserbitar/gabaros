@@ -6,6 +6,7 @@
 import collections
 import data
 import rules
+import math
 
 
 class Char(object):
@@ -27,12 +28,14 @@ class Char(object):
         self.skills = {}
         self.ware = []
         self.fixtures = []
+        self.foci = []
         self.adept_powers = []
         self.items = []
         self.all_items = []
         self.damage = {}
         self.wounds = {}
         self.spells = []
+        self.metamagic = []
         self.money = []
         self.xp = []
         self.load_char()
@@ -64,6 +67,9 @@ class Char(object):
         self.load_damage()
         self.load_wounds()
         self.load_items()
+        self.load_foci()
+        self.load_spells()
+        self.load_metamagic()
         self.load_adept_powers()
         self.load_xp()
         self.load_money()
@@ -85,6 +91,11 @@ class Char(object):
         db_cs = self.db.char_spells
         for row in self.db(db_cs.char == self.char_id).select(db_cs.spell):
             self.spells.append(row.spell)
+
+    def load_metamagic(self):
+        db_cm = self.db.char_metamagic
+        for row in self.db(db_cm.char == self.char_id).select(db_cm.metamagic):
+            self.metamagic.append(row.metamagic)
 
     def load_attributes(self):
         """
@@ -159,6 +170,9 @@ class Char(object):
             for row in self.db((db_ci.char == self.char_id) & (db_ci.loadout.contains(self.loadout))).select(db_ci.id, db_ci.item, db_ci.rating):
                 self.items.append(Item(row.item, row.id, row.rating))
 
+    def load_foci(self):
+        foci = [item.name for item in self.items if data.gameitems_dict[item.name].clas  == 'Focus']
+        self.foci = [CharFocus(self.db, name, self) for name in foci]
 
     def write_attribute(self, attribute, value):
         db_ca = self.db.char_attributes
@@ -201,7 +215,7 @@ class Char(object):
     def delete_damage(self, damage, value):
         pass
 
-    def ware_fix_power_effect(self, primary, secondary, value, func = None):
+    def ware_fix_power_effect(self, primary, secondary, value, func = None, modlevel = 'augmented'):
         for adept_power in self.adept_powers:
             for effect in adept_power.effects:
                 if effect[0] == primary and effect[1] == secondary:
@@ -225,6 +239,14 @@ class Char(object):
                         value = eval('value {}'.format(effect[2]))
                     else:
                         value = eval(func.format(effect[2]))
+        if modlevel in ('temporary', 'stateful'):
+            for focus in self.foci:
+                for effect in focus.effects:
+                    if effect[0] == primary and effect[1] == secondary:
+                        if not func:
+                            value = eval('value {}'.format(effect[2].format(Rating=focus.rating)))
+                        else:
+                            value = eval(func.format(effect[2].format(Rating=focus.rating)))
         return value
 
 
@@ -330,7 +352,7 @@ class CloseCombatWeapon(object):
         net_value = skill - minstr_mod - cc_mod + self.skillmod
         result = net_value
         if net_value > 0:
-            damage.append(rules.weapondamage(self.damage, net_value))
+            damage.append((rules.weapondamage(self.damage, net_value), rules.damage_location()))
         return damage, {'minimum strength mod': minstr_mod, 'weapon skill mod': self.skillmod,
                         'skill': skill, 'other mods': cc_mod, 'result': result, 'difficulty': 0.}
 
@@ -407,7 +429,7 @@ class RangedWeapon(object):
         else:
             bullets = 1
         while net_value >= 0 and bullets:
-            damage.append(rules.weapondamage(self.damage, net_value))
+            damage.append(((rules.weapondamage(self.damage, net_value)), rules.damage_location()))
             net_value -= self.recoil
             bullets -= 1
         return damage, {'difficulty': rules.shoot_base_difficulty, 'weapon range mod': range_mod,
@@ -616,7 +638,8 @@ class CharWare(Ware):
                         base = rules.calc_agility_base(agility_base, weight, weight_base)
                     elif attribute == 'Strength':
                         strength_base = data.attributes_dict['Strength'].base
-                        base = rules.calc_base_strength(strength_base, size, size_base, weight, weight_base)
+                        size_racemod = data.races_dict[char_property_getter.char.race].Weight**(1/3.)
+                        base = rules.calc_base_strength(strength_base, size*size_racemod, size_base, weight, weight_base)
                     value = self.stats[attribute]
                     frac = bodypart.get_fraction(attribute)
                     cost += frac * rules.warecost(self.partcost,
@@ -631,7 +654,12 @@ class CharWare(Ware):
             char_body = CharBody(self.char)
             for part in self.parts:
                 cost += char_body.bodyparts[part].get_attribute_absolute('Essence', modlevel = 'basic')
-        cost *= (1-self.stats['Essence'])
+        cost *= (1-self.stats['Essence']/100.)
+        return cost
+
+    def get_non_located_essence_cost(self):
+        cost = self.essence
+        cost *= (1-self.stats['Essence']/100.)
         return cost
 
 
@@ -692,6 +720,31 @@ class CharAdeptPower(AdeptPower):
 #        else:
 #            weight = self.additional_weight
 #        return weight
+
+
+class Focus(object):
+    def __init__(self, db, name):
+        self.db = db
+        self.name = name
+        self.effects = None
+        self.load_basic_data()
+
+    def load_basic_data(self):
+        foci_nt = data.foci_dict[self.name]
+        self.effects = foci_nt.effects
+
+
+class CharFocus(Focus):
+    def __init__(self, db, focus_name, char):
+        Focus.__init__(self, db, focus_name)
+        self.char = char
+        self.rating = None
+        self.load_extra_data()
+
+    def load_extra_data(self):
+        db_ci = self.db.char_items
+        for row in self.db((db_ci.char == self.char.char_id) & (db_ci.item == self.name)).select(db_ci.rating):
+            self.rating = row.rating
 
 
 class Body(object):
@@ -882,7 +935,7 @@ class CharBodypart():
                 if self.ware:
                     value = self.ware.stats[attribute]
                 if attribute != 'Magic':
-                    value = self.char.ware_fix_power_effect('attributes', attribute, value)
+                    value = self.char.ware_fix_power_effect('attributes', attribute, value, modlevel=modlevel)
             if modlevel == 'stateful':
                 if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
                     weight = self.get_attribute_relative('Weight')
@@ -992,6 +1045,9 @@ class CharPropertyGetter():
     def get_spell_xp_cost(self):
         return sum([rules.get_spell_xp_cost() for i in self.char.spells])
 
+    def get_metamagic_xp_cost(self):
+        return sum([rules.get_metamagic_xp_cost() for i in self.char.metamagic])
+
     def get_attribute_value(self, attribute):
         """
         Calculate a specific attribute of the given character
@@ -1042,14 +1098,11 @@ class CharPropertyGetter():
                 value = self.char_body.bodyparts['Body'].get_attribute_absolute(attribute, self.modlevel)
             else:
                 value = self.char.attributes[attribute]
-            # add ware effects to attribute
-            if attribute not in ('Magic', 'Constituion', 'Strength', 'Agility', 'Coordindation', 'Weight', 'Size'):
-                value = self.char.ware_fix_power_effect('attributes', attribute, value)
             #subtract Essence from non located ware
             if attribute == 'Essence':
                 for ware in self.char.ware:
-                    essence_cost = ware.essence
-                    essence_cost = self.char.ware_fix_power_effect('Essence Cost', ware.location, essence_cost)
+                    essence_cost = ware.get_non_located_essence_cost()
+                    essence_cost = self.char.ware_fix_power_effect('Essence Cost', ware.location, essence_cost, modlevel=self.modlevel)
                     value -= essence_cost
             elif attribute == 'Charisma':
                     essence = self.get_attribute_value('Essence')
@@ -1057,6 +1110,9 @@ class CharPropertyGetter():
             elif attribute == 'Magic':
                     essence = self.get_attribute_value('Essence')
                     value *= rules.essence_magic_mult(essence)
+            # add ware effects to attribute
+            if attribute not in ('Constitution', 'Strength', 'Agility', 'Coordindation', 'Weight', 'Size'):
+                value = self.char.ware_fix_power_effect('attributes', attribute, value, modlevel=self.modlevel)
             if self.modlevel in ('stateful', 'temporary'):
                 pass
             if self.modlevel == 'stateful' and attribute not in ('Size', 'Weight', 'Constitution', 'Essence', 'Magic'):
@@ -1082,30 +1138,32 @@ class CharPropertyGetter():
         value = self.get_attribute_mod(attribute) + rules.attrib_mod_norm
         return value
 
-    def get_skill_value(self, skill):
+    def get_skill_value(self, skill, base = False):
         """
 
         :param skill: the skill to get
         """
-        value = self.skills.get(skill)
-        if value:
-            return value
+        if not base:
+            value = self.skills.get(skill)
+            if value:
+                return value
         if self.modlevel == 'base':
             value = self.char.skills[skill]
         if self.modlevel in ('unaugmented', 'augmented','temporary','stateful'):
             value = self.char.skills.get(skill,0)
             parent = data.skills_dict[skill].parent
             if parent:
-                parent_value = self.get_skill_value(parent)
+                parent_value = self.get_skill_value(parent, base=True)
                 if value < parent_value:
                     value = parent_value
         if self.modlevel in ('augmented','temporary','stateful'):
-            value = self.char.ware_fix_power_effect('skills', skill, value)
+            value = self.char.ware_fix_power_effect('skills', skill, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
-        if self.modlevel == 'stateful':
-            value += self.get_damagemod('absolute')
-        self.skills[skill] = value
+        if not base:
+            if self.modlevel == 'stateful':
+                value += self.get_damagemod('absolute')
+            self.skills[skill] = value
         return value
 
     def get_skilltest_value(self, skill):
@@ -1136,7 +1194,7 @@ class CharPropertyGetter():
         protection = []
         for armor in self.get_armor():
             protection.append(armor.get_protection(bodypart, typ))
-        protection.append(self.char.ware_fix_power_effect(typ + ' armor', bodypart, 0, func = '(value**2 + {}**2)**0.5'))
+        protection.append(self.char.ware_fix_power_effect(typ + ' armor', bodypart, 0, func = '(value**2 + {}**2)**0.5', modlevel=self.modlevel))
         protection = rules.get_stacked_armor_value(protection)
         return protection
 
@@ -1156,7 +1214,7 @@ class CharPropertyGetter():
             return value
         value = self.char_body.bodyparts['Body'].get_life()
         if self.modlevel in ('augmented', 'temporary', 'stateful'):
-            value = self.char.ware_fix_power_effect('stats', 'life', value)
+            value = self.char.ware_fix_power_effect('stats', 'life', value, modlevel=self.modlevel)
         self.maxlife[bodypart] = value
         return value
 
@@ -1170,7 +1228,7 @@ class CharPropertyGetter():
             totaldamage = 0
         statname = 'Pain Resistance'
         pain_resistance = 0
-        pain_resistance = self.char.ware_fix_power_effect('stats', statname, pain_resistance, func = 'value + (1-value) * {}')
+        pain_resistance = self.char.ware_fix_power_effect('stats', statname, pain_resistance, func = 'value + (1-value) * {}', modlevel=self.modlevel)
         max_life = self.get_maxlife()
         life = max_life - max(0, totaldamage - pain_resistance * max_life)
         if kind == 'relative':
@@ -1197,7 +1255,7 @@ class CharPropertyGetter():
             value = rules.physical_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            value = self.char.ware_fix_power_effect('stats', statname, value)
+            value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1218,7 +1276,7 @@ class CharPropertyGetter():
                                               self.get_attribute_mod('Coordination'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            value = self.char.ware_fix_power_effect('stats', statname, value)
+            value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1246,6 +1304,7 @@ class CharPropertyGetter():
         for skill in data.skills_dict:
             xp['Skills'] += self.get_skill_xp_cost(skill)
         xp['Spells'] = self.get_spell_xp_cost()
+        xp['Metamagic'] = self.get_metamagic_xp_cost()
         return xp
 
     def get_total_cost(self):
@@ -1347,7 +1406,7 @@ class CharPhysicalPropertyGetter(CharPropertyGetter):
             value = rules.physical_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            value = self.char.ware_fix_power_effect('stats', statname, value)
+            value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1368,7 +1427,7 @@ class CharPhysicalPropertyGetter(CharPropertyGetter):
                                               self.get_attribute_mod('Coordination'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            value = self.char.ware_fix_power_effect('stats', statname, value)
+            value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1417,7 +1476,7 @@ class CharMatrixPropertyGetter(CharPropertyGetter):
             value = rules.matrix_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            value = self.char.ware_fix_power_effect('stats', statname, value)
+            value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value
@@ -1465,7 +1524,7 @@ class CharAstralPropertyGetter(CharPropertyGetter):
             value = rules.astral_reaction(self.get_attribute_mod('Agility'),
                                               self.get_attribute_mod('Intuition'))
         if self.modlevel in ('augmented','temporary','stateful'):
-            value = self.char.ware_fix_power_effect('stats', statname, value)
+            value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
         self.stats[statname] = value

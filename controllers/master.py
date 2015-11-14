@@ -206,3 +206,26 @@ def calc_deck():
         response.flash = 'form has errors'
     return dict(form=form, firewall=firewall, cost=cost, maintainance=maintainance, system=system, processor=processor,
                 uplink=uplink)
+
+def calc_vehicle():
+    fields = [Field("chassis", 'string', requires=IS_IN_SET(data.vehicle_chassis_dict.keys()))]
+    fields += [Field("computer", 'string', requires=IS_IN_SET(data.computer_dict.keys()))]
+    fields += [Field("sensors", 'string', requires=IS_IN_SET([i[0] for i in data.sensor_packages_dict.keys()]))]
+    fields += [Field("agent", 'string', requires=IS_IN_SET([data.agents_dict.keys()]))]
+    form = SQLFORM.factory(*fields)
+    chassis = []
+    computer = []
+    sensors = []
+    agent = None
+    capacity = 0
+    used_capacity = 0
+    free_capacity = 0
+
+    if form.process().accepted:
+        chassis = data.vehicle_chassis_dict[form.vars.chassis]
+        computer = data.gameitems_dict[form.vars.computer]
+        sensors = data.sensor_packages_dict[form.vars.sensors]
+        capacity = chassis.capacity
+        used_capacity = computer.absolute_capacity + sum([data.gameitems_dict[i].absolute_capacity for i in sensors.content])
+    return dict(form=form, chassis=chassis, agent = agent, computer=computer, sensors=sensors, capacity=capacity, used_capacity=used_capacity,
+               free_capacity = capacity-used_capacity)

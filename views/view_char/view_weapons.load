@@ -7,7 +7,7 @@
     {{for row in weapons[1:]:}}
     <tr>
         {{for entry in row:}}
-        {{=TD(entry, _style="padding-right:10px;text-align:left;")}}
+        {{=TD('{:.0f}'.format(entry) if isinstance(entry, float) else entry, _style="padding-right:10px;text-align:left;")}}
         {{pass}}
     </tr>
     {{pass}}

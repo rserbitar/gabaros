@@ -73,16 +73,28 @@ db.define_table('char_sins', Field('char', type='reference chars', label=T('Char
 db.define_table('char_spells', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('spell', type='string', label=T('Spell Name'),  requires=IS_IN_SET(data.spells_dict.keys())))
 
+db.define_table('char_metamagic', Field('char', type='reference chars', label=T('Character'), writable=False),
+                Field('metamagic', type='string', label=T('Metamagic Name'),  requires=IS_IN_SET(data.metamagic_dict.keys())))
+
+contactsdefault = """
+Size:
+Age:
+Appearance:
+Clothing Style:
+Wear:
+Specialties:
+Character:
+"""
 
 db.define_table('contacts',
                 Field('master', type='reference auth_user', label=T('Master'),
-                      requires=IS_IN_DB(db, db.auth_user.id, '%(username)s')),
+                      requires=IS_IN_DB(db, db.auth_user.id, '%(username)s'), writable=False),
                 Field('name', type='string', label=T('Name')),
                 Field('gender', type='string', label=T('Gender'), requires=IS_IN_SET(data.gendermods_dict.keys())),
                 Field('race', type='string', label=T('Race'), requires=IS_IN_SET(data.races_dict.keys())),
                 Field('occupation', type='string', label=T('Occupation')),
                 Field('rating', type='integer', label=T('Rating')),
-                Field('description', type='text', label=T('Description')),
+                Field('description', type='text', label=T('Description'), default=contactsdefault),
                 format=lambda x: x.name),
 
 
@@ -91,4 +103,5 @@ db.define_table('char_contacts',
                 Field('name', type='reference contacts', label=T('Contact')),
                 Field('loyalty', type='integer', label=T('Loyalty')),
                 Field('starting', type='boolean', label=T('Starting'), default = True),
+                Field('relationship', type='text', label=T('Relationship'), default = 'More in-depth description of the relationship with the contact.')
                )

@@ -2,6 +2,7 @@
 # versuche so etwas wie
 import basic
 import data
+import rules
 
 def index():
     redirect(URL('manage_chars'))
@@ -162,7 +163,7 @@ def manage_ware():
     table = db.char_ware
     table.char.default = char_id
     query = (table.char == char_id)
-    table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id))) if data.ware_dict[ware].parts else ware
+    table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id)))
     maxtextlength = {'table.ware': 50}
     char = basic.Char(db, char_id)
     links = [dict(header='Cost', body=lambda row: int(round(basic.CharWare(db, row.ware, row.id, char).get_cost()))),
@@ -360,7 +361,8 @@ def edit_items():
     table.char.default = char_id
     table.item.represent = lambda item, row: A(item, _href=URL("upgrade_item", args=(row.id)))
     query = table.char == char_id
-    form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, ondelete=my_ondelete('edit_items') )
+    links = [dict(header='Cost', body=lambda row: int(round(rules.cost_by_rating(data.gameitems_dict[row.item].rating, data.gameitems_dict[row.item].cost, row.rating))))]
+    form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, ondelete=my_ondelete('edit_items'), links=links )
     table = get_table('gameitems')
     cost = char_property_getter.get_total_cost()
     total_cost = sum(cost.values())
@@ -374,6 +376,15 @@ def manage_spells():
     table.char.default = char_id
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.spell], csv = False)
+    return dict(form=form)
+
+@auth.requires_login()
+def manage_metamagic():
+    char_id = get_char()
+    table = db.char_metamagic
+    table.char.default = char_id
+    query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.metamagic], csv = False)
     return dict(form=form)
 
 
@@ -394,6 +405,16 @@ def edit_locations():
     table = db.char_locations
     table.char.default = char_id
     query = table.char == char_id
+    form = SQLFORM.grid(query, fields = [table.name], csv = False)
+    return dict(form=form)
+
+@auth.requires_login()
+def edit_contacts():
+    char_id = get_char()
+    table = db.contacts
+    master_id = db(db.chars.id==char_id).select(db.chars.master).first().master
+    table.master.default = master_id
+    query = (table.master == master_id)
     form = SQLFORM.grid(query, fields = [table.name], csv = False)
     return dict(form=form)
 
