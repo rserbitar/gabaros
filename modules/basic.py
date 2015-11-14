@@ -32,6 +32,7 @@ class Char(object):
         self.adept_powers = []
         self.items = []
         self.all_items = []
+        self.all_items_dict = {}
         self.damage = {}
         self.wounds = {}
         self.spells = []
@@ -165,10 +166,18 @@ class Char(object):
         db_ci = self.db.char_items
         for row in self.db(db_ci.char == self.char_id).select(db_ci.id, db_ci.item, db_ci.rating):
             self.all_items.append(Item(row.item, row.id, row.rating))
+            self.all_items_dict[row.id] = self.all_items[-1]
         else:
             self.get_loadout()
             for row in self.db((db_ci.char == self.char_id) & (db_ci.loadout.contains(self.loadout))).select(db_ci.id, db_ci.item, db_ci.rating):
                 self.items.append(Item(row.item, row.id, row.rating))
+
+    def load_upgrades(self):
+        db_cu = self.db.char_upgrades
+        for row in self.db(db_cu.char == self.char_id).select(db_cu.id, db_cu.item, db_cu.upgrade):
+            item_id = row.item
+            upgrade_id = row.upgrade
+            self.all_items_dict[item_id].upgrades.append(self.all_items_dict[upgrade_id])
 
     def load_foci(self):
         foci = [item.name for item in self.items if data.gameitems_dict[item.name].clas  == 'Focus']
@@ -254,6 +263,7 @@ class Item(object):
     def __init__(self, name, db_id, rating = None):
         self.name = name
         self.rating = rating
+        self.upgrades = []
 
     def get_cost(self):
         ratingcost = 0
@@ -358,7 +368,7 @@ class CloseCombatWeapon(object):
 
 
 class RangedWeapon(object):
-    def __init__(self, name, char):
+    def __init__(self, name, char, upgrades=None):
         self.char = char
         self.name = name
         self.char_property_getter = CharPropertyGetter(self.char)
@@ -369,8 +379,25 @@ class RangedWeapon(object):
         self.recoil = 0
         self.damage = 0
         self.penetration = 0
-
+        self.shot = None
+        self.burst = None
+        self.auto = None
+        self.special = {}
+        if not upgrades:
+            self.upgrades = []
+        else:
+            self.upgrades = upgrades
         self.get_attributes()
+        self.get_standard_upgrades()
+
+    def get_standard_upgrades(self):
+        upgrades = self.special.get('upgrades', [])
+        upgrades = [Item(i, None, None) for i in upgrades]
+        self.upgrades.extend(upgrades)
+        self.upgrade_names = [i.name for i in upgrades]
+        if 'Gas Vent' in self.upgrade_names:
+            self.recoil *= rules.gas_vent_recoil
+
 
     def get_attributes(self):
         weapon_tuple = data.rangedweapons_dict[self.name]._asdict()
@@ -397,7 +424,7 @@ class RangedWeapon(object):
         if not braced:
             minstr_mod = rules.weapon_minstr_mod(self.minstr, self.char_property_getter.get_attribute_value('Strength'))
         else:
-            min_str_mod = 0
+            minstr_mod = 0
         net_skill_value = self.char_property_getter.get_skilltest_value(self.skill) + self.skillmod - minstr_mod
         return net_skill_value
 
@@ -1199,8 +1226,8 @@ class CharPropertyGetter():
         return protection
 
     def get_ranged_weapons(self):
-        weapons = [item.name for item in self.char.items if data.gameitems_dict[item.name].clas  == 'Ranged Weapon']
-        weapons = [RangedWeapon(name, self.char) for name in weapons]
+        weapons = [item for item in self.char.items if data.gameitems_dict[item.name].clas  == 'Ranged Weapon']
+        weapons = [RangedWeapon(item.name, self.char, item.upgrades) for item in weapons]
         return weapons
 
     def get_close_combat_weapons(self):

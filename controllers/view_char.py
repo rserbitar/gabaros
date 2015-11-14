@@ -252,7 +252,7 @@ def view_weapons():
     char_id = get_char()
     char = basic.Char(db, char_id)
     weapons = basic.CharPropertyGetter(char).get_ranged_weapons()
-    table = [['Weapon', 'Skill', 'Val', 'Net Val', 'Dam', 'Type', 'Pen', 'Range', 'Bullets', 'Rec', 'Mag', 'Type', 'Hands', 'Shoot']]
+    table = [['Weapon', 'Skill', 'Val', 'Net Val', 'Dam', 'Type', 'Pen', 'Range', 'Bullets', 'Rec', 'Mag', 'Type', 'Hands', 'Shoot', 'Upgrades', 'Special']]
     for weapon in weapons:
         row = []
         row.append(weapon.name)
@@ -270,6 +270,8 @@ def view_weapons():
         row.append(weapon.hands)
         row.append(A('Shoot', callback=URL('shoot_weapon', args=[weapon.name]),
                      target = 'attack_result', _class='btn'))
+        row.append([i.name for i in weapon.upgrades])
+        row.append([(i.key, i.value) for i in weapon.special.items() if i != 'upgrades'])
         table.append(row)
     #fields = [Field('val', 'integer', default=0, label = 'Modifications')]
     #form = SQLFORM.factory(*fields, table_name = 'weapons',  buttons=[], _method = '', _action = None)
