@@ -1,6 +1,8 @@
 # coding: utf8
 import collections
 import applications.gabaros.modules.data as data
+import spirit
+
 def gametables():
     table_name = request.args(0)
     if table_name:
@@ -35,3 +37,15 @@ def gametables():
        response.flash = 'Please select a table'
 
     return dict(form=form, table=table, tablename=tablename)
+
+
+def view_spirit():
+    fields = [Field('force', type='int', label = 'Force'),
+              Field('class_', type='str', requires=IS_IN_SET(['creation', 'destruction', 'detection', 'manipulation']), label = 'Class'),
+             Field('manifestation', type='str', requires=IS_IN_SET(['ethereal', 'fluid', 'solid']), label = 'Manifestation')]
+    summoned = None
+    form=SQLFORM.factory(*fields)
+    if form.process().accepted:
+        force, class_, manifestation = float(form.vars.force), form.vars.class_, form.vars.manifestation
+        summoned = spirit.Spirit(force, class_, manifestation)
+    return dict(form=form, summoned=summoned)

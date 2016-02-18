@@ -68,6 +68,7 @@ class Char(object):
         self.load_damage()
         self.load_wounds()
         self.load_items()
+        self.load_upgrades()
         self.load_foci()
         self.load_spells()
         self.load_metamagic()
@@ -169,12 +170,12 @@ class Char(object):
             self.all_items_dict[row.id] = self.all_items[-1]
         else:
             self.get_loadout()
-            for row in self.db((db_ci.char == self.char_id) & (db_ci.loadout.contains(self.loadout))).select(db_ci.id, db_ci.item, db_ci.rating):
-                self.items.append(Item(row.item, row.id, row.rating))
+            for row in self.db((db_ci.char == self.char_id) & (db_ci.loadout.contains(self.loadout))).select(db_ci.id):
+                self.items.append(self.all_items_dict[row.id])
 
     def load_upgrades(self):
-        db_cu = self.db.char_upgrades
-        for row in self.db(db_cu.char == self.char_id).select(db_cu.id, db_cu.item, db_cu.upgrade):
+        db_iu = self.db.item_upgrades
+        for row in self.db(db_iu.char == self.char_id).select(db_iu.item, db_iu.upgrade):
             item_id = row.item
             upgrade_id = row.upgrade
             self.all_items_dict[item_id].upgrades.append(self.all_items_dict[upgrade_id])
@@ -391,10 +392,13 @@ class RangedWeapon(object):
         self.get_standard_upgrades()
 
     def get_standard_upgrades(self):
-        upgrades = self.special.get('upgrades', [])
+        if self.special:
+            upgrades = self.special.get('upgrades', [])
+        else:
+            upgrades = []
         upgrades = [Item(i, None, None) for i in upgrades]
         self.upgrades.extend(upgrades)
-        self.upgrade_names = [i.name for i in upgrades]
+        self.upgrade_names = [i.name for i in self.upgrades]
         if 'Gas Vent' in self.upgrade_names:
             self.recoil *= rules.gas_vent_recoil
 
@@ -408,6 +412,8 @@ class RangedWeapon(object):
                 setattr(self, attribute,
                         round(eval(getattr(self, attribute).format(Strength=self.char_property_getter.get_attribute_value('Strength')))))
         self.recoil = rules.recoil_by_strength(self.recoil, self.char_property_getter.get_attribute_value('Strength'), self.minstr)
+        if not self.special:
+            self.special = {}
 
     def get_shooting_difficulty(self, distance, magnification=1., burst = False):
         if burst == 'Wide Shot':

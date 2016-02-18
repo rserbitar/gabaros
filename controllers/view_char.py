@@ -105,7 +105,39 @@ def view_skills():
                     callback=URL('roll_button', args=[char_id, skillname, val, 1]), _class='btn')
         button2 = A("{:.0f}".format(val),
                     callback=URL('roll_button', args=[char_id, skillname, val, 0]), _class='btn')
-        skills += [["* " * skilldepth + skillname, button1, button2]]
+        if skilldepth == 0:
+            skilltext = H3(skillname)
+        elif skilldepth == 1:
+            skilltext = H4(skillname)
+        else:
+            skilltext = skillname
+        skills += [[skilltext, button1, button2]]
+    sidebar = wikify(['Task Resolution', 'Skill'])
+    return dict(skills=skills, sidebar=sidebar)
+
+def view_skills_alphabetical():
+    char_id = get_char()
+    skills = [["Skill", "Test", "Secret"]]
+    skilldepth_dict = {}
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
+    for skill, skilldata in data.skills_dict.items():
+        skillname = skill
+        skilldepth = skilldepth_dict.get(skilldata.parent, 0)
+        skilldepth_dict[skill] = skilldepth + 1
+        val = char_property_getter.get_skilltest_value(skill)
+        button1 = A("{:.0f}".format(val),
+                    callback=URL('roll_button', args=[char_id, skillname, val, 1]), _class='btn')
+        button2 = A("{:.0f}".format(val),
+                    callback=URL('roll_button', args=[char_id, skillname, val, 0]), _class='btn')
+        if skilldepth == 0:
+            skilltext = H3(skillname)
+        elif skilldepth == 1:
+            skilltext = H4(skillname)
+        else:
+            skilltext = skillname
+        skills += [[skillname, skilltext, button1, button2]]
+    temp = sorted(skills[1:], key = lambda x: x[0])
+    skills = [skills[0]] + [i[1:] for i in temp]
     sidebar = wikify(['Task Resolution', 'Skill'])
     return dict(skills=skills, sidebar=sidebar)
 
@@ -270,8 +302,8 @@ def view_weapons():
         row.append(weapon.hands)
         row.append(A('Shoot', callback=URL('shoot_weapon', args=[weapon.name]),
                      target = 'attack_result', _class='btn'))
-        row.append([i.name for i in weapon.upgrades])
-        row.append([(i.key, i.value) for i in weapon.special.items() if i != 'upgrades'])
+        row.append(', '.join([i.name for i in weapon.upgrades]))
+        row.append([(key, value) for key,value in weapon.special.items() if key != 'upgrades'])
         table.append(row)
     #fields = [Field('val', 'integer', default=0, label = 'Modifications')]
     #form = SQLFORM.factory(*fields, table_name = 'weapons',  buttons=[], _method = '', _action = None)
@@ -532,12 +564,15 @@ def view_actions():
     combat = db(db.actions.char==char_id).select(db.actions.combat).last()
     if combat:
         combat = combat.combat
+    if session.combat:
+        combat = session.combat
     else:
         combat = 1
     fields = [Field('combat', type = 'reference combats', requires = IS_IN_DB(db,db.combats.id,'%(name)s'), default = combat)]
     form = SQLFORM.factory(*fields)
     if form.process().accepted:
         combat = int(form.vars.combat)
+        session.combat = combat
     combat_name = None
     rows = db(db.combats.id == combat).select(db.combats.name).first()
     if rows:

@@ -1210,35 +1210,35 @@ rangedweapons = [
     ["Raecor Sting",          "Pistols", 0., 10., "ballistic", "physical", 4., 5., 1, 0, 0, 25, 15, 5, "", 0, 0, 0, None, 1],
     ["Colt America L36",      "Pistols", 0., 8., "ballistic", "physical", 10., 10., 2, 0, 0, 30, 15, 11, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m']}, 1],
     ["Fichetti Security 600", "Pistols", 0., 8., "ballistic", "physical", 10., 10., 2, 0, 0, 30, 15, 20, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m']}, 1],
-    ["Hammerli 620S",         "Pistols", 0., 8., "ballistic", "physical", 10., 12., 2, 0, 0, 30, 13, 6, "", 1, 0, 1, {'upgrades': ['Smartlink', 'Gas Vent']}, 1],
+    ["Hammerli 620S",         "Pistols", 0., 8., "ballistic", "physical", 10., 12., 2, 0, 0, 30, 15, 6, "", 1, 0, 1, {'upgrades': ['Smartlink', 'Gas Vent']}, 1],
     ["Yamaha Sakura Fubuki",  "Pistols", 0., 8., "ballistic", "physical", 10., 9., 4, 0, 0, 30, 8, 40, "", 1, 0, 1, {'upgrades': ['Smartlink']}, 1],
-    ["Ceska Black Scorpion",  "Automatics", 0., 8., "ballistic", "physical", 10., 10, 2, 3, 0, 40, 10, 36, "", 1, 0, 1, None, 1],
-    ["Steyr TMP",             "Automatics", 0., 8., "ballistic", "physical", 10., 10, 2, 3, 8, 40, 10, 32, "", 1, 0, 1, None, 1],
-    ["Ares Predator",         "Pistols", 0., 16., "ballistic", "physical", 15., 12., 2, 0, 0, 50, 30, 15, "", 1, 0, 1, {'upgrades': ['Smartlink']}, 1],
-    ["Ares Viper Slivergun",  "Pistols", 0., 20., "ballistic", "physical", 6., 11., 2, 3, 0, 45, 30, 20, "", 1, 0, 1, {'upgrades': ['Silencer']}, 1],
-    ["Colt Manhunter",        "Pistols", 0., 16., "ballistic", "physical", 15., 12., 2, 0, 0, 50, 30, 16, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m']}, 1],
-    ["Remington Roomsweeper", "Pistols", 0., 16., "ballistic", "physical", 15., 12., 2, 0, 0, 50, 30, 8, "", 1, 0, 1, None, 1],
-    ["Ruger Super Warhawk",   "Pistols", 0., 18., "ballistic", "physical", 20., 13., 1, 0, 0, 60, 40, 6, "", 1, 0, 1, None, 1],
-    ["AK-97 Carbine",         "Automatics", 0., 8., "ballistic", "physical", 10., 20, 2, 3, 7, 25, 10, 30, "", 1, 0, 1, None, 2],
-    ["HK-227X",               "Automatics", 0., 8., "ballistic", "physical", 10., 20, 2, 3, 8, 25, 10, 28, "", 1, 0, 1, {'upgrades': ['Silencer', 'Smartlink', "Gas Vent"]}, 2],
-    ["HK MP-5 TX",            "Automatics", 0., 8., "ballistic", "physical", 10., 20, 2, 3, 7, 25, 10, 20, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m', "Gas Vent"]}, 2],
-    ["Ingram Smartgun X",     "Automatics", 0., 8., "ballistic", "physical", 10., 20, 0, 3, 8, 25, 10, 32, "", 1, 0, 1, {'upgrades': ['Silencer', 'Smartlink']}, 2],
-    ["Uzi IV",                "Automatics", 0., 8., "ballistic", "physical", 10., 20, 0, 3, 0, 25, 10, 24, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m']}, 2],
+    ["Ceska Black Scorpion",  "Automatics", 0., 8., "ballistic", "physical", 10., 10, 2, 3, 0, 40, 15, 36, "", 1, 0, 1, None, 1],
+    ["Steyr TMP",             "Automatics", 0., 8., "ballistic", "physical", 10., 10, 2, 3, 8, 40, 15, 32, "", 1, 0, 1, None, 1],
+    ["Ares Predator",         "Pistols", 0., 16., "ballistic", "physical", 15., 12., 2, 0, 0, 50, 15, 15, "", 1, 0, 1, {'upgrades': ['Smartlink']}, 1],
+    ["Ares Viper Slivergun",  "Pistols", 0., 20., "ballistic", "physical", 6., 11., 2, 3, 0, 45, 15, 20, "", 1, 0, 1, {'upgrades': ['Silencer']}, 1],
+    ["Colt Manhunter",        "Pistols", 0., 16., "ballistic", "physical", 15., 12., 2, 0, 0, 50, 15, 16, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m']}, 1],
+    ["Remington Roomsweeper", "Pistols", 0., 16., "ballistic", "physical", 15., 12., 2, 0, 0, 50, 20, 8, "", 1, 0, 1, None, 1],
+    ["Ruger Super Warhawk",   "Pistols", 0., 18., "ballistic", "physical", 20., 13., 1, 0, 0, 60, 20, 6, "", 1, 0, 1, None, 1],
+    ["AK-97 Carbine",         "Automatics", 0., 8., "ballistic", "physical", 10., 20, 2, 3, 7, 25, 15, 30, "", 1, 0, 1, None, 2],
+    ["HK-227X",               "Automatics", 0., 8., "ballistic", "physical", 10., 20, 2, 3, 8, 25, 15, 28, "", 1, 0, 1, {'upgrades': ['Silencer', 'Smartlink', "Gas Vent"]}, 2],
+    ["HK MP-5 TX",            "Automatics", 0., 8., "ballistic", "physical", 10., 20, 2, 3, 7, 25, 15, 20, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m', "Gas Vent"]}, 2],
+    ["Ingram Smartgun X",     "Automatics", 0., 8., "ballistic", "physical", 10., 20, 0, 3, 8, 25, 15, 32, "", 1, 0, 1, {'upgrades': ['Silencer', 'Smartlink']}, 2],
+    ["Uzi IV",                "Automatics", 0., 8., "ballistic", "physical", 10., 20, 0, 3, 0, 25, 15, 24, "", 1, 0, 1, {'upgrades': ['Laser Sight 50m']}, 2],
     ["Mossberg AM-CMDT",      "Long Rifles", 0., 22., "ballistic", "physical", 8., 30, 2, 2, 5, 40, 20, 6, "", 1, 1, 1, None, 2],
     ["Remington 990",         "Automatics", 0., 18., "ballistic", "physical", 20., 30, 2, 0, 0, 40, 20, 6, "", 1, 1, 1, None, 2],
-    ["Battle Rifle",          "Automatics", 0., 18., "ballistic", "physical", 30., 100, 4, 10, 20, 54, 10, 20, "", 1, 1, 1, None, 2],
-    ["AK-97",                 "Automatics", 0., 12., "ballistic", "physical", 20., 80, 2, 3, 8, 36, 10, 38, "", 1, 1, 1, None, 2], #g36
-    ["Ares Alpha",            "Automatics", 0., 12., "ballistic", "physical", 20., 80, 2, 3, 8, 36, 8, 42, "", 1, 1, 1, {'upgrades': ['Underbarrel Grenadelauncher', 'Smartlink']}, 2],
-    ["FN HAR",                "Automatics", 0., 12., "ballistic", "physical", 20., 80, 2, 3, 8, 36, 10, 35, "", 1, 1, 1, {'upgrades': ['Laser Sight 150m', 'Gas Vent']}, 2],
-    ["Ruger 100",             "Long Rifles", 0., 12., "ballistic", "physical", 20., 120, 2, 0, 0, 45, 20, 5, "", 0, 1, 1, {'upgrades': ['Shock Pad']}, 2],
-    ["PJSS Elephant Rifle",   "Long Rifles", 0., 18., "ballistic", "physical", 30., 100, 1, 2, 0, 50, 20, 2, "", 1, 1, 1, {'upgrades': ['Shock Pad']}, 2],
-    ["Ranger Arms SM-4",      "Long Rifles", 0., 16., "ballistic", "physical", 24., 160, 2, 0, 0, 60, 20, 15, "", 0, 1, 0, {'upgrades': ['Silencer', 'Shock Pad'], 'assembly': (3,3)}, 2],
-    ["Walter MA-2100",        "Long Rifles", 0., 18., "ballistic", "physical", 30., 160, 2, 0, 0, 60, 20, 10, "", 1, 1, 1, {'upgrades': ['Smartlink', 'Shock Pad']}, 2],
-    ["Ingram White Knight",   "Automatics", 0., 12., "ballistic", "physical", 20., 120, 2, 4, 12, 55, 10, 100, "", 0, 0, 0, {'upgrades': ['Smartlink', 'Gas Vent', 'Shock Pad']}, 2],
-    ["GE Vindicator Minigun", "Automatics", 0., 12., "ballistic", "physical", 20., 120, 0, 0, 16, 70, 8, 100, "", 0, 0, 0, {'upgrades': ['Smartlink', 'Gas Vent', 'Shock Pad'], 'power-up': 1}, 2],
-    ["Stoner-Ares M202",      "Automatics", 0., 18., "ballistic", "physical", 30., 150, 0, 0, 12, 80, 10, 100, "", 1, 1, 1, {'upgrades': ['Smartlink']}, 2],
-    ["Ultimax HMG-2",         "Automatics", 0., 36., "ballistic", "physical", 60., 300, 0, 0, 12, 140, 10, 100, "", 1, 1, 1, {'upgrades': ['Smartlink', 'Tripod', 'Gas Vent']}, 2], #browning m2
-    ["Panther XXL",           "Long Rifles", 0., 36., "ballistic", "physical", 60., 300, 1, 0, 0, 100, 20, 15, "", 1, 1, 1, {'upgrades': ['Smartlink']}, 2], #light fifty
+    ["Battle Rifle",          "Automatics", 0., 18., "ballistic", "physical", 30., 100, 4, 10, 20, 54, 15, 20, "", 1, 1, 1, None, 2],
+    ["AK-97",                 "Automatics", 0., 12., "ballistic", "physical", 20., 80, 2, 3, 8, 36, 15, 38, "", 1, 1, 1, None, 2], #g36
+    ["Ares Alpha",            "Automatics", 0., 12., "ballistic", "physical", 20., 80, 2, 3, 8, 36, 12, 42, "", 1, 1, 1, {'upgrades': ['Underbarrel Grenadelauncher', 'Smartlink']}, 2],
+    ["FN HAR",                "Automatics", 0., 12., "ballistic", "physical", 20., 80, 2, 3, 8, 36, 15, 35, "", 1, 1, 1, {'upgrades': ['Laser Sight 150m', 'Gas Vent']}, 2],
+    ["Ruger 100",             "Long Rifles", 0., 12., "ballistic", "physical", 20., 120, 2, 0, 0, 45, 25, 5, "", 0, 1, 1, {'upgrades': ['Shock Pad']}, 2],
+    ["PJSS Elephant Rifle",   "Long Rifles", 0., 18., "ballistic", "physical", 30., 100, 1, 2, 0, 50, 25, 2, "", 1, 1, 1, {'upgrades': ['Shock Pad']}, 2],
+    ["Ranger Arms SM-4",      "Long Rifles", 0., 16., "ballistic", "physical", 24., 160, 2, 0, 0, 60, 25, 15, "", 0, 1, 0, {'upgrades': ['Silencer', 'Shock Pad'], 'assembly': (3,3)}, 2],
+    ["Walter MA-2100",        "Long Rifles", 0., 18., "ballistic", "physical", 30., 160, 2, 0, 0, 60, 25, 10, "", 1, 1, 1, {'upgrades': ['Smartlink', 'Shock Pad']}, 2],
+    ["Ingram White Knight",   "Automatics", 0., 12., "ballistic", "physical", 20., 120, 2, 4, 12, 55, 15, 100, "", 0, 0, 0, {'upgrades': ['Smartlink', 'Gas Vent', 'Shock Pad']}, 2],
+    ["GE Vindicator Minigun", "Automatics", 0., 12., "ballistic", "physical", 20., 120, 0, 0, 16, 70, 10, 100, "", 0, 0, 0, {'upgrades': ['Smartlink', 'Gas Vent', 'Shock Pad'], 'power-up': 1}, 2],
+    ["Stoner-Ares M202",      "Automatics", 0., 18., "ballistic", "physical", 30., 150, 0, 0, 12, 80, 15, 100, "", 1, 1, 1, {'upgrades': ['Smartlink']}, 2],
+    ["Ultimax HMG-2",         "Automatics", 0., 36., "ballistic", "physical", 60., 300, 0, 0, 12, 140, 15, 100, "", 1, 1, 1, {'upgrades': ['Smartlink', 'Tripod', 'Gas Vent']}, 2], #browning m2
+    ["Panther XXL",           "Long Rifles", 0., 36., "ballistic", "physical", 60., 300, 1, 0, 0, 100, 25, 15, "", 1, 1, 1, {'upgrades': ['Smartlink']}, 2], #light fifty
     ["Ares Thunderstruck Gauss Rifle", "Long Rifles", 0., 30., "ballistic", "physical", 72., 320, 2, 0, 0, 100, 20, 10, "", 1, 1, 1, {'upgrades': ['Smartlink', 'Shock Pad']}, 2], #light fifty
     ["Throwing Knife","Aerodynamics", 0., '3+{Strength}/15.', "impact", "physical", '3+{Strength}/15.', 5, 1, 0, 0, 30, 0, 0, "", 1, 0, 0, None, 1],
     ["Shuriken","Aerodynamics", 0., '2+{Strength}/20.', "impact", "physical", '2+{Strength}/20.', 8, 1, 0, 0, 30, 0, 0, "", 1, 0, 0, None, 1],
@@ -1262,8 +1262,8 @@ rangedweapons = [
     ["Pistol Crossbow", "Archery", 0., 6., "impact", "physical", 6., 10, 1, 0, 0, 26, 0, 0, "", 1, 1, 0, None, 1],
     ["Light Crossbow", "Archery", 0., 10., "impact", "physical", 10., 30, 1, 0, 0, 30, 0, 0, "", 1, 1, 0, None, 2],
     ["Heavy Crossbow", "Archery", 0., 16., "impact", "physical", 16., 48, 1, 0, 0, 40, 0, 0, "", 1, 1, 0, None, 2],
-    ["Ares Antioch", "Indirect Fire", 0., 0., "impact", "physical", 0., 40, 1, 0, 0, 40, 0, 1, "", 1, 1, 0, ['Smartlink'], 2],
-    ["Enfield GL-67", "Indirect Fire", 0., 0., "impact", "physical", 0., 30, 1, 0, 0, 60, 0, 8, "", 1, 1, 0, ['Smartlink'], 2],
+    ["Ares Antioch", "Indirect Fire", 0., 0., "impact", "physical", 0., 40, 1, 0, 0, 40, 0, 1, "", 1, 1, 0, {'upgrades': ['Smartlink']}, 2],
+    ["Enfield GL-67", "Indirect Fire", 0., 0., "impact", "physical", 0., 30, 1, 0, 0, 60, 0, 8, "", 1, 1, 0, {'upgrades': ['Smartlink']}, 2],
 ]
 
 rangedweapons_nt = namedtuple('rangedweapon', ['id'] + rangedweapons[0])
@@ -1879,40 +1879,41 @@ metamagic_dict = OrderedDict([(entry[0], metamagic_nt(*([i] + entry))) for i, en
 # jets: 3:1
 # bike 2:1
 vehicle_chassis = [
-    ["name", "weight", "max_speed", "acceleration", "load", 'capacity', 'size', 'constitution', 'armor', 'vsibility','signature', 'cost'],
-    ['Lady Bug', 0.0005, 10, 3,  0.0005, 0.0005, 0.01, 20, 1, 45, 45, 600],
-    ['Bug', 0.0005, 0.2, 0.2, 0.01, 0.001, 0.01, 30, 1, 45, 45, 200],
-    ['Hummel', 0.002, 12, 4, 0.002, 0.002, 0.025, 20, 1, 35, 35, 300],
-    ['Dragonfly', 0.005, 13, 5, 0.005, 0.005, 0.1, 15, 1, 15, 15, 300],
-    ['Roach', 0.01, 1, 1, 0.1, 0.01, 0.05, 40, 3, 25, 25, 100], #American Roach
-    ['Spider', 0.1, 4, 4, 0.5, 0.05, 0.3, 30, 1, 5, 5, 200], #Vogelspinne
-    ['Flying Football', 5, 25, 4, 5, 5, 0.5, 30, 30, -10, -10, 500],
-    ['Rolling Ball', 0.5, 10, 3, 0.5, 0.5, 0.1, 40, 5, 10, 10, 100],
-    ['Blimp', 10, 15, 1, 10, 10, 2, 20, 0, -30, -30, 450],
-    ['Cat', 4, 10, 5, 1, 0.4, 0.3, 30, 1, -5, -5, 2000],
-    ['Small Patrol', 20, 20, 2, 20, 20, 0.5, 40, 40, -10, -10, 1000],
-    ['Large Patrol', 100, 35, 3, 100, 100, 1, 40, 50, -20, -20, 2500],
-    ['Vector Thrust Lynx', 100, 60, 4, 50, 50,  1, 30, 40, -20, -20, 8000],
-    ['Mini Plane', 3, 40, 5, 2, 1, 1, 20, 1, -20, -20, 2500],
-    ['Jet Drone', 20, 100, 10, 30, 30, 2, 20, 20, -30, -30, 32000],
-    ['Hover Drone', 2, 30, 2, 2, 2, 0.5, 30, 3, -10, -10, 300],
-    ['Segway', 30, 12, 1, 100, 100, 1., 30, 0, -20, -20, 800],
-    ['Personal Mobility Vehicle', 100, 20, 2, 100, 100, 2., 30, 5, -30, -30, 3000],
-    ['Google Car', 500, 30, 2, 300, 300, 2.5, 40, 10, -35, -35, 6000],
-    ['Subcompact', 750, 50, 3, 350, 350, 4.5, 40, 10, -40, -40, 12000], # opel insignia
-    ['Speed Car', 1500, 75, 5, 300, 500, 4.5, 40, 10, -40, -40, 80000],
-    ['Sedan', 1500, 50, 2, 500, 500, 5, 40, 15, -45, -45, 25000], # opel insignia
-    ['Pizza Van', 2000, 40, 2, 1500, 1500, 5.5, 40, 15, -45, -45, 30000], #sprinter kurz
-    ['Runner Van', 2500, 30, 1.5, 2500, 2500, 7, 40, 15, -50, -50, 35000], #sprinter lang
-    ['Monocycle', 150, 60, 5,  100, 100, 1., 30, 10, -20, -20, 4000],
-    ['Enclosed Monocycle', 400, 50, 4,  200, 200, 2, 40, 15, -30, -30, 7500],
-    ['Speedbike', 200, 75, 6, 120, 120, 2, 30, 10, -30, -30, 8000], # ducati 1199
-    ['Chopper', 350, 50, 4,  200, 200, 2.5, 40, 15, -35, -35, 6500], # harley davidson breakout
-    ['Combat Helicopter', 5000, 80, 6, 3000, 3000, 15, 40, 50, -60, -60, 750000], # apache
+    ["name", "locomotion", "weight", "max_speed", "acceleration", "load", 'capacity', 'size', 'constitution', 'armor', 'vsibility','signature', 'cost'],
+    ['Lady Bug', ['insect flight', 'walk'], 0.0005, 10, 3,  0.0005, 0.0005, 0.01, 20, 1, 45, 45, 600],
+    ['Bug', 'walk', 0.0005, 0.2, 0.2, 0.01, 0.001, 0.01, 30, 1, 45, 45, 200],
+    ['Hummel', ['insect flight', 'walk'], 0.002, 12, 4, 0.002, 0.002, 0.025, 20, 1, 35, 35, 300],
+    ['Dragonfly', ['insect flight', 'walk'], 0.005, 13, 5, 0.005, 0.005, 0.1, 15, 1, 15, 15, 300],
+    ['Roach', 'walk', 0.01, 1, 1, 0.1, 0.01, 0.05, 40, 3, 25, 25, 100], #American Roach
+    ['Spider', 'walk', 0.1, 4, 4, 0.5, 0.05, 0.3, 30, 1, 5, 5, 200], #Vogelspinne
+    ['Flying Football', 'rotor flight', 5, 25, 4, 5, 5, 0.5, 30, 30, -10, -10, 500],
+    ['Rolling Ball', 'roll', 0.5, 10, 3, 0.5, 0.5, 0.1, 40, 5, 10, 10, 100],
+    ['Blimp', 'lta flight', 10, 15, 1, 10, 10, 2, 20, 0, -30, -30, 450],
+    ['Cat', 'walk', 4, 10, 5, 1, 0.4, 0.3, 30, 1, -5, -5, 2000],
+    ['Small Patrol Drone', 'wheeled', 20, 20, 2, 20, 20, 0.5, 40, 40, -10, -10, 1000],
+    ['Medium Patrol Drone', 'wheeled', 100, 35, 3, 100, 100, 1, 40, 50, -20, -20, 2500],
+    ['Large Patrol Drone', 'wheeled', 250, 40, 4, 250, 250, 2, 40, 50, -30, -30, 5000],
+    ['Vector Thrust Drone', 'thrust flight', 100, 60, 4, 50, 50,  1, 30, 40, -20, -20, 8000],
+    ['Mini Plane Drone', 'fixed-wing flight', 3, 40, 5, 2, 1, 1, 20, 1, -20, -20, 2500],
+    ['Jet Drone', 'fixed-wing flight', 20, 100, 10, 30, 30, 2, 20, 20, -30, -30, 32000],
+    ['Hover Drone', 'hover', 2, 30, 2, 2, 2, 0.5, 30, 3, -10, -10, 300],
+    ['Segway', 'dual-wheeled', 30, 12, 1, 100, 100, 1., 30, 0, -20, -20, 800],
+    ['Personal Mobility Vehicle', 'three-wheeled', 100, 20, 2, 100, 100, 2., 30, 5, -30, -30, 3000],
+    ['Google Car', 'wheeled', 500, 30, 2, 300, 300, 2.5, 40, 10, -35, -35, 6000],
+    ['Subcompact', 'wheeled', 750, 50, 3, 350, 350, 4.5, 40, 10, -40, -40, 12000], # opel insignia
+    ['Speed Car', 'wheeled', 1500, 75, 5, 300, 500, 4.5, 40, 10, -40, -40, 80000],
+    ['Sedan', 'wheeled', 1500, 50, 2, 500, 500, 5, 40, 15, -45, -45, 25000], # opel insignia
+    ['Medium Van', 'wheeled', 2000, 40, 2, 1500, 1500, 5.5, 40, 15, -45, -45, 30000], #sprinter kurz
+    ['Large Van', 'wheeled', 2500, 30, 1.5, 2500, 2500, 7, 40, 15, -50, -50, 35000], #sprinter lang
+    ['Monocycle', 'monocycle', 150, 60, 5,  100, 100, 1., 30, 10, -20, -20, 4000],
+    ['Enclosed Monocycle', 'monocycle', 400, 50, 4,  200, 200, 2, 40, 15, -30, -30, 7500],
+    ['Speedbike', 'cycle', 200, 75, 6, 120, 120, 2, 30, 10, -30, -30, 8000], # ducati 1199
+    ['Chopper',  'rotor flight',350, 50, 4,  200, 200, 2.5, 40, 15, -35, -35, 6500], # harley davidson breakout
+    ['Combat Helicopter', 'rotor flight', 5000, 80, 6, 3000, 3000, 15, 40, 50, -60, -60, 750000], # apache
     #['Commuting Helicopter', '', '', '', '', '', '', ''],
-    ['APC', 10000, 30, 1, 5000, 5000, 7, 50, 150, -50, -50, 58000], # LAV
-    ['IFV', 15000, 15, 1, 15000, 15000, 7, 50, 200, -50, -50, 130000], # Bradley
-    ['Tank', 30000, 20, 2, 30000, 30000, 9, 50, 500, -50, -50, 420000], # Leopard 2a6
+    ['APC', 'wheeled', 10000, 30, 1, 5000, 5000, 7, 50, 150, -50, -50, 58000], # LAV
+    ['IFV', 'tracked', 15000, 15, 1, 15000, 15000, 7, 50, 200, -50, -50, 130000], # Bradley
+    ['Tank', 'tracked', 30000, 20, 2, 30000, 30000, 9, 50, 500, -50, -50, 420000], # Leopard 2a6
     #['', '', '', '', '', '', ''],
 ]
 
@@ -1960,9 +1961,9 @@ vehicles = [
     ["Shiawase Kanmushi", "Bug", "Civilian Drone Pilot Class I", "Nano Drone Computer I", "Nano Drone", []],
     ["MCT Fly-Spy", "Dragonfly", "Civilian Drone Pilot Class I", "Mini Drone Computer I", "Nano Drone", []],
     ["Lone Star iBall", "Rolling Ball", "Civilian Drone Pilot Class I", "Mini Drone Computer I", "Micro Drone", []],
-    ["Lockheed Optic-X", "Mini Plane", "Security Drone Pilot Class I", "Erika Elite", "Mini Drone", []],
-    ["GM-Nissan Doberman", "Small Patrol", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Drone", []],
-    ["Steel Lynx", "Large Patrol", "Security Drone Pilot Class II", "Erika Elite", "Civilian Drone", []],
+    ["Lockheed Optic-X", "Mini Plane Drone", "Security Drone Pilot Class I", "Erika Elite", "Mini Drone", []],
+    ["GM-Nissan Doberman", "Small Patrol Drone", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Drone", []],
+    ["Steel Lynx", "Medium Patrol Drone", "Security Drone Pilot Class II", "Erika Elite", "Civilian Drone", []],
     ["MCT-Nissan Roto-drone", "Flying Football", "Security Drone Pilot Class I", "Renraku Sensei", "Mini Drone", []],
     ["Renraku Stormcloud", "Blimp", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Vehicle", []],
     ["McDonnel-Douglas Nimrod", "Jet Drone", "Military Drone Pilot Class I", "Erika Elite", "Civilian Vehicle", []],
@@ -1973,3 +1974,11 @@ for i, vehicle in enumerate(vehicles[1:]):
 
 vehicles_nt = namedtuple('vehicle', ['id'] + vehicles[0])
 vehicles_dict = OrderedDict([(entry[0], vehicles_nt(*([i] + entry))) for i, entry in enumerate(vehicles[1:])])
+
+vehicle_upgrades = [
+    ['name','category','weight','capacity'],
+    ['Seat','basic', 80, 200],
+    ['Troll Seat', 240, 575],
+    ['Bench', 230, 500],
+    [],
+    ]

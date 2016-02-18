@@ -51,7 +51,7 @@ particle_conditions = ['clear', 'drizzle', 'light rain', 'heavy rain', 'thunders
                        'medium fog (50m)', 'heavy fog (10m)', 'light smoke', 'heavy smoke']
 
 
-gas_vent_recoil = 0.8
+gas_vent_recoil = 2/3.
 
 
 def die_roll():

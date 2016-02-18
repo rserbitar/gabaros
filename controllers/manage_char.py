@@ -411,13 +411,29 @@ def edit_locations():
 @auth.requires_login()
 def edit_contacts():
     char_id = get_char()
-    table = db.contacts
     master_id = db(db.chars.id==char_id).select(db.chars.master).first().master
-    table.master.default = master_id
-    query = (table.master == master_id)
-    form = SQLFORM.grid(query, fields = [table.name], csv = False)
-    return dict(form=form)
+    table1 = db.contacts
+    table1.master.default = master_id
+    query1 = (table1.master == master_id)
+    form1 = SQLFORM.grid(query1, fields = [table1.name], csv = False)
+    return dict(form=form1)
 
+@auth.requires_login()
+def edit_char_contacts():
+    char_id = get_char()
+    master_id = db(db.chars.id==char_id).select(db.chars.master).first().master
+    table2 =db.char_contacts
+    table2.char.default = char_id
+    query2 = (table2.char == char_id)
+    form2 = SQLFORM.grid(query2, fields = [table2.name], csv = False)
+    return dict(form=form2)
+
+
+@auth.requires_login()
+def manage_contacts():
+    char_id = get_char()
+    master_id = db(db.chars.id==char_id).select(db.chars.master).first().master
+    return dict()
 
 @auth.requires_login()
 def edit_loadout():

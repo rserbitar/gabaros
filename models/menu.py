@@ -44,6 +44,7 @@ response.menu = [
           (T('Damage'), False, URL('manage_char', 'edit_damage')),
           (T('Wounds'), False, URL('manage_char', 'edit_wounds')),
           LI(_class="divider"),
+          (T('Contacts'), False, URL('manage_char', 'manage_contacts')),
           (T('Items'), False, URL('manage_char', 'edit_items')),
           (T('Upgrades'), False, URL('manage_char', 'manage_upgrades')),
           (T('Loadout'), False, URL('manage_char', 'edit_loadout')),
@@ -55,6 +56,7 @@ response.menu = [
           (T('Attributes'), False, URL('view_char', 'view_attributes')),
           (T('Stats'), False, URL('view_char', 'view_stats')),
           (T('Skills'), False, URL('view_char', 'view_skills')),
+          (T('Skills ABC'), False, URL('view_char', 'view_skills_alphabetical')),
           (T('XP'), False, URL('view_char', 'view_xp')),
           (T('Cost'), False, URL('view_char', 'view_cost')),
           (T('Bodyparts'), False, URL('view_char', 'view_bodyparts')),
@@ -69,6 +71,7 @@ response.menu = [
             ]),
       (T('Gameinformation'), False, '#', [
           (T('Wiki'), False, A('Wiki', _href='http://gabaros.sessionmob.de')),
+          (T('Spirit'), False, URL('game', 'view_spirit')),
           (T('Gametables'), False, URL('game', 'gametables')),
           ]),
       (T('Toggle Sidebar'), False, A('Toggle Sidebar', _href="#menu-toggle", _id="menu-toggle"), []),
