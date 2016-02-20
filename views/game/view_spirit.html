@@ -1,0 +1,222 @@
+{{extend 'layout.html'}}
+{{=H1(get_char_name())}}
+{{=form}}
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12">
+			{{form}}
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6">
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th>
+							Force
+						</th>
+						<th>
+							Magic
+						</th>
+						<th>
+							Charisma
+						</th>
+						<th>
+							Intuition
+						</th>
+						<th>
+							Logic
+						</th>
+						<th>
+							Willpower
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							{{=summoned.force if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.magic if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.charisma if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.intuition if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.logic if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.willpower if summoned else ''}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="col-md-6">
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th>
+							Agility
+						</th>
+						<th>
+							Constitution
+						</th>
+						<th>
+							Coordination
+						</th>
+						<th>
+							Strength
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							{{=summoned.agility if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.constitution if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.coordination if summoned else ''}}
+						</td>
+						<td>
+							{{=summoned.strength if summoned else ''}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6">
+			<table class="table table-striped table-condensed">
+				<thead>
+					<tr>
+						<th>
+							Stat
+						</th>
+						<th>
+							Value
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							Class
+						</td>
+						<td>
+							{{=summoned.class_ if summoned else ''}}
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Manifestation
+						</td>
+						<td>
+							{{=summoned.manifestation if summoned else ''}}
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Base skill rating
+						</td>
+						<td>
+							{{=summoned.base_skill if summoned else ''}}
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Weight
+						</td>
+						<td>
+							{{=summoned.weight if summoned else ''}}
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Size
+						</td>
+						<td>
+							{{=summoned.size if summoned else ''}}
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Life
+						</td>
+						<td>
+							{{=summoned.life if summoned else ''}}
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Armor
+						</td>
+						<td>
+							{{=summoned.armor if summoned else ''}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<table class="table table-striped table-condensed">
+				<thead>
+					<tr>
+						<th>
+							Skill
+						</th>
+						<th>
+							Value
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+                    {{if summoned:}}
+                    {{for skill in summoned.skills:}}
+					<tr>
+						<td>
+							{{=skill}}
+						</td>
+						<td>
+							{{=summoned.skills[skill]}}
+						</td>
+					</tr>
+					{{pass}}
+                    {{pass}}
+				</tbody>
+			</table>
+		</div>
+		<div class="col-md-6">
+            <h4>
+                Powers
+            </h4>
+			<ul>
+                {{if summoned:}}
+                {{for power in summoned.powers:}}
+				<li>
+					{{=power}}
+				</li>
+                {{pass}}
+                {{pass}}
+			</ul>
+            <h4>
+                Optional Powers
+            </h4>
+			<ul>
+                {{if summoned:}}
+                {{for power in summoned.optional_powers:}}
+				<li>
+					{{=power}}
+				</li>
+                {{pass}}
+                {{pass}}
+			</ul>
+		</div>
+	</div>
+</div>
