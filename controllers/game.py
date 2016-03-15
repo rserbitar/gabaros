@@ -2,6 +2,7 @@
 import collections
 import applications.gabaros.modules.data as data
 import spirit
+import vehicle
 
 def gametables():
     table_name = request.args(0)
@@ -49,3 +50,13 @@ def view_spirit():
         force, class_, manifestation = float(form.vars.force), form.vars.class_, form.vars.manifestation
         summoned = spirit.Spirit(force, class_, manifestation)
     return dict(form=form, summoned=summoned)
+
+
+def view_vehicle():
+    fields = [Field('vehicle', type='str', requires=IS_IN_SET(data.vehicles_dict.keys()), label = 'Vehicle')]
+    vehicle = None
+    form=SQLFORM.factory(*fields)
+    if form.process().accepted:
+        vehicle = data.vehicles_dict[form.vars.vehicle]
+        vehicle = vehicle.Vehicle(vehicle.chassis, vehicle.agent, vehicle.computer, vehicle.sensors_package)
+    return dict(form=form, vehicle=vehicle)

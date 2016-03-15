@@ -806,7 +806,7 @@ gameitems = [
     ["Ranger Arms SM-4", "Ranged Weapon", 55, 9200, 3.5, -6, 10, 70, False, 0, [], 0, 0],
     ["Walter MA-2100", "Ranged Weapon", 45, 8000, 3.5, -6, 10, 70, False, 0, [], 0, 0],
     ["Ingram White Knight", "Ranged Weapon", 40,  3000, 5.5, -10, -35, 70, False, 0, [], 0, 0],
-    ["GE Vindicator Minigun", "Ranged Weapon", 70, 15000, 7.5, -10, -45, 80, False, 0, [], 0, 0],
+    ["GE Vindicator Minigun", "Ranged Weapon", 70, 15000, 9.5, -10, -45, 80, False, 0, [], 0, 0],
     ["Stoner-Ares 202", "Ranged Weapon", 60, 4500, 8.0, -15, -40, 75, False, 0, [], 0, 0],
     ["Ultimax HMG-2", "Ranged Weapon", 65, 12000, 25.0, -20, -45, 80, False, 0, [], 0, 0],
     ["Panther XXL", "Ranged Weapon", 60, 9000, 12.0, -20, -45, 80, False, 0, [], 0, 0],
@@ -1235,7 +1235,7 @@ rangedweapons = [
     ["Ranger Arms SM-4",      "Long Rifles", 0., 16., "ballistic", "physical", 24., 160, 2, 0, 0, 60, 25, 15, "", 0, 1, 0, {'upgrades': ['Silencer', 'Shock Pad'], 'assembly': (3,3)}, 2],
     ["Walter MA-2100",        "Long Rifles", 0., 18., "ballistic", "physical", 30., 160, 2, 0, 0, 60, 25, 10, "", 1, 1, 1, {'upgrades': ['Smartlink', 'Shock Pad']}, 2],
     ["Ingram White Knight",   "Automatics", 0., 12., "ballistic", "physical", 20., 120, 2, 4, 12, 55, 15, 100, "", 0, 0, 0, {'upgrades': ['Smartlink', 'Gas Vent', 'Shock Pad']}, 2],
-    ["GE Vindicator Minigun", "Automatics", 0., 12., "ballistic", "physical", 20., 120, 0, 0, 16, 70, 10, 100, "", 0, 0, 0, {'upgrades': ['Smartlink', 'Gas Vent', 'Shock Pad'], 'power-up': 1}, 2],
+    ["GE Vindicator Minigun", "Automatics", 0., 12., "ballistic", "physical", 20., 120, 0, 0, 16, 85, 10, 100, "", 0, 0, 0, {'upgrades': ['Smartlink', 'Gas Vent', 'Shock Pad'], 'power-up': 1}, 2],
     ["Stoner-Ares M202",      "Automatics", 0., 18., "ballistic", "physical", 30., 150, 0, 0, 12, 80, 15, 100, "", 1, 1, 1, {'upgrades': ['Smartlink']}, 2],
     ["Ultimax HMG-2",         "Automatics", 0., 36., "ballistic", "physical", 60., 300, 0, 0, 12, 140, 15, 100, "", 1, 1, 1, {'upgrades': ['Smartlink', 'Tripod', 'Gas Vent']}, 2], #browning m2
     ["Panther XXL",           "Long Rifles", 0., 36., "ballistic", "physical", 60., 300, 1, 0, 0, 100, 25, 15, "", 1, 1, 1, {'upgrades': ['Smartlink']}, 2], #light fifty
@@ -1879,41 +1879,41 @@ metamagic_dict = OrderedDict([(entry[0], metamagic_nt(*([i] + entry))) for i, en
 # jets: 3:1
 # bike 2:1
 vehicle_chassis = [
-    ["name", "locomotion", "weight", "max_speed", "acceleration", "load", 'capacity', 'size', 'constitution', 'armor', 'vsibility','signature', 'cost'],
-    ['Lady Bug', ['insect flight', 'walk'], 0.0005, 10, 3,  0.0005, 0.0005, 0.01, 20, 1, 45, 45, 600],
-    ['Bug', 'walk', 0.0005, 0.2, 0.2, 0.01, 0.001, 0.01, 30, 1, 45, 45, 200],
-    ['Hummel', ['insect flight', 'walk'], 0.002, 12, 4, 0.002, 0.002, 0.025, 20, 1, 35, 35, 300],
-    ['Dragonfly', ['insect flight', 'walk'], 0.005, 13, 5, 0.005, 0.005, 0.1, 15, 1, 15, 15, 300],
-    ['Roach', 'walk', 0.01, 1, 1, 0.1, 0.01, 0.05, 40, 3, 25, 25, 100], #American Roach
-    ['Spider', 'walk', 0.1, 4, 4, 0.5, 0.05, 0.3, 30, 1, 5, 5, 200], #Vogelspinne
-    ['Flying Football', 'rotor flight', 5, 25, 4, 5, 5, 0.5, 30, 30, -10, -10, 500],
-    ['Rolling Ball', 'roll', 0.5, 10, 3, 0.5, 0.5, 0.1, 40, 5, 10, 10, 100],
-    ['Blimp', 'lta flight', 10, 15, 1, 10, 10, 2, 20, 0, -30, -30, 450],
-    ['Cat', 'walk', 4, 10, 5, 1, 0.4, 0.3, 30, 1, -5, -5, 2000],
-    ['Small Patrol Drone', 'wheeled', 20, 20, 2, 20, 20, 0.5, 40, 40, -10, -10, 1000],
-    ['Medium Patrol Drone', 'wheeled', 100, 35, 3, 100, 100, 1, 40, 50, -20, -20, 2500],
-    ['Large Patrol Drone', 'wheeled', 250, 40, 4, 250, 250, 2, 40, 50, -30, -30, 5000],
-    ['Vector Thrust Drone', 'thrust flight', 100, 60, 4, 50, 50,  1, 30, 40, -20, -20, 8000],
-    ['Mini Plane Drone', 'fixed-wing flight', 3, 40, 5, 2, 1, 1, 20, 1, -20, -20, 2500],
-    ['Jet Drone', 'fixed-wing flight', 20, 100, 10, 30, 30, 2, 20, 20, -30, -30, 32000],
-    ['Hover Drone', 'hover', 2, 30, 2, 2, 2, 0.5, 30, 3, -10, -10, 300],
-    ['Segway', 'dual-wheeled', 30, 12, 1, 100, 100, 1., 30, 0, -20, -20, 800],
-    ['Personal Mobility Vehicle', 'three-wheeled', 100, 20, 2, 100, 100, 2., 30, 5, -30, -30, 3000],
-    ['Google Car', 'wheeled', 500, 30, 2, 300, 300, 2.5, 40, 10, -35, -35, 6000],
-    ['Subcompact', 'wheeled', 750, 50, 3, 350, 350, 4.5, 40, 10, -40, -40, 12000], # opel insignia
-    ['Speed Car', 'wheeled', 1500, 75, 5, 300, 500, 4.5, 40, 10, -40, -40, 80000],
-    ['Sedan', 'wheeled', 1500, 50, 2, 500, 500, 5, 40, 15, -45, -45, 25000], # opel insignia
-    ['Medium Van', 'wheeled', 2000, 40, 2, 1500, 1500, 5.5, 40, 15, -45, -45, 30000], #sprinter kurz
-    ['Large Van', 'wheeled', 2500, 30, 1.5, 2500, 2500, 7, 40, 15, -50, -50, 35000], #sprinter lang
-    ['Monocycle', 'monocycle', 150, 60, 5,  100, 100, 1., 30, 10, -20, -20, 4000],
-    ['Enclosed Monocycle', 'monocycle', 400, 50, 4,  200, 200, 2, 40, 15, -30, -30, 7500],
-    ['Speedbike', 'cycle', 200, 75, 6, 120, 120, 2, 30, 10, -30, -30, 8000], # ducati 1199
-    ['Chopper',  'rotor flight',350, 50, 4,  200, 200, 2.5, 40, 15, -35, -35, 6500], # harley davidson breakout
-    ['Combat Helicopter', 'rotor flight', 5000, 80, 6, 3000, 3000, 15, 40, 50, -60, -60, 750000], # apache
+    ["name", "locomotion", "handling", "weight", "max_speed", "acceleration", "load", 'capacity', 'size', 'constitution', 'armor', 'vsibility','signature', 'cost'],
+    ['Lady Bug', ['insect flight', 'walk'], 0, 0.0005, 10, 3,  0.0005, 0.0005, 0.01, 20, 1, 45, 45, 600],
+    ['Bug', 'walk', 0,  0.0005, 0.2, 0.2, 0.01, 0.001, 0.01, 30, 1, 45, 45, 200],
+    ['Hummel', ['insect flight', 'walk'], 0,  0.002, 12, 4, 0.002, 0.002, 0.025, 20, 1, 35, 35, 300],
+    ['Dragonfly', ['insect flight', 'walk'], 0,  0.005, 13, 5, 0.005, 0.005, 0.1, 15, 1, 15, 15, 300],
+    ['Roach', 'walk', 0,  0.01, 1, 1, 0.1, 0.01, 0.05, 40, 3, 25, 25, 100], #American Roach
+    ['Spider', 'walk', 0,  0.1, 4, 4, 0.5, 0.05, 0.3, 30, 1, 5, 5, 200], #Vogelspinne
+    ['Flying Football', 'rotor flight', 0,  5, 25, 4, 5, 5, 0.5, 30, 30, -10, -10, 500],
+    ['Rolling Ball', 'roll', 0,  0.5, 10, 3, 0.5, 0.5, 0.1, 40, 5, 10, 10, 100],
+    ['Blimp', 'lta flight', 0,  10, 15, 1, 10, 10, 2, 20, 0, -30, -30, 450],
+    ['Cat', 'walk', 0,  4, 10, 5, 1, 0.4, 0.3, 30, 1, -5, -5, 2000],
+    ['Small Patrol Drone', 'wheeled', 0,  20, 20, 2, 20, 20, 0.5, 40, 40, -10, -10, 1000],
+    ['Medium Patrol Drone', 'wheeled', 0,  100, 35, 3, 100, 100, 1, 40, 50, -20, -20, 2500],
+    ['Large Patrol Drone', 'wheeled', 0,  250, 40, 4, 250, 250, 2, 40, 50, -30, -30, 5000],
+    ['Vector Thrust Drone', 'thrust flight', 0,  100, 60, 4, 50, 50,  1, 30, 40, -20, -20, 8000],
+    ['Mini Plane Drone', 'fixed-wing flight', 0,  3, 40, 5, 2, 1, 1, 20, 1, -20, -20, 2500],
+    ['Jet Drone', 'fixed-wing flight', 0,  20, 100, 10, 30, 30, 2, 20, 20, -30, -30, 32000],
+    ['Hover Drone', 'hover', 0,  2, 30, 2, 2, 2, 0.5, 30, 3, -10, -10, 300],
+    ['Segway', 'dual-wheeled', 0,  30, 12, 1, 100, 100, 1., 30, 0, -20, -20, 800],
+    ['Personal Mobility Vehicle', 'three-wheeled', 0,  100, 20, 2, 100, 100, 2., 30, 5, -30, -30, 3000],
+    ['Google Car', 'wheeled', 0,  500, 30, 2, 300, 300, 2.5, 40, 10, -35, -35, 6000],
+    ['Subcompact', 'wheeled', 0, 750, 50, 3, 350, 350, 4.5, 40, 10, -40, -40, 12000], # opel insignia
+    ['Speed Car', 'wheeled', 0, 1500, 75, 5, 300, 500, 4.5, 40, 10, -40, -40, 80000],
+    ['Sedan', 'wheeled', 0, 1500, 50, 2, 500, 500, 5, 40, 15, -45, -45, 25000], # opel insignia
+    ['Medium Van', 'wheeled', 0, 2000, 40, 2, 1500, 1500, 5.5, 40, 15, -45, -45, 30000], #sprinter kurz
+    ['Large Van', 'wheeled', 0, 2500, 30, 1.5, 2500, 2500, 7, 40, 15, -50, -50, 35000], #sprinter lang
+    ['Monocycle', 'monocycle', 0, 150, 60, 5,  100, 100, 1., 30, 10, -20, -20, 4000],
+    ['Enclosed Monocycle', 'monocycle', 0, 400, 50, 4,  200, 200, 2, 40, 15, -30, -30, 7500],
+    ['Speedbike', 'cycle', 0, 200, 75, 6, 120, 120, 2, 30, 10, -30, -30, 8000], # ducati 1199
+    ['Chopper',  'rotor flight', 0, 350, 50, 4,  200, 200, 2.5, 40, 15, -35, -35, 6500], # harley davidson breakout
+    ['Combat Helicopter', 'rotor flight', 0, 5000, 80, 6, 3000, 3000, 15, 40, 50, -60, -60, 750000], # apache
     #['Commuting Helicopter', '', '', '', '', '', '', ''],
-    ['APC', 'wheeled', 10000, 30, 1, 5000, 5000, 7, 50, 150, -50, -50, 58000], # LAV
-    ['IFV', 'tracked', 15000, 15, 1, 15000, 15000, 7, 50, 200, -50, -50, 130000], # Bradley
-    ['Tank', 'tracked', 30000, 20, 2, 30000, 30000, 9, 50, 500, -50, -50, 420000], # Leopard 2a6
+    ['APC', 'wheeled', 0, 10000, 30, 1, 5000, 5000, 7, 50, 150, -50, -50, 58000], # LAV
+    ['IFV', 'tracked', 0, 15000, 15, 1, 15000, 15000, 7, 50, 200, -50, -50, 130000], # Bradley
+    ['Tank', 'tracked', 0, 30000, 20, 2, 30000, 30000, 9, 50, 500, -50, -50, 420000], # Leopard 2a6
     #['', '', '', '', '', '', ''],
 ]
 
@@ -1957,16 +1957,16 @@ def get_vehicle_stats(chassis, agent, computer, sensors_package, equipment):
     return [cost, availability, capacity, used_capacity]
 
 vehicles = [
-    ["name", "chassis", "agent", "computer", "sensors_package", "equipment", "cost", "availability", "capacity", "used_capacity"],
-    ["Shiawase Kanmushi", "Bug", "Civilian Drone Pilot Class I", "Nano Drone Computer I", "Nano Drone", []],
-    ["MCT Fly-Spy", "Dragonfly", "Civilian Drone Pilot Class I", "Mini Drone Computer I", "Nano Drone", []],
-    ["Lone Star iBall", "Rolling Ball", "Civilian Drone Pilot Class I", "Mini Drone Computer I", "Micro Drone", []],
-    ["Lockheed Optic-X", "Mini Plane Drone", "Security Drone Pilot Class I", "Erika Elite", "Mini Drone", []],
-    ["GM-Nissan Doberman", "Small Patrol Drone", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Drone", []],
-    ["Steel Lynx", "Medium Patrol Drone", "Security Drone Pilot Class II", "Erika Elite", "Civilian Drone", []],
-    ["MCT-Nissan Roto-drone", "Flying Football", "Security Drone Pilot Class I", "Renraku Sensei", "Mini Drone", []],
-    ["Renraku Stormcloud", "Blimp", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Vehicle", []],
-    ["McDonnel-Douglas Nimrod", "Jet Drone", "Military Drone Pilot Class I", "Erika Elite", "Civilian Vehicle", []],
+    ["name", "chassis", "agent", "computer", "sensors_package", "equipment", "cost", "availability"],
+    ["Shiawase Kanmushi", "Bug", "Civilian Drone Pilot Class I", "Nano Drone Computer I", "Nano Drone", [], 0, 0, ],
+    ["MCT Fly-Spy", "Dragonfly", "Civilian Drone Pilot Class I", "Mini Drone Computer I", "Nano Drone", [], 0, 0, ],
+    ["Lone Star iBall", "Rolling Ball", "Civilian Drone Pilot Class I", "Mini Drone Computer I", "Micro Drone", [], 0, 0, ],
+    ["Lockheed Optic-X", "Mini Plane Drone", "Security Drone Pilot Class I", "Erika Elite", "Mini Drone", [], 0, 0, ],
+    ["GM-Nissan Doberman", "Small Patrol Drone", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Drone", [], 0, 0, ],
+    ["Steel Lynx", "Medium Patrol Drone", "Security Drone Pilot Class II", "Erika Elite", "Civilian Drone", [], 0, 0, ],
+    ["MCT-Nissan Roto-drone", "Flying Football", "Security Drone Pilot Class I", "Renraku Sensei", "Mini Drone", [], 0, 0, ],
+    ["Renraku Stormcloud", "Blimp", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Vehicle", [], 0, 0, ],
+    ["McDonnel-Douglas Nimrod", "Jet Drone", "Military Drone Pilot Class I", "Erika Elite", "Civilian Vehicle", [], 0, 0, ],
 ]
 
 for i, vehicle in enumerate(vehicles[1:]):
@@ -1976,9 +1976,94 @@ vehicles_nt = namedtuple('vehicle', ['id'] + vehicles[0])
 vehicles_dict = OrderedDict([(entry[0], vehicles_nt(*([i] + entry))) for i, entry in enumerate(vehicles[1:])])
 
 vehicle_upgrades = [
-    ['name','category','weight','capacity'],
-    ['Seat','basic', 80, 200],
-    ['Troll Seat', 240, 575],
-    ['Bench', 230, 500],
-    [],
+    ['name','category','weight','capacity', 'price', 'square weight price'],
+    ['Seat','basic', 80, 200, 500, 0],
+    ['Seat Ejection','basic', 100, 250, 3000, 0],
+    ['Seat, Troll', 'basic', 240, 575, 1000, 0],
+    ['Seat Ejection, Troll', 'basic',  300, 750, 5000, 0],
+    ['Bench', 'basic', 230, 500, 500, 0],
+    ['Gridlink', 'basic', '2%', '2%', 300, 2, 100],
+    ['Manual Controls', 'basic', 20, 50, 3000, 0],
+    ['Passenger Protection', 'security', 20, 30, 1000, 0],
+    ['Passenger Protection, Troll', 'security', 60, 90, 2000, 0],
+    ['Life Support I', 'security', 50, 50, 5000, 20],
+    ['Life Support II', 'security', 200, 200, 10000, 100],
+    ['Zapper System I', 'security', 2, 2, 500, 5],
+    ['Zapper System II', 'security', 5, 5, 1000, 10],
+    ['Zapper System III', 'security', 20, 20, 5000, 50],
+    ['Armor', 'security', 0, 0, 0, 0],
+    ['Signature Masking', 'security', '1%', '4%', 200, 100],
+    ['Signature Masking II', 'security', '2%', '8%', 500, 300],
+    ['Ruthenium Polymer Coating', 'security', '1%', '1%', 1000, 150],
+    ['Oil-Slick Sprayer', 'security', 20, 20, 500, 0],
+    ['Ram Plate', 'security', '3%', '3%', 0, 20],
+    ['Drone Rack Mini', 'cargo', 0.5, 1, 100, 0],
+    ['Drone Rack Multi Mini', 'cargo', 5, 10, 500, 0],
+    ['Drone Rack Small', 'cargo', 20, 25, 500, 0],
+    ['Drone Rack Medium', 'cargo', 100, 125, 800, 0],
+    ['Drone Rack Large', 'cargo', 250, 300, 1000, 0],
+    ['Drone Rack Airborne Small', 'cargo', 10, 25, 750, 0],
+    ['Drone Rack Airborne Medium', 'cargo', 50, 125, 1250, 0],
+    ['Drone Rack Airborne Large', 'cargo', 100, 250, 2000, 0],
+    ['Engine Customization I', 'performance', '3%', '3%', 200, 50],
+    ['Engine Customization II', 'performance',  '5%', '5%', 1000, 150],
+    ['Improved Economy I', 'performance',  '1%', '1%', 100, 30],
+    ['Improved Economy II', 'performance',  '1.5%', '1.5%', 300, 50],
+    ['Handling Upgrade I', 'performance',  '2%', '2%', 200, 100],
+    ['Handling Upgrade II', 'performance',  '3%', '3%', 600, 300],
+    ['Offroad Suspension', 'performance',  '3%', '3%', 200, 50],
+    ['Grapple', 'utility', 10, 10, 500, 0],
+    ['Micro Mechanical Arm', 'utility', 0.01, 0.01, 300, 0],
+    ['Mini Mechanical Arm', 'utility', 0.1, 0.1, 500, 0],
+    ['Small Mechanical Arm', 'utility', 1, 1, 500, 0],
+    ['Mechanical Arm', 'utility', 15, 15, 2000, 0],
+    ['Rigger Adaption', 'utility', '5%', '5%', 500, 200],
+    ['Nanomaintainance System', '2%', '2%', 2000, 500],
+    ['Rigger Cocoon', 'basic', 100, 300, 5000, 0],
+    ['Rigger Cocoon II', 'basic', 150, 350, 20000, 0],
+    ['Road Strip Ejector', 'security', 5, 5, 300, 0],
+    ['Mounted Searchlight', 'security', 10, 30, 1000, 0],
+    ['Smoke Projector', 'security', '1%', '1%', 100, 20],
+    ['Smuggling Compartment Small', 'security', 5, 20, 500, 0],
+    ['Smuggling Compartment Medium', 'security', 25, 100, 1000, 0],
+    ['Smuggling Compartment Large', 'security', 100, 400, 2000, 0],
+
+    ["Small-Arms Micro (0.5kg) Fixed Weapon Mount", "weapon", 0.75, 1.5, 100, 0],
+    ["Small-Arms Light (2kg) Fixed Weapon Mount", "weapon", 3, 6, 150, 0],
+    ["Small-Arms Medium (6kg) Fixed Weapon Mount", "weapon", 8, 12, 200, 0],
+    ["Small-Arms Heavy (15kg) Fixed Weapon Mount", "weapon", 22.5, 45, 300, 0],
+    ["Light (40kg) Fixed Weapon Mount", "weapon", 60, 120, 100, 0],
+    ["Medium (100kg) Fixed Weapon Mount", "weapon", 150, 300, 100, 0],
+    ["Heavy (250kg) Fixed Weapon Mount", "weapon", 375, 750, 100, 0],
+    ["Assault (500kg) Fixed Weapon Mount", "weapon", 750, 1500, 100, 0],
+    ["Tank (1500kg) Fixed Weapon Mount", "weapon", 2250, 4500, 100, 0],
+
+    ["Small-Arms Micro (0.5kg) Turret", "weapon", 1.5, 1.5, 100, 0],
+    ["Small-Arms Light (2kg) Turret", "weapon", 6, 6, 100, 0],
+    ["Small-Arms Medium (6kg) Turret", "weapon", 12, 12, 100, 0],
+    ["Small-Arms Heavy (15kg) Turret", "weapon", 45, 45, 100, 0],
+    ["Light (40kg) Turret", "weapon", 120, 120, 100, 0],
+    ["Medium (100kg) Turrret", "weapon", 300, 300, 100, 0],
+    ["Heavy (250kg) Turret", "weapon", 750, 750, 100, 0],
+    ["Assault (500kg) Turret", "weapon", 1500, 1500, 100, 0],
+    ["Tank (1500kg) Turret", "weapon", 4500, 4500, 100, 0],
+
+    ["Small-Arms Micro (0.5kg) Retracteable Turret", "weapon", 1.5, 3, 100, 0],
+    ["Small-Arms Light (2kg) Retracteable Turret", "weapon", 6, 16, 100, 0],
+    ["Small-Arms Medium (6kg) Retracteable Turret", "weapon", 12, 24, 100, 0],
+    ["Small-Arms Heavy (15kg) Retracteable Turret", "weapon", 45, 90, 100, 0],
+    ["Light (40kg) Retracteable Turret", "weapon", 120, 240, 100, 0],
+    ["Medium (100kg) Retracteable Turrret", "weapon", 300, 600, 100, 0],
+    ["Heavy (250kg) Retracteable Turret", "weapon", 750, 1500, 100, 0],
+    ["Assault (500kg) Retracteable Turret", "weapon", 1500, 3000, 100, 0],
+    ["Tank (1500kg) Retracteable Turret", "weapon", 4500, 9000, 100, 0],
     ]
+
+#               single      automatic       minigun
+#5.56 = 12/20               3.5kg           10kg
+#7.62 = 18/30               4.5kg           20kg
+#0.5 = 36/60    12kg        25kg            50kg
+#20mm                                       120kg
+#25mm           120 kg
+#30mm                                       250kg
+#105mm          1200kg

@@ -1,0 +1,151 @@
+{{extend 'layout.html'}}
+{{=H1(get_char_name())}}
+{{=form}}
+{{=vehicle.cost if vehicle else None}}
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12">
+			{{form}}
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6">
+			<table class="table table-striped">
+				<thead>
+					<>
+						<th>
+							Locomotion
+						</th>
+						<th>
+							Handling
+						</th>
+						<th>
+							Max Speed
+						</th>
+						<th>
+							Acceleration
+						</th>
+						<th>
+							Size
+						</th>
+						<th>
+							Weight
+						</th>
+						<th>
+							Visibility
+						</th>
+						<th>
+							Signature
+						</th>
+						<th>
+							Constitution
+						</th>
+						<th>
+							Armor
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							{{=vehicle.locomotion if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.handling if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.max_speed if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.acceleration if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.size if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.weight if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.visibility if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.signature if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.constitution if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.armor if vehicle else ''}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="col-md-6">
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th>
+							Signal
+						</th>
+						<th>
+							Firewall
+						</th>
+						<th>
+							System
+						</th>
+						<th>
+							Processing
+						</th>
+						<th>
+							Uplink
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							{{=vehicle.Signal if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.Firewall if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.System if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.Processing if vehicle else ''}}
+						</td>
+						<td>
+							{{=vehicle.Uplink if vehicle else ''}}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6">
+			<table class="table table-striped table-condensed">
+				<thead>
+					<tr>
+						<th>
+							Sensor
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+                    {{if vehicle:}}
+                    {{for sensor in vehicle.sensors:}}
+					<tr>
+						<td>
+							{{=sensor}}
+						</td>
+					</tr>
+					{{pass}}
+                    {{pass}}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
