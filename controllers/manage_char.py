@@ -7,6 +7,18 @@ import rules
 def index():
     redirect(URL('manage_chars'))
 
+@auth.requires_login()
+def insert_button():
+    table = request.args(0)
+    name = request.args(1)
+    value = request.args(2).replace('_',' ')
+    reload = request.args(3)
+    db[table].bulk_insert([{'char':get_char(), name:value}])
+    response.flash = '{} was added'.format(value)
+    if reload:
+        redirect(URL(reload), client_side=True)
+    return dict()
+
 def my_ondelete(function):
     def func(table, id):
         db(table[table._id.name] == id).delete()
@@ -17,19 +29,23 @@ def select_char(id):
     session.char=int(id)
     return  A(id, _href=URL("edit_char", args=(id)))
 
-def get_table(table_name):
+def get_table(table_name, insert_table=False, insert_value=False, reload = False):
     dictionary = getattr(data, table_name + '_dict')
-    first = dictionary[dictionary.keys()[0]]
+    first = list(dictionary[dictionary.keys()[0]]._fields)
+    if insert_table:
+        first.append('insert')
     dict_data = []
     for entry in dictionary.values():
         dict_data.append(list(entry))
+        if insert_table:
+            dict_data[-1].append(A('Insert', callback=URL('insert_button', args = [insert_table, insert_value, dict_data[-1][1], reload])))
     for i, row in enumerate(dict_data):
         for j, entry in enumerate(row):
             if isinstance(entry,list):
                 dict_data[i][j] = ', '.join([str(k) for k in entry])
             if isinstance(entry,float):
                 dict_data[i][j] = round(entry, 2)
-    table = [first._fields]
+    table = [first]
     table.extend(dict_data)
     return table
 
@@ -150,7 +166,7 @@ def manage_powers():
     maxtextlength = {'char_adept_powers.power': 50, 'char_adept_powers.value': 100}
     table.value.represent = lambda value, row: basic.CharAdeptPower(db, row.power, basic.Char(db, char_id)).get_description()
     form = SQLFORM.grid(query, fields = [table.power, table.value], csv = False, maxtextlengths = maxtextlength, ondelete=my_ondelete('manage_powers'))
-    table = get_table('adept_powers')
+    table = get_table('adept_powers', 'char_adept_powers', 'power', 'manage_powers')
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
     cost = char_property_getter.get_power_cost()
     magic = char_property_getter.get_attribute_value('Magic')
@@ -173,7 +189,7 @@ def manage_ware():
                         links = links,
                         ondelete=my_ondelete('manage_ware'),
                         oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id))))
-    table = get_table('ware')
+    table = get_table('ware', 'char_ware', 'ware', 'manage_ware')
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
     cost = char_property_getter.get_total_cost()
     total_cost = sum(cost.values())
@@ -200,7 +216,7 @@ def manage_fixtures():
     links = [dict(header='Cost', body=lambda row: data.fixtures_dict[row.fixture].cost),
              dict(header='Capacity', body=lambda row: {key:round(value,2) for key,value in basic.CharFixture(row.fixture, char).get_capacity_dict().items()})]
     form = SQLFORM.grid(query, fields = [table.id, table.fixture], csv = False, maxtextlength=maxtextlength, links=links, ondelete=my_ondelete('manage_fixtures'))
-    table = get_table('fixtures')
+    table = get_table('fixtures', 'char_fixtures', 'fixture', 'manage_fixtures')
     cost = char_property_getter.get_total_cost()
     total_cost = sum(cost.values())
     money = char_property_getter.get_money()
@@ -363,7 +379,7 @@ def edit_items():
     query = table.char == char_id
     links = [dict(header='Cost', body=lambda row: int(round(rules.cost_by_rating(data.gameitems_dict[row.item].rating, data.gameitems_dict[row.item].cost, row.rating))))]
     form = SQLFORM.grid(query, fields = [table.item, table.rating, table.loadout, table.location], csv = False, ondelete=my_ondelete('edit_items'), links=links )
-    table = get_table('gameitems')
+    table = get_table('gameitems', 'char_items', 'item', 'edit_items')
     cost = char_property_getter.get_total_cost()
     total_cost = sum(cost.values())
     money = char_property_getter.get_money()
@@ -447,19 +463,28 @@ def edit_loadout():
         val = 0
     else:
         val = int(val.value)
-    fields = [Field('loadout', 'integer', default=val, label = 'Loadout', requires=IS_IN_SET(list(range(10))))]
-    form = SQLFORM.factory(*fields)
-    form.element(_name='loadout')['_onblur']="ajax('/gabaros/manage_char/edit_loadout/{}', " \
-                                            "['loadout'], '')".format(char_id)
-    if form.process().accepts:
-        if form.vars.get('loadout') is not None:
-            db.char_loadout.update_or_insert(query, value=form.vars.get('loadout'), char = char_id)
-            fields = [Field('loadout', 'integer', default=form.vars.get('loadout'), label = 'Loadout',
-                            requires=IS_IN_SET(list(range(10))))]
-            form = SQLFORM.factory(*fields)
-    form.element(_name='loadout')['_onblur']="ajax('/gabaros/manage_char/edit_loadout/{}', " \
-                                            "['loadout'], '')".format(char_id)
-    return dict(form = form)
+    fields1 = [Field('loadout', 'integer', default=val, label = 'Loadout', requires=IS_IN_SET(list(range(10))))]
+    form1 = SQLFORM.factory(*fields1)
+
+    if form1.process(formname='form_one').accepted:
+        if form1.vars.get('loadout') is not None:
+            db.char_loadout.update_or_insert(query, value=form1.vars.get('loadout'), char = char_id)
+            form1.custom.widget['loadout']['value'] = form1.vars.get('loadout')
+            form1.custom.widget['loadout']._postprocessing()
+
+    items = db(db.char_items.char == char_id).select(db.char_items.id, db.char_items.item, db.char_items.loadout)
+    fields2 = [Field('item_{}_{}'.format(i.id,j), 'boolean', default=True if j in i.loadout else False) for i in items for j in range(10)]
+    form2 = SQLFORM.factory(*fields2)
+    if form2.process(formname='form_two').accepted:
+        for item in items:
+            templist = []
+            for j in range(10):
+                if form2.vars['item_{}_{}'.format(item.id, j)]:
+                    templist.append(j)
+                form2.custom.widget['item_{}_{}'.format(item.id, j)]['value'] = form2.vars['item_{}_{}'.format(item.id, j)]
+                form2.custom.widget['item_{}_{}'.format(item.id, j)]._postprocessing()
+            db(db.char_items.id == item.id).update(loadout = templist)
+    return dict(form1 = form1, form2=form2, items=[(i.id, i.item) for i in items])
 
 
 @auth.requires_login()

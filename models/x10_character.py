@@ -47,7 +47,7 @@ db.define_table('char_fixtures', Field('char', type='reference chars', label=T('
 
 db.define_table('char_adept_powers', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('power', type='string', label=T('Power'), requires=IS_IN_SET(data.adept_powers_dict.keys())),
-                Field('value', type='double', label=T('Value')),
+                Field('value', type='double', label=T('Value'), default=0),
                 )
 
 db.define_table('char_computers', Field('char', type='reference chars', label=T('Character'), writable=False),

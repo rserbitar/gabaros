@@ -1,8 +1,6 @@
 {{extend 'layout.html'}}
 {{=H1(get_char_name())}}
-{{=form1}}
-
-{{=form2.custom.begin}}
+{{=form.custom.begin}}
 <table class = 'table table-striped'>
     <tr>
         <th>Item</th>
@@ -21,10 +19,10 @@
 <tr>
     <td>{{=name}}</td>
     {{for j in range(10):}}
-    <td>{{=getattr(form2.custom.widget, 'item_{}_{}'.format(id,j))}}</td>
+    <td>{{=getattr(form.custom.widget, 'item_{}_{}'.format(id,j))}}</td>
     {{pass}}
 </tr>
 {{pass}}
 </table>
-{{=form2.custom.submit}}
-{{=form2.custom.end}}
+{{=form.custom.submit}}
+{{=form.custom.end}}
