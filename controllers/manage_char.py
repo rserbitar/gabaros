@@ -11,12 +11,12 @@ def index():
 def insert_button():
     table = request.args(0)
     name = request.args(1)
-    value = request.args(2).replace('_',' ')
-    reload = request.args(3)
-    db[table].bulk_insert([{'char':get_char(), name:value}])
+    value = request.vars['value']
+    reload = request.vars['reload']
+    #db[table].bulk_insert([{'char':get_char(), name:value}])
     response.flash = '{} was added'.format(value)
-    if reload:
-        redirect(URL(reload), client_side=True)
+    #if reload:
+    #    redirect(URL(reload), client_side=True)
     return dict()
 
 def my_ondelete(function):
@@ -38,7 +38,7 @@ def get_table(table_name, insert_table=False, insert_value=False, reload = False
     for entry in dictionary.values():
         dict_data.append(list(entry))
         if insert_table:
-            dict_data[-1].append(A('Insert', callback=URL('insert_button', args = [insert_table, insert_value, dict_data[-1][1], reload])))
+            dict_data[-1].append(A('Insert', callback=URL('insert_button', args = [insert_table, insert_value], vars={'value':dict_data[-1][1], 'reload':reload})))
     for i, row in enumerate(dict_data):
         for j, entry in enumerate(row):
             if isinstance(entry,list):
@@ -388,20 +388,34 @@ def edit_items():
 @auth.requires_login()
 def manage_spells():
     char_id = get_char()
+    char = basic.Char(db, char_id)
+    char_property_getter = basic.CharPropertyGetter(char, modlevel='augmented')
+    next_spell_cost = char_property_getter.get_next_spell_xp_cost()
+    total_spells_xp_cost = char_property_getter.get_spell_xp_cost()
+    char_xp = char_property_getter.get_xp()
+    total_xp = sum(char_property_getter.get_total_exp().values())
     table = db.char_spells
     table.char.default = char_id
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.spell], csv = False)
-    return dict(form=form)
+    return dict(form=form, next_spell_cost=next_spell_cost, total_spells_xp_cost=total_spells_xp_cost,
+               char_xp=char_xp, total_xp=total_xp)
 
 @auth.requires_login()
 def manage_metamagic():
     char_id = get_char()
+    char = basic.Char(db, char_id)
+    char_property_getter = basic.CharPropertyGetter(char, modlevel='augmented')
+    next_metamagic_cost = char_property_getter.get_next_metamagic_xp_cost()
+    total_metamagic_xp_cost = char_property_getter.get_metamagic_xp_cost()
+    char_xp = char_property_getter.get_xp()
+    total_xp = sum(char_property_getter.get_total_exp().values())
     table = db.char_metamagic
     table.char.default = char_id
     query = table.char == char_id
     form = SQLFORM.grid(query, fields = [table.metamagic], csv = False)
-    return dict(form=form)
+    return dict(form=form, next_metamagic_cost=next_metamagic_cost, total_metamagic_xp_cost=total_metamagic_xp_cost,
+               char_xp=char_xp, total_xp=total_xp)
 
 
 @auth.requires_login()
@@ -437,12 +451,17 @@ def edit_contacts():
 @auth.requires_login()
 def edit_char_contacts():
     char_id = get_char()
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
+    xp = char_property_getter.get_contacts_xp_cost()
+    charisma_xp = char_property_getter.get_free_contacts_xp()
+    char_xp = char_property_getter.get_xp()
+    total_xp = sum(char_property_getter.get_total_exp().values())
     master_id = db(db.chars.id==char_id).select(db.chars.master).first().master
     table2 =db.char_contacts
     table2.char.default = char_id
     query2 = (table2.char == char_id)
     form2 = SQLFORM.grid(query2, fields = [table2.name], csv = False)
-    return dict(form=form2)
+    return dict(form=form2, xp=xp, charisma_xp=charisma_xp, char_xp = char_xp, total_xp = total_xp)
 
 
 @auth.requires_login()

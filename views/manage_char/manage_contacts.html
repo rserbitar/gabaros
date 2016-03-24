@@ -1,6 +1,15 @@
 {{extend 'layout.html'}}
 {{=H1(get_char_name())}}
-
-{{=LOAD(f="edit_contacts.load")}}
-
-{{=LOAD(f="edit_char_contacts.load")}}
+<div class='container'>
+  <div class="row">
+      <div class="col-sm-6">
+      {{=LOAD(f="edit_char_contacts.load")}}
+      </div>
+      <div class="col-sm-6">
+      <H4>
+          Available Contacts
+          </H4>
+      {{=LOAD(f="edit_contacts.load")}}
+      </div>
+    </div>
+</div>

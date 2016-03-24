@@ -1879,7 +1879,7 @@ metamagic_dict = OrderedDict([(entry[0], metamagic_nt(*([i] + entry))) for i, en
 # jets: 3:1
 # bike 2:1
 vehicle_chassis = [
-    ["name", "locomotion", "handling", "weight", "max_speed", "acceleration", "load", 'capacity', 'size', 'constitution', 'armor', 'vsibility','signature', 'cost'],
+    ["name", "locomotion", "handling", "weight", "max_speed", "acceleration", "load", 'capacity', 'size', 'constitution', 'armor', 'visibility','signature', 'cost'],
     ['Lady Bug', ['insect flight', 'walk'], 0, 0.0005, 10, 3,  0.0005, 0.0005, 0.01, 20, 1, 45, 45, 600],
     ['Bug', 'walk', 0,  0.0005, 0.2, 0.2, 0.01, 0.001, 0.01, 30, 1, 45, 45, 200],
     ['Hummel', ['insect flight', 'walk'], 0,  0.002, 12, 4, 0.002, 0.002, 0.025, 20, 1, 35, 35, 300],
@@ -1941,7 +1941,7 @@ agents_nt = namedtuple('agent', ['id'] + agents[0])
 agents_dict = OrderedDict([(entry[0], agents_nt(*([i] + entry))) for i, entry in enumerate(agents[1:])])
 
 
-def get_vehicle_stats(chassis, agent, computer, sensors_package, equipment):
+def get_vehicle_stats(chassis, agent, computer, sensors_package, equipment, cost, availability):
     chassis = vehicle_chassis_dict[chassis]
     agent = gameitems_dict[agent]
     computer = gameitems_dict[computer]
@@ -1963,26 +1963,27 @@ vehicles = [
     ["Lone Star iBall", "Rolling Ball", "Civilian Drone Pilot Class I", "Mini Drone Computer I", "Micro Drone", [], 0, 0, ],
     ["Lockheed Optic-X", "Mini Plane Drone", "Security Drone Pilot Class I", "Erika Elite", "Mini Drone", [], 0, 0, ],
     ["GM-Nissan Doberman", "Small Patrol Drone", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Drone", [], 0, 0, ],
-    ["Steel Lynx", "Medium Patrol Drone", "Security Drone Pilot Class II", "Erika Elite", "Civilian Drone", [], 0, 0, ],
+    ["Steel Lynx", "Medium Patrol Drone", "Security Drone Pilot Class II", "Erika Elite", "Civilian Drone", ["Small-Arms Medium (6kg) Turret"], 0, 0, ],
     ["MCT-Nissan Roto-drone", "Flying Football", "Security Drone Pilot Class I", "Renraku Sensei", "Mini Drone", [], 0, 0, ],
     ["Renraku Stormcloud", "Blimp", "Security Drone Pilot Class I", "Renraku Sensei", "Civilian Vehicle", [], 0, 0, ],
     ["McDonnel-Douglas Nimrod", "Jet Drone", "Military Drone Pilot Class I", "Erika Elite", "Civilian Vehicle", [], 0, 0, ],
 ]
 
-for i, vehicle in enumerate(vehicles[1:]):
-    vehicles[i+1].extend(get_vehicle_stats(*vehicle[1:]))
+#for i, vehicle in enumerate(vehicles[1:]):
+#    vehicles[i+1].extend(get_vehicle_stats(*vehicle[1:]))
 
 vehicles_nt = namedtuple('vehicle', ['id'] + vehicles[0])
 vehicles_dict = OrderedDict([(entry[0], vehicles_nt(*([i] + entry))) for i, entry in enumerate(vehicles[1:])])
 
 vehicle_upgrades = [
-    ['name','category','weight','capacity', 'price', 'square weight price'],
+    ['name', 'category', 'weight', 'capacity', 'cost', 'square_weight_cost'],
     ['Seat','basic', 80, 200, 500, 0],
+
     ['Seat Ejection','basic', 100, 250, 3000, 0],
     ['Seat, Troll', 'basic', 240, 575, 1000, 0],
     ['Seat Ejection, Troll', 'basic',  300, 750, 5000, 0],
     ['Bench', 'basic', 230, 500, 500, 0],
-    ['Gridlink', 'basic', '2%', '2%', 300, 2, 100],
+    ['Gridlink', 'basic', '*0.02', '*0.02', 300, 100],
     ['Manual Controls', 'basic', 20, 50, 3000, 0],
     ['Passenger Protection', 'security', 20, 30, 1000, 0],
     ['Passenger Protection, Troll', 'security', 60, 90, 2000, 0],
@@ -1991,12 +1992,13 @@ vehicle_upgrades = [
     ['Zapper System I', 'security', 2, 2, 500, 5],
     ['Zapper System II', 'security', 5, 5, 1000, 10],
     ['Zapper System III', 'security', 20, 20, 5000, 50],
-    ['Armor', 'security', 0, 0, 0, 0],
-    ['Signature Masking', 'security', '1%', '4%', 200, 100],
-    ['Signature Masking II', 'security', '2%', '8%', 500, 300],
-    ['Ruthenium Polymer Coating', 'security', '1%', '1%', 1000, 150],
+    ['External Armor', 'security', 0, 0, 0, 0],
+    ['Internal Armor', 'security', 0, 0, 0, 0],
+    ['Signature Masking', 'security', '*0.01', '*0.04', 200, 100],
+    ['Signature Masking II', 'security', '*0.02', '*0.08', 500, 300],
+    ['Ruthenium Polymer Coating', 'security', '*0.01', '*0.01', 1000, 150],
     ['Oil-Slick Sprayer', 'security', 20, 20, 500, 0],
-    ['Ram Plate', 'security', '3%', '3%', 0, 20],
+    ['Ram Plate', 'security', '*0.03', '*0.03', 0, 20],
     ['Drone Rack Mini', 'cargo', 0.5, 1, 100, 0],
     ['Drone Rack Multi Mini', 'cargo', 5, 10, 500, 0],
     ['Drone Rack Small', 'cargo', 20, 25, 500, 0],
@@ -2005,32 +2007,33 @@ vehicle_upgrades = [
     ['Drone Rack Airborne Small', 'cargo', 10, 25, 750, 0],
     ['Drone Rack Airborne Medium', 'cargo', 50, 125, 1250, 0],
     ['Drone Rack Airborne Large', 'cargo', 100, 250, 2000, 0],
-    ['Engine Customization I', 'performance', '3%', '3%', 200, 50],
-    ['Engine Customization II', 'performance',  '5%', '5%', 1000, 150],
-    ['Improved Economy I', 'performance',  '1%', '1%', 100, 30],
-    ['Improved Economy II', 'performance',  '1.5%', '1.5%', 300, 50],
-    ['Handling Upgrade I', 'performance',  '2%', '2%', 200, 100],
-    ['Handling Upgrade II', 'performance',  '3%', '3%', 600, 300],
-    ['Offroad Suspension', 'performance',  '3%', '3%', 200, 50],
+
+    ['Engine Customization I', 'performance', '*0.03', '*0.03', 200, 50],
+    ['Engine Customization II', 'performance',  '*0.05', '*0.05', 1000, 150],
+    ['Improved Economy I', 'performance',  '*0.01', '*0.01', 100, 30],
+    ['Improved Economy II', 'performance',  '*0.015', '*0.01.5', 300, 50],
+    ['Handling Upgrade I', 'performance',  '*0.02', '*0.02', 200, 100],
+    ['Handling Upgrade II', 'performance',  '*0.03', '*0.03', 600, 300],
+    ['Offroad Suspension', 'performance',  '*0.03', '*0.03', 200, 50],
     ['Grapple', 'utility', 10, 10, 500, 0],
     ['Micro Mechanical Arm', 'utility', 0.01, 0.01, 300, 0],
     ['Mini Mechanical Arm', 'utility', 0.1, 0.1, 500, 0],
     ['Small Mechanical Arm', 'utility', 1, 1, 500, 0],
     ['Mechanical Arm', 'utility', 15, 15, 2000, 0],
-    ['Rigger Adaption', 'utility', '5%', '5%', 500, 200],
-    ['Nanomaintainance System', '2%', '2%', 2000, 500],
+    ['Rigger Adaption', 'utility', '*0.05', '*0.05', 500, 200],
+    ['Nanomaintainance System', 'utility', '*0.02', '*0.02', 2000, 500],
     ['Rigger Cocoon', 'basic', 100, 300, 5000, 0],
     ['Rigger Cocoon II', 'basic', 150, 350, 20000, 0],
     ['Road Strip Ejector', 'security', 5, 5, 300, 0],
     ['Mounted Searchlight', 'security', 10, 30, 1000, 0],
-    ['Smoke Projector', 'security', '1%', '1%', 100, 20],
+    ['Smoke Projector', 'security', '*0.01', '*0.01', 100, 20],
     ['Smuggling Compartment Small', 'security', 5, 20, 500, 0],
     ['Smuggling Compartment Medium', 'security', 25, 100, 1000, 0],
     ['Smuggling Compartment Large', 'security', 100, 400, 2000, 0],
 
     ["Small-Arms Micro (0.5kg) Fixed Weapon Mount", "weapon", 0.75, 1.5, 100, 0],
     ["Small-Arms Light (2kg) Fixed Weapon Mount", "weapon", 3, 6, 150, 0],
-    ["Small-Arms Medium (6kg) Fixed Weapon Mount", "weapon", 8, 12, 200, 0],
+    ["Small-Arms Medium (6kg) Fixed Weapon Mount", "weapon", 9, 18, 200, 0],
     ["Small-Arms Heavy (15kg) Fixed Weapon Mount", "weapon", 22.5, 45, 300, 0],
     ["Light (40kg) Fixed Weapon Mount", "weapon", 60, 120, 100, 0],
     ["Medium (100kg) Fixed Weapon Mount", "weapon", 150, 300, 100, 0],
@@ -2040,7 +2043,7 @@ vehicle_upgrades = [
 
     ["Small-Arms Micro (0.5kg) Turret", "weapon", 1.5, 1.5, 100, 0],
     ["Small-Arms Light (2kg) Turret", "weapon", 6, 6, 100, 0],
-    ["Small-Arms Medium (6kg) Turret", "weapon", 12, 12, 100, 0],
+    ["Small-Arms Medium (6kg) Turret", "weapon", 18, 18, 100, 0],
     ["Small-Arms Heavy (15kg) Turret", "weapon", 45, 45, 100, 0],
     ["Light (40kg) Turret", "weapon", 120, 120, 100, 0],
     ["Medium (100kg) Turrret", "weapon", 300, 300, 100, 0],
@@ -2057,7 +2060,11 @@ vehicle_upgrades = [
     ["Heavy (250kg) Retracteable Turret", "weapon", 750, 1500, 100, 0],
     ["Assault (500kg) Retracteable Turret", "weapon", 1500, 3000, 100, 0],
     ["Tank (1500kg) Retracteable Turret", "weapon", 4500, 9000, 100, 0],
+
     ]
+
+vehicle_upgrades_nt = namedtuple('vehicle_upgrade', ['id'] + vehicle_upgrades[0])
+vehicle_upgrades_dict = OrderedDict([(entry[0], vehicle_upgrades_nt(*([i] + entry))) for i, entry in enumerate(vehicle_upgrades[1:])])
 
 #               single      automatic       minigun
 #5.56 = 12/20               3.5kg           10kg

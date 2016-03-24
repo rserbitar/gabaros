@@ -1,3 +1,18 @@
 {{extend 'layout.html'}}
-<h1>Dies ist das Template manage_char/manage_spells.html</h1>
-{{=BEAUTIFY(response._vars)}}
+{{=H1(get_char_name())}}
+<div class="container">
+  <div class="row">
+      <div class="col-sm-6">
+          {{=H4('XP: {:,.2f}'.format(float(char_xp)))}}
+          {{=H4('Free XP: {:,.2f}'.format(float(char_xp-total_xp)))}}
+          {{=H4('Next spell XP: {:,.2f}'.format(float(next_spell_cost)))}}
+          {{=H4('Total spells XP Cost: {:,.2f}'.format(float(total_spells_xp_cost)) )}}
+      </div>
+      <div class="col-sm-6">
+      </div>
+    </div>
+  <div class="row">
+    <div class="col-sm-12">
+        {{=form}}</div>
+  </div>
+</div>

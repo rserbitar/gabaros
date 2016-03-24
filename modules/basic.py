@@ -39,6 +39,8 @@ class Char(object):
         self.metamagic = []
         self.money = []
         self.xp = []
+        self.contacts = []
+        self.sins = []
         self.load_char()
 
     def init_attributes(self):
@@ -75,6 +77,8 @@ class Char(object):
         self.load_adept_powers()
         self.load_xp()
         self.load_money()
+        self.load_contacts()
+        self.load_sins()
 
     def load_xp(self):
         db_cx = self.db.char_xp
@@ -183,6 +187,17 @@ class Char(object):
     def load_foci(self):
         foci = [item.name for item in self.items if data.gameitems_dict[item.name].clas  == 'Focus']
         self.foci = [CharFocus(self.db, name, self) for name in foci]
+
+    def load_contacts(self):
+        db_cc = self.db.char_contacts
+        for row in self.db(db_cc.char == self.char_id).select(db_cc.loyalty, db_cc.name, db_cc.starting):
+            if row.starting:
+                self.contacts.append((row.loyalty, row.name.rating))
+
+    def load_sins(self):
+        db_cs = self.db.char_sins
+        for row in self.db(db_cs.char == self.char_id).select(db_cs.rating, db_cs.permits):
+            self.sins.append((row.rating, row.permits))
 
     def write_attribute(self, attribute, value):
         db_ca = self.db.char_attributes
@@ -1076,10 +1091,22 @@ class CharPropertyGetter():
         return result
 
     def get_spell_xp_cost(self):
-        return sum([rules.get_spell_xp_cost() for i in self.char.spells])
+        return rules.get_spell_xp_cost(self.char.spells)
+
+    def get_next_spell_xp_cost(self):
+        return rules.get_spell_xp_cost(self.char.spells + [1]) - rules.get_spell_xp_cost(self.char.spells)
 
     def get_metamagic_xp_cost(self):
-        return sum([rules.get_metamagic_xp_cost() for i in self.char.metamagic])
+        return rules.get_metamagic_xp_cost(self.char.metamagic)
+
+    def get_next_metamagic_xp_cost(self):
+        return rules.get_metamagic_xp_cost(self.char.metamagic + [1]) - rules.get_metamagic_xp_cost(self.char.metamagic)
+
+    def get_contacts_xp_cost(self):
+        return sum([i**2*j**2/5000 for i,j in self.char.contacts])
+
+    def get_free_contacts_xp(self):
+        return CharPropertyGetter(self.char, 'unaugmented').get_attribute_value('Charisma')**4*2/5000 + 300
 
     def get_attribute_value(self, attribute):
         """
@@ -1336,8 +1363,10 @@ class CharPropertyGetter():
         xp['Skills'] = 0
         for skill in data.skills_dict:
             xp['Skills'] += self.get_skill_xp_cost(skill)
+        xp['Contacts'] = max(0, self. get_contacts_xp_cost() - self.get_free_contacts_xp())
         xp['Spells'] = self.get_spell_xp_cost()
         xp['Metamagic'] = self.get_metamagic_xp_cost()
+        xp['Contacts']
         return xp
 
     def get_total_cost(self):
@@ -1354,6 +1383,10 @@ class CharPropertyGetter():
         for item in self.char.all_items:
             itemcost += item.get_cost()
         cost['Items'] = itemcost
+        sincost = 0
+        for sin in self.char.sins:
+            sincost += rules.get_sin_cost(sin[0], data.permits_dict.get(sin[1]).cost_multiplier)
+        cost['SINs'] = sincost
         return cost
 
     def get_spomod_max(self):

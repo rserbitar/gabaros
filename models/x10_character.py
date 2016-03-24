@@ -1,6 +1,6 @@
 # coding: utf8
 import data
-
+import rules
 
 db.define_table('chars', Field('player', type='reference auth_user', label=T('Player'), default=auth.user_id,
                                update=auth.user_id, writable=False),
@@ -67,8 +67,10 @@ db.define_table('char_sins', Field('char', type='reference chars', label=T('Char
                 Field('name', type='string', label=T('SIN Name')),
                 Field('rating', type='integer', label=T('Rating')),
                 Field('permits', type='string', label=T('Permits'), requires=IS_IN_SET(data.permits_dict.keys())),
-                Field('locations', type='list:reference char_locations', label=T('Locations')),
-                Field('money', type='float', label='Money'))
+                Field('locations',type='list:reference char_locations', label=T('Locations')),
+                Field('money', type='float', label='Money'),
+                Field('cost', compute = lambda row: rules.get_sin_cost(row.rating, data.permits_dict.get(row.permits).cost_multiplier), label='Cost'),
+               fake_migrate=True)
 
 db.define_table('char_spells', Field('char', type='reference chars', label=T('Character'), writable=False),
                 Field('spell', type='string', label=T('Spell Name'),  requires=IS_IN_SET(data.spells_dict.keys())))
@@ -81,7 +83,7 @@ Size:
 Age:
 Appearance:
 Clothing Style:
-Wear:
+Ware:
 Specialties:
 Character:
 """

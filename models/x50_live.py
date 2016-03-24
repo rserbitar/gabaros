@@ -10,6 +10,7 @@ db.define_table('rolls',
     Field('roll', type = 'double', label = T('Roll')),
     Field('result', type = 'double', label = T('Result')),
     Field('visible', type = 'boolean', label = T('Visible')),
+    Field('psyval', type = 'double', label = T('Psyco Value')),
     Field('time', type = 'datetime', label = T('Time'),
     writable = False, default = datetime.now()),
     )
@@ -32,8 +33,7 @@ db.define_table('combats',
     Field('name', type = 'string', label = T('Name')),
     Field('lighting', type = 'string', label = T('Lighting')),
     Field('noise', type = 'string', label = T('Noise')),
-    Field('environment', type = 'string', label = T('Environment')),
-    )
+    Field('environment', type = 'string', label = T('Environment')))
 
 
 db.define_table('actions',

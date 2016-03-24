@@ -28,8 +28,8 @@ baseuplink = attrib_mod_norm
 wound_exp = 200.
 cyberhalf = 20
 shoot_base_difficulty = 20
-spell_xp_cost = 250
-metamagic_xp_cost = 500
+spell_xp_cost = 200
+metamagic_xp_cost = 400
 money_to_xp = 1/(50*2**0.5)
 xp_to_money = 50/(2**0.5)
 starting_money = 150000
@@ -109,12 +109,12 @@ def exp_cost_attribute(attribute, value, base, factor, signmod):
     return val
 
 
-def get_spell_xp_cost():
-    return spell_xp_cost
+def get_spell_xp_cost(spells):
+    return  (2**(len(spells)/10.)-1)*spell_xp_cost/(2**0.1-1)
 
 
-def get_metamagic_xp_cost():
-    return metamagic_xp_cost
+def get_metamagic_xp_cost(magics):
+    return (2**(len(magics)/2.)-1)*metamagic_xp_cost/(2**0.5-1)
 
 
 def calc_charisma_degrade(cyberindex):
@@ -276,7 +276,7 @@ def essence_magic_mult(essence):
     return mult
 
 def essence_psycho_thresh(essence):
-    return log(1./(1-(essence/100.)))/log(2)*10+10 if essence < 100 else float('inf')
+    return log(1./(1-(essence/100.)))/log(2)*10+5 if essence < 100 else float('inf')
 
 
 def spomod_max(logic):
@@ -532,3 +532,6 @@ def contacts_free_value(charisma):
 
 def recoil_by_strength(recoil, strength, min_strength):
     return recoil/(strength/min_strength)
+
+def get_sin_cost(rating, permit_mult):
+    return 2000*5**(rating/10.-3)*permit_mult

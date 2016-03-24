@@ -54,9 +54,9 @@ def view_spirit():
 
 def view_vehicle():
     fields = [Field('vehicle', type='str', requires=IS_IN_SET(data.vehicles_dict.keys()), label = 'Vehicle')]
-    vehicle = None
+    this_vehicle = None
     form=SQLFORM.factory(*fields)
     if form.process().accepted:
-        vehicle = data.vehicles_dict[form.vars.vehicle]
-        vehicle = vehicle.Vehicle(vehicle.chassis, vehicle.agent, vehicle.computer, vehicle.sensors_package)
-    return dict(form=form, vehicle=vehicle)
+        this_vehicle = data.vehicles_dict[form.vars.vehicle]
+        this_vehicle = vehicle.Vehicle(this_vehicle.chassis, this_vehicle.agent, this_vehicle.computer, this_vehicle.sensors_package, this_vehicle.equipment)
+    return dict(form=form, vehicle=this_vehicle)

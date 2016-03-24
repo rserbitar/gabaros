@@ -12,7 +12,7 @@ def index():
     redirect(URL('view_chars'))
 
 
-def roll(char_id, value, name, visible):
+def roll(char_id, value, name, visible, psythresh=100.):
     roll = int(rules.die_roll())
     if value is None:
         value = -100
@@ -22,18 +22,25 @@ def roll(char_id, value, name, visible):
         name = ''
     name = name.replace('_', ' ')
     result = int(round(value + roll))
-    db.rolls.insert(char=char_id, name=name, value=value, roll=roll, result=result, visible=visible)
+    psyval = int(round(max(0, abs(roll) - psythresh)))
+    db.rolls.insert(char=char_id, name=name, value=value, roll=roll, result=result, visible=visible, psyval=psyval)
     return result
 
 
 def roll_button():
     value = request.args(2)
-    char = int(request.args(0))
+    char_id = int(request.args(0))
+    psythresh = float(request.args(4))
     name = request.args(1)
     visible = int(request.args(3))
-    result = roll(char, value, name, visible)
+    result = roll(char_id, value, name, visible, psythresh)
+    roll_val = result - float(value)
+    psyval = int(round(max(0, abs(roll_val) - psythresh)))
     if visible:
-        response.js = 'jQuery(".flash").html("{}: {}").slideDown();'.format(name, result)
+        if psyval:
+            response.js = 'jQuery(".flash").html("{}: {} (Psyco: {})").slideDown();'.format(name, result, psyval)
+        else:
+            response.js = 'jQuery(".flash").html("{}: {}").slideDown();'.format(name, result)
     else:
         response.js = 'jQuery(".flash").html("{} roll was sent!").slideDown();'.format(name)
 
@@ -96,15 +103,16 @@ def view_skills():
     skills = [["Skill", "Test", "Secret"]]
     skilldepth_dict = {}
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
+    psythresh = char_property_getter.get_psycho_thresh()
     for skill, skilldata in data.skills_dict.items():
         skillname = skill
         skilldepth = skilldepth_dict.get(skilldata.parent, 0)
         skilldepth_dict[skill] = skilldepth + 1
         val = char_property_getter.get_skilltest_value(skill)
         button1 = A("{:.0f}".format(val),
-                    callback=URL('roll_button', args=[char_id, skillname, val, 1]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, skillname, val, 1, psythresh]), _class='btn')
         button2 = A("{:.0f}".format(val),
-                    callback=URL('roll_button', args=[char_id, skillname, val, 0]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, skillname, val, 0, psythresh]), _class='btn')
         if skilldepth == 0:
             skilltext = H3(skillname)
         elif skilldepth == 1:
@@ -120,15 +128,16 @@ def view_skills_alphabetical():
     skills = [["Skill", "Test", "Secret"]]
     skilldepth_dict = {}
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
+    psythresh = char_property_getter.get_psycho_thresh()
     for skill, skilldata in data.skills_dict.items():
         skillname = skill
         skilldepth = skilldepth_dict.get(skilldata.parent, 0)
         skilldepth_dict[skill] = skilldepth + 1
         val = char_property_getter.get_skilltest_value(skill)
         button1 = A("{:.0f}".format(val),
-                    callback=URL('roll_button', args=[char_id, skillname, val, 1]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, skillname, val, 1, psythresh]), _class='btn')
         button2 = A("{:.0f}".format(val),
-                    callback=URL('roll_button', args=[char_id, skillname, val, 0]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, skillname, val, 0, psythresh]), _class='btn')
         if skilldepth == 0:
             skilltext = H3(skillname)
         elif skilldepth == 1:
@@ -152,6 +161,7 @@ def view_attributes():
     char_property_getter2 = basic.CharPropertyGetter(char, modlevel = 'augmented')
     char_property_getter3 = basic.CharPropertyGetter(char, modlevel = 'temporary')
     char_property_getter4 = basic.CharPropertyGetter(char, modlevel = 'stateful')
+    psythresh = char_property_getter4.get_psycho_thresh()
     for attribute in data.attributes_dict.keys()+ ['Essence']:
         unaugmented = round(char_property_getter.get_attribute_value(attribute),2)
         augmented = round(char_property_getter2.get_attribute_value(attribute),2)
@@ -159,9 +169,9 @@ def view_attributes():
         value = round(char_property_getter4.get_attribute_value(attribute),2)
         modval = round(char_property_getter4.get_attribute_test_value(attribute),2)
         button1= A("{:.0f}".format(modval),
-                    callback=URL('roll_button', args=[char_id, attribute, modval, 1]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, attribute, modval, 1, psythresh]), _class='btn')
         button2 = A("{:.0f}".format(modval),
-                    callback=URL('roll_button', args=[char_id, attribute, modval, 0]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, attribute, modval, 0, psythresh]), _class='btn')
         attributes += [[attribute, unaugmented, augmented, temporary, value, modval, button1, button2]]
     return dict(attributes=attributes)
 
@@ -169,6 +179,8 @@ def view_attributes():
 @auth.requires_login()
 def view_matrix_actions():
     char_id = get_char()
+    char_property_getter = basic.CharPropertyGetter(char)
+    psythresh = char_property_getter.get_psycho_thresh()
     computer_id = request.args(0)
     computer = basic.Computer(db, computer_id, basic.Char(db, char_id))
     actions = [["Action", "Prerequisite", "Test", "Secret"]]
@@ -177,9 +189,9 @@ def view_matrix_actions():
         prerequisite = item.prerequisite
         if value is not None:
             button1 = A("{:.0f}".format(value),
-                    callback=URL('roll_button', args=[char_id, action, value, 1]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, action, value, 1, psythresh]), _class='btn')
             button2 = A("{:.0f}".format(value),
-                    callback=URL('roll_button', args=[char_id, action, value, 0]), _class='btn')
+                    callback=URL('roll_button', args=[char_id, action, value, 0, psythresh]), _class='btn')
         else:
             button1 = ''
             button2 = ''
@@ -561,6 +573,7 @@ def insert_situation_mod():
 def view_actions():
     char_id = get_char()
     char_property_getter = basic.CharPhysicalPropertyGetter(basic.Char(db, char_id))
+    psythresh = char_property_getter.get_psycho_thresh()
     combat = db(db.actions.char==char_id).select(db.actions.combat).last()
     if combat:
         combat = combat.combat
@@ -583,7 +596,7 @@ def view_actions():
     action_buttons = {i: A(i, callback=URL('perform_action', args=[i, combat]),
                      target = 'next_action', _class='btn') for i in actions}
     reaction_button = A("Reaction ({})".format(reaction),
-                    callback=URL('roll_button', args=[char_id, 'Reaction', reaction, 1]), _class='btn', _title = 'test')
+                    callback=URL('roll_button', args=[char_id, 'Reaction', reaction, 1, psythresh]), _class='btn', _title = 'test')
     action_history = get_action_history(char_id, combat)
     return dict(reaction_button=reaction_button, actions=actions, action_costs=action_costs, action_buttons=action_buttons, action_history = action_history, form=form, combat_name = combat_name)
 

@@ -7,15 +7,16 @@ import data
 
 class Vehicle(object):
 
-    def __init__(self, chassis, agent, computer, sensors_package, upgrades):
+    def __init__(self, chassis, agent, computer, sensors_package, upgrade_list):
         self.chassis = chassis
         self.agent = agent
         self.computer = computer
         self.sensors_package = sensors_package
-        self.upgrades = upgrades
+        self.upgrade_list = upgrade_list
 
         self.locomotion = ''
         self.weight = 0
+        self.handling = 0
         self.max_speed = 0
         self.acceleration = 0
         self.load = 0
@@ -34,6 +35,7 @@ class Vehicle(object):
         self.Signal = 0
         self.Uplink = 0
         self.agent_rating = 0
+        self.upgrades = []
         self.skills = {}
 
         self.structure = 0
@@ -62,7 +64,7 @@ class Vehicle(object):
         self.Uplink = data.computer_dict[self.computer].Uplink
         self.used_capacity += data.computer_dict[self.computer].Volume*1000
         self.used_load += data.computer_dict[self.computer].Volume*500
-        self.cost += data.gameitems_dict[self.computer].Cost
+        self.cost += data.gameitems_dict[self.computer].cost
 
         self.agent_rating = data.agents_dict[self.agent].rating
         self.skills = data.agents_dict[self.agent].skills
@@ -70,8 +72,21 @@ class Vehicle(object):
         self.sensors = data.sensor_packages_dict[self.sensors_package].content
         for i in self.sensors:
             self.used_capacity += data.gameitems_dict[i].absolute_capacity
-            self.used_load += data.gameitems_dict[i].Weight
-            self.cost += data.gameitems_dict[i].Cost
+            self.used_load += data.gameitems_dict[i].weight
+            self.cost += data.gameitems_dict[i].cost
+        for upgrade in self.upgrade_list:
+            upgrade = data.vehicle_upgrades_dict[upgrade]
+            self.cost += upgrade.cost
+            self.cost += upgrade.square_weight_cost * self.weight**0.5
+            if isinstance(upgrade.capacity, str):
+                self.used_capacity += eval('{}'.format(self.weight)+upgrade.capacity)
+            else:
+                self.used_capacity += upgrade.capacity
+            if isinstance(upgrade.weight, str):
+                self.used_load += eval('{}'.format(self.weight)+upgrade.weight)
+            else:
+                self.used_load += upgrade.weight
+            self.upgrades.append(upgrade)
 
     def calc_stats(self):
         self.structure = rules.life(self.weight, self.constitution)

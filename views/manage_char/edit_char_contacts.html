@@ -1,2 +1,6 @@
 {{extend 'layout.html'}}
+{{=H4('XP: {:,.2f}'.format(float(char_xp)))}}
+{{=H4('Free Cost: {:,.2f}'.format(float(char_xp - total_xp)))}}
+{{=H4('Free XP for contacts from charisma: {:,.2f}'.format(float(charisma_xp)))}}
+{{=H4('XP for Contacts: {:,.2f}'.format(float(xp)))}}
 {{=form}}
