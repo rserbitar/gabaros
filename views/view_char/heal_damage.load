@@ -1,9 +1,11 @@
 <div class="row">
     <div class="col-sm-6">
          {{=form}}
+        <br>
     </div>
     <div class="col-sm-6">
         {{=form4}}
+        <br>
     </div>
   </div>
   <div class="row">
@@ -15,8 +17,10 @@
   <div class="row">
     <div class="col-sm-6">
         {{=form2}}
+        <br>
     </div>
     <div class="col-sm-6">
         {{=form3}}
+        <br>
     </div>
   </div>

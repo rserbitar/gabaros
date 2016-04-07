@@ -1,4 +1,9 @@
-{{=form}}
+<div class="row">
+    <div class="col-sm-12">
+         {{=form}}
+        <br>
+    </div>
+</div>
 
 
 <script>

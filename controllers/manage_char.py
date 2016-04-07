@@ -182,13 +182,13 @@ def manage_ware():
     table.ware.represent = lambda ware, row: A(ware, _href=URL("edit_ware", args=(row.id)))
     maxtextlength = {'table.ware': 50}
     char = basic.Char(db, char_id)
-    links = [dict(header='Cost', body=lambda row: int(round(basic.CharWare(db, row.ware, row.id, char).get_cost()))),
-             dict(header='Essence', body=lambda row: round(basic.CharWare(db, row.ware, row.id, char).get_essence_cost(),2))]
+    links = [dict(header='Cost', body=lambda row: int(round(basic.CharWare(db, row.ware, row.id, char, True).get_cost()))),
+             dict(header='Essence', body=lambda row: round(basic.CharWare(db, row.ware, row.id, char, True).get_essence_cost(),2))]
     form = SQLFORM.grid(query, fields = [table.id, table.ware], csv = False,
                         maxtextlength = maxtextlength,
                         links = links,
                         ondelete=my_ondelete('manage_ware'),
-                        oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id))))
+                        oncreate = (lambda form: basic.CharWare(db, form.vars.ware, form.vars.id, basic.Char(db, char_id), True)))
     table = get_table('ware', 'char_ware', 'ware', 'manage_ware')
     char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id), modlevel='augmented')
     cost = char_property_getter.get_total_cost()

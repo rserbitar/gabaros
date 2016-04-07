@@ -2,6 +2,40 @@
 import data
 import rules
 
+descriptiondefault = """
+Age:
+
+General Appearance: What is the general appearance of the character?
+
+Clothing Style: How does the character dress?
+
+Personality: What pesonality, traits and quirks does the character have?
+
+Good: What are the characters strong points?
+
+Weak: What are the characters week points?
+
+Special_ what makes the character special?
+
+Education: What ist the eductaiton of the character?
+
+Former Occupation: What did he do for a living before runnig?
+
+Family: Who is the characters family (names) and what are the charactes ties now?
+
+Free time: How does the character spend his free time?
+
+Social ties: Whom does the character spend his free time with?
+
+Worldview: How does the character see the world and his place in it?
+
+Moral Code: What is the moral code of the character? Will he do, what won't he do? Has he hought about it?
+
+Goals: What are the characters goals in life?
+
+The Reason: Why does the character start running the shadows? Whe does he still run the shadows?
+"""
+
 db.define_table('chars', Field('player', type='reference auth_user', label=T('Player'), default=auth.user_id,
                                update=auth.user_id, writable=False),
                 Field('master', type='reference auth_user', label=T('Master'),
@@ -9,6 +43,7 @@ db.define_table('chars', Field('player', type='reference auth_user', label=T('Pl
                 Field('name', type='string', label=T('Name')),
                 Field('gender', type='string', label=T('Gender'), requires=IS_IN_SET(data.gendermods_dict.keys())),
                 Field('race', type='string', label=T('Race'), requires=IS_IN_SET(data.races_dict.keys())),
+                Field('descrption', type='text', label=T('Description'), default=descriptiondefault),
                 format=lambda x: x.name)
 
 db.define_table('char_attributes', Field('char', type='reference chars', label=T('Character')),
@@ -37,7 +72,8 @@ db.define_table('item_upgrades', Field('char', type='reference chars', label=T('
                 Field('upgrade', type='reference char_items', label=T('Upgrade')))
 
 db.define_table('char_ware', Field('char', type='reference chars', label=T('Character'), writable=False),
-                Field('ware', type='string', label=T('Ware'), requires=IS_IN_SET(data.ware_dict.keys())))
+                Field('ware', type='string', label=T('Ware'), requires=IS_IN_SET(data.ware_dict.keys())),
+                Field('active', type='boolean', label=T('Active'), default=True))
 
 db.define_table('char_ware_stats', Field('ware', type='reference char_ware', label=T('Ware')),
                 Field('stat', type='string', label=T('Stat')), Field('value', type='double', label=T('Value')))

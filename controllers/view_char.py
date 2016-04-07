@@ -845,3 +845,38 @@ def view_cost():
     cost = char_property_getter.get_total_cost()
     totalcost = sum(cost.values())
     return dict(totalcost=totalcost, cost=cost)
+
+def view_magic():
+    char_id = get_char()
+    char = basic.Char(db, char_id)
+
+    skills = [["Skill", "Test", "Secret"]]
+    magicskills = ['Assensing', 'Astral Combat', 'Sorcery', 'Spellcasting', 'Counterspelling', 'Ritual Magic',
+                   'Invocation', 'Binding', 'Banishing', 'Summoning', 'Alchemy', 'Metamagic']
+    skilldepth_dict = {}
+    char_property_getter = basic.CharPropertyGetter(basic.Char(db, char_id))
+    psythresh = char_property_getter.get_psycho_thresh()
+    for skill, skilldata in data.skills_dict.items():
+        if skill in magicskills:
+            skillname = skill
+            skilldepth = skilldepth_dict.get(skilldata.parent, 0)
+            skilldepth_dict[skill] = skilldepth + 1
+            val = char_property_getter.get_skilltest_value(skill)
+            button1 = A("{:.0f}".format(val),
+                        callback=URL('roll_button', args=[char_id, skillname, val, 1, psythresh]), _class='btn')
+            button2 = A("{:.0f}".format(val),
+                        callback=URL('roll_button', args=[char_id, skillname, val, 0, psythresh]), _class='btn')
+            if skilldepth == 0:
+                skilltext = H3(skillname)
+            elif skilldepth == 1:
+                skilltext = H4(skillname)
+            else:
+                skilltext = skillname
+            skills += [[skilltext, button1, button2]]
+    
+    view_damage_state = LOAD('view_char','view_damage_state.load',ajax=True, target = 'view_damage_state')
+    apply_damage = LOAD('view_char','apply_damage.load',ajax=True, target = 'apply_damage')
+    sidebar = wikify(['Spellcasting', 'Summoning'])
+    return dict(skills=skills,
+                view_damage_state=view_damage_state, 
+                apply_damage=apply_damage, sidebar=sidebar)

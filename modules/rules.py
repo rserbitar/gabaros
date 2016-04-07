@@ -6,7 +6,7 @@
 #from gluon.sqlhtml import *
 from collections import OrderedDict
 from math import log, e, atan
-from scipy.special import erfinv, erf
+from math import erf
 from random import gauss, random
 # request, response, session, cache, T, db(s)
 # must be passed and cannot be imported!
@@ -131,16 +131,22 @@ def woundlimit(weight, constitution):
     return percent *lifeval
 
 
-def wounds_for_incapacitated_thresh(weight, constitution):
-    return 3
+def wounds_for_incapacitated_thresh(weight, constitution, bodypart):
+    wounds = 3
+    if bodypart.lower() == 'body':
+        wounds *= 7
+    return wounds
 
 
-def wounds_for_destroyed_thresh(weight, constitution):
-    return 5
+def wounds_for_destroyed_thresh(weight, constitution, bodypart):
+    wounds = 5
+    if bodypart.lower() == 'body':
+        wounds *= 7
+    return wounds
 
-
-def woundeffect(attribute, wounds, weight, constitution):
-    return attribute * (0.5)**(wounds * wounds_for_incapacitated_thresh(weight, constitution)/3.)
+    
+def woundeffect(attribute, wounds, weight, constitution, bodypart):
+    return attribute * (0.5)**(wounds * wounds_for_incapacitated_thresh(weight, constitution, bodypart)/3.)
 
 
 def action_cost(kind, actionmult):
@@ -184,7 +190,8 @@ def loadeffect(load, strength=30, weight=75):
 
 
 def loadeffect_inv(percent, strength=30, weight=75):
-    load = erfinv(1 - percent) ** (1 / 1.5) * 5
+    #load = erfinv(1 - percent) ** (1 / 1.5) * 5
+    load = 0
     mod = (strength - weight ** (2 / 3.))
     if mod < 1:
         mod = 1
@@ -243,7 +250,7 @@ def lifemod_absolute(life, maxlife):
 def lifemod_relative(life, maxlife):
     if life <= 0:
         return 0
-    return max(1, float(life)/maxlife)**(1/3.)
+    return min(1, float(life)/maxlife)**(1/3.)
 
 #def warecostmult(effectmult=1, charmodmult=1, weightmult=1, kind="cyberware"):
 #    mult = 2.5 ** (effectmult - 1.)
@@ -484,13 +491,17 @@ def firewall_rating(time, skill, system, users):
 
 def negative_square_avg(values):
     result = float('inf')
-    if values:
+    if not all(values):
+        result = 0
+    elif values:
         result = (1./sum([(1./i)**2 for i in values]))**0.5
         result *= len(values)**0.5
     return result
 
+
 def square_avg(values):
      return sum([i**2 for i in values])**0.5/len(values)**0.5
+
 
 def square_add(values):
      return sum([i**2 for i in values])**0.5
@@ -518,20 +529,26 @@ def get_armor_coordination(coordination, coordination_multiplier):
 def get_stacked_armor_value(values):
     return square_add(values)
 
+
 def scale(x):
     return 2**(x/10.)
+
 
 def price_by_rating(baseprice, rating):
     return (1+(2**(rating/10.)))/9.*baseprice
 
+
 def contact_costs(loyalty, rating):
     return 2**((loyalty/30.)**2+(30/30.)**2)*50
+
 
 def contacts_free_value(charisma):
     return charisma*charisma
 
+
 def recoil_by_strength(recoil, strength, min_strength):
     return recoil/(strength/min_strength)
+
 
 def get_sin_cost(rating, permit_mult):
     return 2000*5**(rating/10.-3)*permit_mult

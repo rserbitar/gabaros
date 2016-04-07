@@ -2,12 +2,14 @@
 # !/usr/bin/env python
 # coding: utf8
 
-#from gluon import *
+from gluon.debug import dbg
 import collections
 import data
 import rules
 import math
-
+import logging
+logger = logging.getLogger("web2py.app.gabaros")
+logger.setLevel(logging.DEBUG)
 
 class Char(object):
     """
@@ -143,8 +145,8 @@ class Char(object):
         Load character ware
         """
         db_cw = self.db.char_ware
-        for row in self.db(db_cw.char == self.char_id).select(db_cw.ware, db_cw.id):
-            self.ware.append(CharWare(self.db, row.ware, row.id, self))
+        for row in self.db(db_cw.char == self.char_id).select(db_cw.ware, db_cw.id, db_cw.active):
+            self.ware.append(CharWare(self.db, row.ware, row.id, self, row.active))
 
     def load_fixtures(self):
         """
@@ -251,12 +253,13 @@ class Char(object):
                     else:
                         value = eval(func.format(formula))
         for ware in self.ware:
-            for effect in ware.effects:
-                if effect[0] == primary and effect[1] == secondary:
-                    if not func:
-                        value = eval('value {}'.format(effect[2]))
-                    else:
-                        value = eval(func.format(effect[2]))
+            if ware.active:
+                for effect in ware.effects:
+                    if effect[0] == primary and effect[1] == secondary:
+                        if not func:
+                            value = eval('value {}'.format(effect[2]))
+                        else:
+                            value = eval(func.format(effect[2]))
         for fixture in self.fixtures:
             for effect in fixture.effects:
                 if effect[0] == primary and effect[1] == secondary:
@@ -624,12 +627,13 @@ class Ware(object):
         self.capacity = ware_nt.capacity
 
 class CharWare(Ware):
-    def __init__(self, db, ware_name, db_id, char):
+    def __init__(self, db, ware_name, db_id, char, active):
         Ware.__init__(self, db, ware_name)
         self.db_id = db_id
         self.char = char
         self.stats = {}
         self.load_extra_data()
+        self.active = active
         #self.weight = self.calc_absolute_weight()
 
     def init_stats(self):
@@ -972,7 +976,7 @@ class CharBodypart():
                 if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
                     weight = self.get_attribute_relative('Weight')
                     constitution = self.get_attribute_relative('Constitution')
-                    value = rules.woundeffect(value, sum(self.wounds.values()), weight, constitution)
+                    value = rules.woundeffect(value, sum(self.wounds.values()), weight, constitution, self.bodypart.name)
             return value
         else:
             if attribute == 'Essence':
@@ -988,7 +992,7 @@ class CharBodypart():
                 if self.wounds and attribute not in ('Size', 'Weight', 'Constitution', 'Essence'):
                     weight = self.get_attribute_relative('Weight')
                     constitution = self.get_attribute_relative('Constitution')
-                    value = rules.woundeffect(value, sum(self.wounds.values()), weight, constitution)
+                    value = rules.woundeffect(value, sum(self.wounds.values()), weight, constitution, self.bodypart.name)
             value *= fraction
             self.attributes[(attribute, modlevel)] = value
             return value
@@ -1020,7 +1024,7 @@ class CharBodypart():
     def get_wounds_destroyed_thresh(self, modlevel = 'stateful'):
         constitution = self.get_attribute_relative('Constitution', modlevel)
         weight = self.get_attribute_relative('Weight', 'temporary')
-        thresh = rules.wounds_for_destroyed_thresh(weight, constitution)
+        thresh = rules.wounds_for_destroyed_thresh(weight, constitution, self.bodypart.name)
         return thresh
 
     def get_attribute_relative(self, attribute, modlevel = 'stateful'):
@@ -1060,8 +1064,8 @@ class CharPropertyGetter():
                 frac = round(bodypart.bodypart.get_fraction(attribute),2)
                 templist.append('{}/{}/{}'.format(augmented, stateful, frac))
             ware = bodypart.ware.name if bodypart.ware else ''
-            kind = bodypart.get_kind()[0]
-            templist.append('{}/{}'.format(kind, ware))
+            kind,cyberfrac,_ = bodypart.get_kind()
+            templist.append('{}({})/{}'.format(kind, cyberfrac, ware))
             woundlimit = int(round(bodypart.get_woundlimit()))
             templist.append(woundlimit)
             wounds = int(sum([i for i in  bodypart.wounds.values()]))
@@ -1196,6 +1200,8 @@ class CharPropertyGetter():
     def get_attribute_test_value(self, attribute):
 
         value = self.get_attribute_mod(attribute) + rules.attrib_mod_norm
+        if self.modlevel == 'stateful':
+                value += self.get_damagemod('absolute')
         return value
 
     def get_skill_value(self, skill, base = False):
@@ -1221,8 +1227,6 @@ class CharPropertyGetter():
         if self.modlevel in ('temporary','stateful'):
             pass
         if not base:
-            if self.modlevel == 'stateful':
-                value += self.get_damagemod('absolute')
             self.skills[skill] = value
         return value
 
@@ -1239,6 +1243,8 @@ class CharPropertyGetter():
             if weight:
                 mod += weight * self.get_attribute_mod(attribute)
         value += mod
+        if self.modlevel == 'stateful':
+            value += self.get_damagemod('absolute')
         return value
 
 
@@ -1252,10 +1258,16 @@ class CharPropertyGetter():
 
     def get_protection(self, bodypart, typ):
         protection = []
-        for armor in self.get_armor():
-            protection.append(armor.get_protection(bodypart, typ))
-        protection.append(self.char.ware_fix_power_effect(typ + ' armor', bodypart, 0, func = '(value**2 + {}**2)**0.5', modlevel=self.modlevel))
-        protection = rules.get_stacked_armor_value(protection)
+        if bodypart == 'Body':
+            protections = []
+            for bodypart in data.main_bodyparts:
+                protections.append(self.get_protection(bodypart, typ))
+            protection = rules.negative_square_avg(protections)
+        else:
+            for armor in self.get_armor():
+                protection.append(armor.get_protection(bodypart, typ))
+            protection.append(self.char.ware_fix_power_effect(typ + ' armor', bodypart, 0, func = '(value**2 + {}**2)**0.5', modlevel=self.modlevel))
+            protection = rules.get_stacked_armor_value(protection)
         return protection
 
     def get_ranged_weapons(self):
@@ -1318,6 +1330,8 @@ class CharPropertyGetter():
             value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
+        if self.modlevel == 'stateful':
+            value += self.get_damagemod('absolute')
         self.stats[statname] = value
         return value
 
@@ -1339,6 +1353,8 @@ class CharPropertyGetter():
             value = self.char.ware_fix_power_effect('stats', statname, value, modlevel=self.modlevel)
         if self.modlevel in ('temporary','stateful'):
             pass
+        if self.modlevel == 'stateful':
+            value /= self.get_damagemod('relative')
         self.stats[statname] = value
         return value
 
@@ -1673,6 +1689,7 @@ class CharPropertyPutter():
 
     def put_damage(self, value, penetration, bodypart='Body', kind='physical', typ='ballistic',
                    percent=False, resist=False, resistroll=None, wounding = True):
+        logging.debug('value: {}'.format(value))
         charpropertygetter = CharPropertyGetter(self.char, 'stateful')
         if kind in ['drain stun', 'drain physical']:
             percent = True
@@ -1686,6 +1703,7 @@ class CharPropertyPutter():
             armor = charpropertygetter.get_protection(bodypart, typ)
         if percent:
             value = charpropertygetter.get_maxlife(bodypart)*value/100.
+        damageval = value
         if resist:
             if resist == 'drain':
                 attribute_mod = charpropertygetter.get_drain_resist()
@@ -1721,7 +1739,12 @@ class CharPropertyPutter():
             new_damage = old_damage + damage
             new_damage = min(new_damage, 2*max_life)
             self.char.write_damage(kind, new_damage)
-        result = 'damage: {}, wounds: {}'.format(damage, wounds)
+        logging.debug('value: {}'.format(value))
+        logging.debug('calc_wounds: {}'.format(calc_wounds))
+        logging.debug('damage: {}'.format(damage))
+        logging.debug('armor: {}'.format(armor))
+        logging.debug('cyberfraction: {}'.format(cyberfraction))
+        result = 'damage: {:.0f}, wounds: {:.0f} (armor: {:.0f}, cyberfraction: {:.0%}, maximum destruction limit: {:.0f})'.format(damage, wounds, armor, cyberfraction, woundlimit*(calc_wounds))
         if resistroll:
             result += '; resistroll:{}'.format(resistroll)
         return result

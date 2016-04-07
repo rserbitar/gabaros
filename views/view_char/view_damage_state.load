@@ -1,7 +1,7 @@
 <H3>
 Max Life:
 </H3>
-{{=maxlife}}
+{{='{:.0f}'.format(maxlife)}}
 <br>
 <H3>
 Attribute Damage Mod:
@@ -13,9 +13,7 @@ Attribute Skill Mod:
 </H3>
 {{=damage_skill_mod}}
 <br>
-<div class="container">
-  <div class="row">
-    <div class="col-sm-6">
+<br>
         <table class = 'table table-striped'>
             <tr>
                 <th>Bodypart</th>
@@ -28,8 +26,6 @@ Attribute Skill Mod:
             </tr>
             {{pass}}
         </table>
-     </div>
-    <div class="col-sm-6">
         <table class = 'table table-striped'>
             <tr>
                 <th>Damagekind</th>
@@ -42,6 +38,3 @@ Attribute Skill Mod:
             </tr>
             {{pass}}
         </table>
-    </div>
-  </div>
-</div>
